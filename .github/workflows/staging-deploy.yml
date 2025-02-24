@@ -15,5 +15,5 @@ jobs:
 
         - name: Build Docker image
           run: |
-            ls -l
+            ls -l docker/prod
             docker build -t uptime-backend:develop ./docker/prod/server.Dockerfile
