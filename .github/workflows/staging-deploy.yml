@@ -13,9 +13,7 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v2
 
-        - name: Docker build
-          uses: docker/build-push-action@v6
-          with:
-            context: ./docker/prod/server.Dockerfile
-            push: false
-            tags: uptime-backend:develop
+        - name: Build Docker image
+          run: |
+            docker build -t uptime-backend:develop ./docker/prod/server.Dockerfile
+            
