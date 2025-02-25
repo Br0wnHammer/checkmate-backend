@@ -17,5 +17,13 @@ jobs:
 
         - name: Build Docker image
           run: |
+            COMMIT_HASH=$(git rev-parse --short HEAD)
             sed -i 's/\.\/Server/./g' docker/prod/server.Dockerfile
-            docker build -t uptime-backend:develop -f docker/prod/server.Dockerfile .
+            docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/server.Dockerfile .
+
+        - name: Clean and Run Docker container
+          run: |
+            docker stop uptime-backend
+            docker rm uptime-backend
+            COMMIT_HASH=$(git rev-parse --short HEAD)
+            docker run -d --name uptime-backend -p 5000:5000 -e DB_CONNECTION_STRING=mongodb://172.31.40.27:27017/uptime_db -e REDIS_HOST=172.31.40.27 uptime-backend:$COMMIT_HASH
