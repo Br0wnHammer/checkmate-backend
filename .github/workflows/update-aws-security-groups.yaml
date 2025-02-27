@@ -46,6 +46,12 @@ jobs:
 
             # Add new GitHub Actions IPs
             for IP in $IPS; do
-              aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $IP/32 || true
+              if [[ $IP =~ .*/[0-9]{1,2}$ ]]; then
+                CIDR=$IP  # Use existing CIDR if already specified
+              else
+                CIDR="$IP/32"  # Add /32 if missing
+              fi
+              echo "Updating security group for $CIDR..."
+              aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $CIDR || true
             done
           done
