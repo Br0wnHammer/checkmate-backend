@@ -12,6 +12,7 @@ class QueueRoutes {
 		this.router.post("/jobs", this.queueController.addJob);
 		this.router.post("/obliterate", this.queueController.obliterateQueue);
 		this.router.post("/flush", this.queueController.flushQueue);
+		this.router.get("/health", this.queueController.checkQueueHealth);
 	}
 
 	getRouter() {

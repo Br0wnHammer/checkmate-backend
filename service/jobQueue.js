@@ -1,5 +1,7 @@
 import IORedis from "ioredis";
 
+const HEALTH_CHECK_INTERVAL = 15 * 60 * 1000;
+
 const QUEUE_NAMES = ["uptime", "pagespeed", "hardware", "distributed"];
 const SERVICE_NAME = "JobQueue";
 const JOBS_PER_WORKER = 5;
@@ -38,6 +40,7 @@ class NewJobQueue {
 
 		this.queues = {};
 		this.workers = {};
+		this.lastJobProcessedTime = {};
 
 		this.connection = redisConnection;
 		this.db = db;
@@ -53,6 +56,19 @@ class NewJobQueue {
 			this.queues[name] = new Queue(name, redisConnection);
 			this.workers[name] = [];
 		});
+
+		// Periodic health check
+		this.healthCheckInterval = setInterval(async () => {
+			const health = await this.checkQueueHealth();
+			if (health.stuck) {
+				this.logger.error({
+					message: `Queue is stuck: ${health.stuckQueues.join(", ")}`,
+					service: SERVICE_NAME,
+					method: "healthCheckInterval",
+				});
+				this.flushQueue();
+			}
+		}, HEALTH_CHECK_INTERVAL);
 	}
 
 	/**
@@ -149,6 +165,8 @@ class NewJobQueue {
 	createJobHandler() {
 		return async (job) => {
 			try {
+				// Set the last job processed time for this queue
+				this.lastJobProcessedTime[job.queue.name] = Date.now();
 				// Get all maintenance windows for this monitor
 				await job.updateProgress(0);
 				const monitorId = job.data._id;
@@ -558,6 +576,12 @@ class NewJobQueue {
 				service: SERVICE_NAME,
 				method: "obliterate",
 			});
+
+			if (this.healthCheckInterval) {
+				clearInterval(this.healthCheckInterval);
+				this.healthCheckInterval = null;
+			}
+
 			await Promise.all(
 				QUEUE_NAMES.map(async (name) => {
 					const queue = this.queues[name];
@@ -596,6 +620,7 @@ class NewJobQueue {
 				method: "obliterate",
 				details: metrics,
 			});
+
 			return true;
 		} catch (error) {
 			error.service === undefined ? (error.service = SERVICE_NAME) : null;
@@ -631,6 +656,68 @@ class NewJobQueue {
 		} catch (error) {
 			error.service === undefined ? (error.service = SERVICE_NAME) : null;
 			error.method === undefined ? (error.method = "getKeyValuePairs") : null;
+			throw error;
+		}
+	}
+
+	/**
+	 * Gets metrics for a specific queue
+	 * @async
+	 * @function getQueueHealthMetrics
+	 * @param {Queue} queue - The queue to get metrics for
+	 * @returns {Promise<Object>} Queue metrics
+	 */
+	async getQueueHealthMetrics(queue) {
+		const [waiting, active, completed, failed, delayed] = await Promise.all([
+			queue.getWaitingCount(),
+			queue.getActiveCount(),
+			queue.getCompletedCount(),
+			queue.getFailedCount(),
+			queue.getDelayedCount(),
+		]);
+
+		return { waiting, active, completed, failed, delayed };
+	}
+
+	getQueueIdleTimes() {
+		const now = Date.now();
+		const idleTimes = {};
+		Object.entries(this.lastJobProcessedTime).forEach(([queueName, lastProcessed]) => {
+			idleTimes[queueName] = now - lastProcessed;
+		});
+		return idleTimes;
+	}
+	async checkQueueHealth() {
+		try {
+			const currentTime = Date.now();
+			const stuckQueues = [];
+			for (const queueName of QUEUE_NAMES) {
+				const queue = this.queues[queueName];
+				const healthMetrics = await this.getQueueHealthMetrics(queue);
+				const hasJobs =
+					healthMetrics.waiting > 0 ||
+					healthMetrics.active > 0 ||
+					healthMetrics.delayed > 0 ||
+					healthMetrics.completed > 0 ||
+					healthMetrics.failed > 0;
+				const timeSinceLastProcessed = currentTime - this.lastJobProcessedTime[queueName];
+				const isStuck = hasJobs && timeSinceLastProcessed > HEALTH_CHECK_INTERVAL;
+				if (isStuck) {
+					stuckQueues.push(queueName);
+				}
+			}
+
+			if (stuckQueues.length > 0) {
+				return {
+					stuck: true,
+					stuckQueues,
+					idleTimes: this.getQueueIdleTimes(),
+				};
+			}
+			return { stuck: false, stuckQueues, idleTimes: this.getQueueIdleTimes() };
+		} catch (error) {
+			error.service === undefined ? (error.service = SERVICE_NAME) : null;
+			error.method === undefined ? (error.method = "checkQueueHealth") : null;
 			throw error;
 		}
 	}

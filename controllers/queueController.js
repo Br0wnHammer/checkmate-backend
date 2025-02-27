@@ -70,5 +70,18 @@ class JobQueueController {
 			return;
 		}
 	};
+
+	checkQueueHealth = async (req, res, next) => {
+		try {
+			const stuckQueues = await this.jobQueue.checkQueueHealth();
+			return res.success({
+				msg: this.stringService.queueHealthCheck,
+				data: stuckQueues,
+			});
+		} catch (error) {
+			next(handleError(error, SERVICE_NAME, "checkQueueHealth"));
+			return;
+		}
+	};
 }
 export default JobQueueController;
