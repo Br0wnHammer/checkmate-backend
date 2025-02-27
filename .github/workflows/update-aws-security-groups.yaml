@@ -13,7 +13,7 @@ jobs:
       - name: Get GitHub Actions Runner IPs
         id: get_ips
         run: |
-          IPS=$(curl -s https://api.github.com/meta | jq -r '.actions[]')
+          IPS=$(curl -s https://api.github.com/meta | jq -r '.actions | join(" ")')
           echo "IPS=${IPS}" >> $GITHUB_ENV
 
       - name: Configure AWS CLI
