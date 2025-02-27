@@ -2,14 +2,14 @@
 
 # Change directory to root directory for correct Docker Context
 cd "$(dirname "$0")"
-cd ../..
+cd ../../../
 
 # Define an array of services and their Dockerfiles
 declare -A services=(
-  ["uptime_client"]="./Docker/prod/client.Dockerfile"
-  ["uptime_database_mongo"]="./Docker/prod/mongoDB.Dockerfile"
-  ["uptime_redis"]="./Docker/prod/redis.Dockerfile"
-  ["uptime_server"]="./Docker/prod/server.Dockerfile"
+  ["uptime_client"]="./server/docker/prod/client.Dockerfile"
+  ["uptime_database_mongo"]="./server/docker/prod/mongoDB.Dockerfile"
+  ["uptime_redis"]="./server/docker/prod/redis.Dockerfile"
+  ["uptime_server"]="./server/docker/prod/server.Dockerfile"
 )
 
 # Loop through each service and build the corresponding image
