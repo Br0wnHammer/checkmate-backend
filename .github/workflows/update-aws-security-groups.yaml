@@ -16,7 +16,7 @@ jobs:
           # Fetch the public IP using an external service
           IP=$(curl -s http://ifconfig.me)
           echo "Public IP is $IP"
-          echo "IP=$IP" >> $GITHUB_ENV
+          echo "IP=$IP/32" >> $GITHUB_ENV
 
       - name: Configure AWS CLI
         run: |
