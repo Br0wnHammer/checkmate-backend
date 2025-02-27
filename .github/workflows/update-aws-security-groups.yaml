@@ -22,36 +22,69 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set region us-east-1  # Default region for setup
 
-      - name: Update AWS Security Groups in Multiple Regions
-        env:
-          REGIONS: "eu-west-1"
-          SECURITY_GROUPS: "sg-0fcd48c1b8cd4b692"
+      - name: Get GitHub Actions Runner IPs and Merge CIDR Block
+        id: get_ips
         run: |
-          IFS=' ' read -r -a REGION_ARRAY <<< "$REGIONS"
-          IFS=' ' read -r -a SG_ARRAY <<< "$SECURITY_GROUPS"
+            # Fetch GitHub Actions runner IPs
+            IPS=$(curl -s https://api.github.com/meta | jq -r '.actions[]')
+            
+            # Save IPs to a temporary file
+            echo "$IPS" > github_ips.txt
+            
+            # Install Python and ipaddress module (if not already installed)
+            sudo apt-get update
+            sudo apt-get install -y python3 python3-pip
+            pip3 install ipaddress
 
-          for i in "${!REGION_ARRAY[@]}"; do
-            REGION=${REGION_ARRAY[$i]}
-            SG_ID=${SG_ARRAY[$i]}
-            echo "Updating Security Group $SG_ID in $REGION"
+            # Python script to merge IPs into a CIDR block
+            python3 <<EOF
+            import ipaddress
 
-            # Set AWS Region
-            aws configure set region $REGION
+            # Read the IPs from the file
+            with open('github_ips.txt') as f:
+                ips = [line.strip() for line in f.readlines()]
 
-            # Remove old rules
-            EXISTING_IPS=$(aws ec2 describe-security-groups --group-id $SG_ID --query "SecurityGroups[0].IpPermissions[?ToPort==\`22\`].IpRanges[*].CidrIp" --output text)
-            for OLD_IP in $EXISTING_IPS; do
-              aws ec2 revoke-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $OLD_IP || true
-            done
+            # Convert IPs to network objects
+            networks = [ipaddress.IPv4Network(f"{ip}/32", strict=False) for ip in ips]
 
-            # Add new GitHub Actions IPs
-            for IP in $IPS; do
-              if [[ $IP =~ .*/[0-9]{1,2}$ ]]; then
-                CIDR=$IP  # Use existing CIDR if already specified
-              else
-                CIDR="$IP/32"  # Add /32 if missing
-              fi
-              echo "Updating security group for $CIDR..."
-              aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $CIDR || true
-            done
-          done
+            # Aggregate networks
+            aggregated_network = networks[0]
+            for network in networks[1:]:
+                aggregated_network = aggregated_network.supernet_of(network) if aggregated_network.supernet_of(network) else aggregated_network
+
+            # Output the smallest CIDR block
+            print(f"CIDR block that covers all IPs: {aggregated_network}")
+            EOF
+      # - name: Update AWS Security Groups in Multiple Regions
+      #   env:
+      #     REGIONS: "eu-west-1"
+      #     SECURITY_GROUPS: "sg-0fcd48c1b8cd4b692"
+      #   run: |
+      #     IFS=' ' read -r -a REGION_ARRAY <<< "$REGIONS"
+      #     IFS=' ' read -r -a SG_ARRAY <<< "$SECURITY_GROUPS"
+
+      #     for i in "${!REGION_ARRAY[@]}"; do
+      #       REGION=${REGION_ARRAY[$i]}
+      #       SG_ID=${SG_ARRAY[$i]}
+      #       echo "Updating Security Group $SG_ID in $REGION"
+
+      #       # Set AWS Region
+      #       aws configure set region $REGION
+
+      #       # Remove old rules
+      #       EXISTING_IPS=$(aws ec2 describe-security-groups --group-id $SG_ID --query "SecurityGroups[0].IpPermissions[?ToPort==\`22\`].IpRanges[*].CidrIp" --output text)
+      #       for OLD_IP in $EXISTING_IPS; do
+      #         aws ec2 revoke-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $OLD_IP || true
+      #       done
+
+      #       # Add new GitHub Actions IPs
+      #       for IP in $IPS; do
+      #         if [[ $IP =~ .*/[0-9]{1,2}$ ]]; then
+      #           CIDR=$IP  # Use existing CIDR if already specified
+      #         else
+      #           CIDR="$IP/32"  # Add /32 if missing
+      #         fi
+      #         echo "Updating security group for $CIDR..."
+      #         aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $CIDR || true
+      #       done
+      #     done
