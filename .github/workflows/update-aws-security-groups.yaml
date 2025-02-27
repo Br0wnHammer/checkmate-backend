@@ -10,11 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get GitHub Actions Runner IPs
-        id: get_ips
+      - name: Get Public IP of GitHub Actions Runner
+        id: get_public_ip
         run: |
-          IPS=$(curl -s https://api.github.com/meta | jq -r '.actions | join(" ")')
-          echo "IPS=${IPS}" >> $GITHUB_ENV
+          # Fetch the public IP using an external service
+          IP=$(curl -s http://ifconfig.me)
+          echo "Public IP is $IP"
+          echo "IP=$IP/32" >> $GITHUB_ENV
 
       - name: Configure AWS CLI
         run: |
@@ -45,13 +47,6 @@ jobs:
             done
 
             # Add new GitHub Actions IPs
-            for IP in $IPS; do
-              if [[ $IP =~ .*/[0-9]{1,2}$ ]]; then
-                CIDR=$IP  # Use existing CIDR if already specified
-              else
-                CIDR="$IP/32"  # Add /32 if missing
-              fi
-              echo "Updating security group for $CIDR..."
-              aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $CIDR || true
-            done
+            echo "Updating security group for $IP..."
+            aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $IP || true
           done
