@@ -23,7 +23,7 @@ jobs:
           aws configure set region us-east-1  # Default region for setup
 
       - name: Get GitHub Actions Runner IPs and Merge CIDR Block
-        id: get_ips
+        id: merge_cidr
         run: |
             # Fetch GitHub Actions runner IPs
             IPS=$(curl -s https://api.github.com/meta | jq -r '.actions[]')
