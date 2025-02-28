@@ -7,7 +7,7 @@ const envConfig = {
 	clientHost: process.env.CLIENT_HOST,
 	jwtSecret: process.env.JWT_SECRET,
 	dbType: process.env.DB_TYPE,
-	dbConnectionString: process.env.MONGODB_URI,
+	dbConnectionString: process.env.DBCONNECTION_STRING ,
 	redisHost: process.env.REDIS_HOST,
 	redisPort: process.env.REDIS_PORT,
 	jwtTTL: process.env.TOKEN_TTL,

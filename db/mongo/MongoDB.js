@@ -89,7 +89,7 @@ class MongoDB {
 	connect = async () => {
 		try {
 			const connectionString =
-				process.env.MONGODB_URI || "mongodb://localhost:27017/uptime_db";
+				process.env.DBCONNECTION_STRING  || "mongodb://localhost:27017/uptime_db";
 			await mongoose.connect(connectionString);
 			// If there are no AppSettings, create one
 			let appSettings = await AppSettings.find();
