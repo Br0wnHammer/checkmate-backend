@@ -37,6 +37,7 @@ class NewJobQueue {
 		const connection = new IORedis({
 			host: redisHost,
 			port: redisPort,
+			maxRetriesPerRequest: null,
 		});
 
 		this.queues = {};
@@ -226,11 +227,24 @@ class NewJobQueue {
 	 * @throws {Error} If worker creation fails or connection is invalid
 	 */
 	createWorker(queue) {
-		const worker = new this.Worker(queue.name, this.createJobHandler(), {
-			connection: this.connection,
-			concurrency: 5,
-		});
-		return worker;
+		try {
+			const worker = new this.Worker(queue.name, this.createJobHandler(), {
+				connection: this.connection,
+				concurrency: 5,
+			});
+
+			return worker;
+		} catch (error) {
+			this.logger.error({
+				message: error.message,
+				service: SERVICE_NAME,
+				method: "createWorker",
+				stack: error.stack,
+			});
+			error.service = SERVICE_NAME;
+			error.method = "createWorker";
+			throw error;
+		}
 	}
 
 	/**
