@@ -60,6 +60,27 @@ class NewJobQueue {
 			this.queues[name] = new Queue(name, { connection });
 			this.workers[name] = [];
 		});
+
+		this.healthCheckInterval = setInterval(async () => {
+			try {
+				const health = await this.checkQueueHealth();
+				if (health.stuck) {
+					this.logger.error({
+						message: `Queue is stuck: ${health.stuckQueues.join(", ")}`,
+						service: SERVICE_NAME,
+						method: "healthCheckInterval",
+					});
+					await this.flushQueue();
+				}
+			} catch (error) {
+				this.logger.error({
+					message: error.message,
+					service: SERVICE_NAME,
+					method: "periodicHealthCheck",
+					stack: error.stack,
+				});
+			}
+		}, HEALTH_CHECK_INTERVAL);
 	}
 
 	/**
@@ -580,6 +601,12 @@ class NewJobQueue {
 				service: SERVICE_NAME,
 				method: "obliterate",
 			});
+
+			if (this.healthCheckInterval) {
+				clearInterval(this.healthCheckInterval);
+				this.healthCheckInterval = null;
+			}
+
 			await Promise.all(
 				QUEUE_NAMES.map(async (name) => {
 					const queue = this.queues[name];
