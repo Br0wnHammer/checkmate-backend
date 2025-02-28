@@ -106,13 +106,23 @@ const shutdown = async () => {
 			service: SERVICE_NAME,
 			method: "shutdown",
 		});
-		await ServiceRegistry.get(JobQueue.SERVICE_NAME).flushQueue();
+		// flush Redis
+		const settings =
+			ServiceRegistry.get(SettingsService.SERVICE_NAME).getSettings() || {};
+
+		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
+		const redis = new IORedis({
+			host: redisHost,
+			port: redisPort,
+		});
+		logger.info({ message: "Flushing Redis" });
+		await redis.flushall();
+		logger.info({ message: "Redis flushed" });
 		process.exit(1);
 	}, SHUTDOWN_TIMEOUT);
 	try {
 		server.close();
 		await ServiceRegistry.get(JobQueue.SERVICE_NAME).obliterate();
-		await ServiceRegistry.get(JobQueue.SERVICE_NAME).flushQueue();
 		await ServiceRegistry.get(MongoDB.SERVICE_NAME).disconnect();
 		logger.info({ message: "Graceful shutdown complete" });
 		process.exit(0);
