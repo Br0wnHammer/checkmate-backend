@@ -57,31 +57,5 @@ class JobQueueController {
 			return;
 		}
 	};
-
-	flushQueue = async (req, res, next) => {
-		try {
-			const result = await this.jobQueue.flushQueue();
-			return res.success({
-				msg: this.stringService.jobQueueFlush,
-				data: result,
-			});
-		} catch (error) {
-			next(handleError(error, SERVICE_NAME, "flushQueue"));
-			return;
-		}
-	};
-
-	checkQueueHealth = async (req, res, next) => {
-		try {
-			const stuckQueues = await this.jobQueue.checkQueueHealth();
-			return res.success({
-				msg: this.stringService.queueHealthCheck,
-				data: stuckQueues,
-			});
-		} catch (error) {
-			next(handleError(error, SERVICE_NAME, "checkQueueHealth"));
-			return;
-		}
-	};
 }
 export default JobQueueController;

@@ -1,7 +1,3 @@
-import IORedis from "ioredis";
-
-const HEALTH_CHECK_INTERVAL = 15 * 60 * 1000;
-
 const QUEUE_NAMES = ["uptime", "pagespeed", "hardware", "distributed"];
 const SERVICE_NAME = "JobQueue";
 const JOBS_PER_WORKER = 5;
@@ -15,6 +11,7 @@ const QUEUE_LOOKUP = {
 	distributed_http: "distributed",
 };
 const getSchedulerId = (monitor) => `scheduler:${monitor.type}:${monitor._id}`;
+
 
 class NewJobQueue {
 	static SERVICE_NAME = SERVICE_NAME;
@@ -32,17 +29,15 @@ class NewJobQueue {
 	) {
 		const settings = settingsService.getSettings() || {};
 		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
-		const redisConnection = new IORedis({
+		const connection = {
 			host: redisHost,
 			port: redisPort,
-			maxRetriesPerRequest: null,
-		});
+		};
 
 		this.queues = {};
 		this.workers = {};
-		this.lastJobProcessedTime = {};
 
-		this.connection = redisConnection;
+		this.connection = connection;
 		this.db = db;
 		this.networkService = networkService;
 		this.statusService = statusService;
@@ -53,31 +48,9 @@ class NewJobQueue {
 		this.stringService = stringService;
 
 		QUEUE_NAMES.forEach((name) => {
-			this.queues[name] = new Queue(name, redisConnection);
+			this.queues[name] = new Queue(name, { connection });
 			this.workers[name] = [];
 		});
-
-		// Periodic health check
-		this.healthCheckInterval = setInterval(async () => {
-			try {
-				const health = await this.checkQueueHealth();
-				if (health.stuck) {
-					this.logger.error({
-						message: `Queue is stuck: ${health.stuckQueues.join(", ")}`,
-						service: SERVICE_NAME,
-						method: "healthCheckInterval",
-					});
-					await this.flushQueue();
-				}
-			} catch (error) {
-				this.logger.error({
-					message: error.message,
-					service: SERVICE_NAME,
-					method: "periodicHealthCheck",
-					stack: error.stack,
-				});
-			}
-		}, HEALTH_CHECK_INTERVAL);
 	}
 
 	/**
@@ -174,8 +147,6 @@ class NewJobQueue {
 	createJobHandler() {
 		return async (job) => {
 			try {
-				// Set the last job processed time for this queue
-				this.lastJobProcessedTime[job.queue.name] = Date.now();
 				// Get all maintenance windows for this monitor
 				await job.updateProgress(0);
 				const monitorId = job.data._id;
@@ -585,12 +556,6 @@ class NewJobQueue {
 				service: SERVICE_NAME,
 				method: "obliterate",
 			});
-
-			if (this.healthCheckInterval) {
-				clearInterval(this.healthCheckInterval);
-				this.healthCheckInterval = null;
-			}
-
 			await Promise.all(
 				QUEUE_NAMES.map(async (name) => {
 					const queue = this.queues[name];
@@ -629,137 +594,10 @@ class NewJobQueue {
 				method: "obliterate",
 				details: metrics,
 			});
-
 			return true;
 		} catch (error) {
 			error.service === undefined ? (error.service = SERVICE_NAME) : null;
 			error.method === undefined ? (error.method = "obliterate") : null;
-			throw error;
-		}
-	}
-
-	async getKeyValuePairs() {
-		try {
-			// Get all keys
-			const keys = await this.connection.keys("*");
-
-			if (keys.length === 0) {
-				return {}; // Return an empty object if no keys are found
-			}
-
-			// Get values for all keys
-			const values = await this.connection.mget(keys);
-
-			// Combine keys and values into an object
-			const keyValuePairs = keys.reduce((result, key, index) => {
-				result[key] = values[index];
-				return result;
-			}, {});
-			this.logger.info({
-				message: "Redis key-value",
-				service: SERVICE_NAME,
-				method: "flushQueue",
-				details: keyValuePairs,
-			});
-			return keyValuePairs;
-		} catch (error) {
-			error.service === undefined ? (error.service = SERVICE_NAME) : null;
-			error.method === undefined ? (error.method = "getKeyValuePairs") : null;
-			throw error;
-		}
-	}
-
-	/**
-	 * Gets metrics for a specific queue
-	 * @async
-	 * @function getQueueHealthMetrics
-	 * @param {Queue} queue - The queue to get metrics for
-	 * @returns {Promise<Object>} Queue metrics
-	 */
-	async getQueueHealthMetrics(queue) {
-		const [waiting, active, completed, failed, delayed] = await Promise.all([
-			queue.getWaitingCount(),
-			queue.getActiveCount(),
-			queue.getCompletedCount(),
-			queue.getFailedCount(),
-			queue.getDelayedCount(),
-		]);
-
-		return { waiting, active, completed, failed, delayed };
-	}
-
-	getQueueIdleTimes() {
-		const now = Date.now();
-		const idleTimes = {};
-		Object.entries(this.lastJobProcessedTime).forEach(([queueName, lastProcessed]) => {
-			idleTimes[queueName] = now - lastProcessed;
-		});
-		return idleTimes;
-	}
-	async checkQueueHealth() {
-		try {
-			const currentTime = Date.now();
-			const stuckQueues = [];
-			for (const queueName of QUEUE_NAMES) {
-				const queue = this.queues[queueName];
-				const healthMetrics = await this.getQueueHealthMetrics(queue);
-				const hasJobs =
-					healthMetrics.waiting > 0 ||
-					healthMetrics.active > 0 ||
-					healthMetrics.delayed > 0 ||
-					healthMetrics.completed > 0 ||
-					healthMetrics.failed > 0;
-				const timeSinceLastProcessed = currentTime - this.lastJobProcessedTime[queueName];
-				const isStuck = hasJobs && timeSinceLastProcessed > HEALTH_CHECK_INTERVAL;
-				if (isStuck) {
-					stuckQueues.push(queueName);
-				}
-			}
-
-			if (stuckQueues.length > 0) {
-				return {
-					stuck: true,
-					stuckQueues,
-					idleTimes: this.getQueueIdleTimes(),
-				};
-			}
-			return { stuck: false, stuckQueues, idleTimes: this.getQueueIdleTimes() };
-		} catch (error) {
-			error.service === undefined ? (error.service = SERVICE_NAME) : null;
-			error.method === undefined ? (error.method = "checkQueueHealth") : null;
-			throw error;
-		}
-	}
-	async flushQueue() {
-		try {
-			const keyValuePairs = await this.getKeyValuePairs();
-			this.logger.info({
-				message: "Before flush",
-				service: SERVICE_NAME,
-				method: "flushQueue",
-				details: keyValuePairs,
-			});
-			const flushResult = await this.connection.flushall();
-			const keyValuePairsAfter = await this.getKeyValuePairs();
-			this.logger.info({
-				message: "After flush",
-				service: SERVICE_NAME,
-				method: "flushQueue",
-				details: keyValuePairsAfter,
-			});
-			if (flushResult !== "OK") {
-				throw new Error("Failed to flush queue");
-			}
-			await this.initJobQueue();
-			return {
-				keyValuePairs,
-				flush: flushResult,
-				keyValuePairsAfter,
-				init: true,
-			};
-		} catch (error) {
-			error.service === undefined ? (error.service = SERVICE_NAME) : null;
-			error.method === undefined ? (error.method = "flushQueue") : null;
 			throw error;
 		}
 	}
