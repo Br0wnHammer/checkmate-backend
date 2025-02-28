@@ -3,8 +3,7 @@ import IORedis from "ioredis";
 const QUEUE_NAMES = ["uptime", "pagespeed", "hardware", "distributed"];
 const SERVICE_NAME = "JobQueue";
 const JOBS_PER_WORKER = 5;
-// const HEALTH_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
-const HEALTH_CHECK_INTERVAL = 10000;
+const HEALTH_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const QUEUE_LOOKUP = {
 	hardware: "hardware",
 	http: "uptime",
