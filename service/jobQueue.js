@@ -1,3 +1,5 @@
+import IORedis from "ioredis";
+
 const QUEUE_NAMES = ["uptime", "pagespeed", "hardware", "distributed"];
 const SERVICE_NAME = "JobQueue";
 const JOBS_PER_WORKER = 5;
@@ -11,7 +13,6 @@ const QUEUE_LOOKUP = {
 	distributed_http: "distributed",
 };
 const getSchedulerId = (monitor) => `scheduler:${monitor.type}:${monitor._id}`;
-
 
 class NewJobQueue {
 	static SERVICE_NAME = SERVICE_NAME;
@@ -29,10 +30,14 @@ class NewJobQueue {
 	) {
 		const settings = settingsService.getSettings() || {};
 		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
-		const connection = {
+		// const connection = {
+		// 	host: redisHost,
+		// 	port: redisPort,
+		// };
+		const connection = new IORedis({
 			host: redisHost,
 			port: redisPort,
-		};
+		});
 
 		this.queues = {};
 		this.workers = {};
