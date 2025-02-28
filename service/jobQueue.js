@@ -623,6 +623,74 @@ class NewJobQueue {
 			throw error;
 		}
 	}
+
+	// **************************
+	//  Queue Health Checks
+	// **************************
+	async getKeyValuePairs() {
+		try {
+			// Get all keys
+			const keys = await this.connection.keys("*");
+
+			if (keys.length === 0) {
+				return {}; // Return an empty object if no keys are found
+			}
+
+			// Get values for all keys
+			const values = await this.connection.mget(keys);
+
+			// Combine keys and values into an object
+			const keyValuePairs = keys.reduce((result, key, index) => {
+				result[key] = values[index];
+				return result;
+			}, {});
+			this.logger.info({
+				message: "Redis key-value",
+				service: SERVICE_NAME,
+				method: "flushQueue",
+				details: keyValuePairs,
+			});
+			return keyValuePairs;
+		} catch (error) {
+			error.service === undefined ? (error.service = SERVICE_NAME) : null;
+			error.method === undefined ? (error.method = "getKeyValuePairs") : null;
+			throw error;
+		}
+	}
+
+	async flushQueue() {
+		try {
+			const keyValuePairs = await this.getKeyValuePairs();
+			this.logger.info({
+				message: "Before flush",
+				service: SERVICE_NAME,
+				method: "flushQueue",
+				details: keyValuePairs,
+			});
+			const flushResult = await this.connection.flushall();
+			const keyValuePairsAfter = await this.getKeyValuePairs();
+			this.logger.info({
+				message: "After flush",
+				service: SERVICE_NAME,
+				method: "flushQueue",
+				details: keyValuePairsAfter,
+			});
+			if (flushResult !== "OK") {
+				throw new Error("Failed to flush queue");
+			}
+			await this.initJobQueue();
+			return {
+				keyValuePairs,
+				flush: flushResult,
+				keyValuePairsAfter,
+				init: true,
+			};
+		} catch (error) {
+			error.service === undefined ? (error.service = SERVICE_NAME) : null;
+			error.method === undefined ? (error.method = "flushQueue") : null;
+			throw error;
+		}
+	}
 }
 
 export default NewJobQueue;
