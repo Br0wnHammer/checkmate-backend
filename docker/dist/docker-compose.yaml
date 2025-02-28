@@ -19,7 +19,7 @@ services:
       - redis
       - mongodb
     environment:
-      - DB_CONNECTION_STRING=mongodb://mongodb:27017/uptime_db
+      - MONGODB_URI=mongodb://mongodb:27017/uptime_db
       - REDIS_HOST=redis
     # volumes:
     # - /var/run/docker.sock:/var/run/docker.sock:ro

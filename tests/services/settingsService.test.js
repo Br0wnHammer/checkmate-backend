@@ -14,7 +14,7 @@ describe("SettingsService", function() {
 		sandbox.stub(process.env, "REFRESH_TOKEN_SECRET").value("refreshSecret");
 		sandbox.stub(process.env, "DB_TYPE").value("postgres");
 		sandbox
-			.stub(process.env, "DB_CONNECTION_STRING")
+			.stub(process.env, "MONGODB_URI")
 			.value("postgres://user:pass@localhost/db");
 		sandbox.stub(process.env, "REDIS_HOST").value("localhost");
 		sandbox.stub(process.env, "REDIS_PORT").value("6379");
