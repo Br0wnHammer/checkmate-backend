@@ -42,6 +42,7 @@ class NewJobQueue {
 
 		this.queues = {};
 		this.workers = {};
+		this.lastJobProcessedTime = {};
 
 		this.connection = connection;
 		this.db = db;
@@ -153,6 +154,8 @@ class NewJobQueue {
 	createJobHandler() {
 		return async (job) => {
 			try {
+				// Update the last job processed time for this queue
+				this.lastJobProcessedTime[job.queue.name] = Date.now();
 				// Get all maintenance windows for this monitor
 				await job.updateProgress(0);
 				const monitorId = job.data._id;
