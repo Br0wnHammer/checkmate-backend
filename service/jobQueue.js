@@ -59,14 +59,23 @@ class NewJobQueue {
 
 		// Periodic health check
 		this.healthCheckInterval = setInterval(async () => {
-			const health = await this.checkQueueHealth();
-			if (health.stuck) {
+			try {
+				const health = await this.checkQueueHealth();
+				if (health.stuck) {
+					this.logger.error({
+						message: `Queue is stuck: ${health.stuckQueues.join(", ")}`,
+						service: SERVICE_NAME,
+						method: "healthCheckInterval",
+					});
+					this.flushQueue();
+				}
+			} catch (error) {
 				this.logger.error({
-					message: `Queue is stuck: ${health.stuckQueues.join(", ")}`,
+					message: error.message,
 					service: SERVICE_NAME,
-					method: "healthCheckInterval",
+					method: "periodicHealthCheck",
+					stack: error.stack,
 				});
-				this.flushQueue();
 			}
 		}, HEALTH_CHECK_INTERVAL);
 	}
