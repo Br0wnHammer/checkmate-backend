@@ -67,7 +67,7 @@ class NewJobQueue {
 						service: SERVICE_NAME,
 						method: "healthCheckInterval",
 					});
-					this.flushQueue();
+					await this.flushQueue();
 				}
 			} catch (error) {
 				this.logger.error({
