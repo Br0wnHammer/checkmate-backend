@@ -3,6 +3,8 @@ import IORedis from "ioredis";
 const QUEUE_NAMES = ["uptime", "pagespeed", "hardware", "distributed"];
 const SERVICE_NAME = "JobQueue";
 const JOBS_PER_WORKER = 5;
+// const HEALTH_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
+const HEALTH_CHECK_INTERVAL = 10000;
 const QUEUE_LOOKUP = {
 	hardware: "hardware",
 	http: "uptime",
@@ -688,6 +690,68 @@ class NewJobQueue {
 		} catch (error) {
 			error.service === undefined ? (error.service = SERVICE_NAME) : null;
 			error.method === undefined ? (error.method = "flushQueue") : null;
+			throw error;
+		}
+	}
+
+	/**
+	 * Gets metrics for a specific queue
+	 * @async
+	 * @function getQueueHealthMetrics
+	 * @param {Queue} queue - The queue to get metrics for
+	 * @returns {Promise<Object>} Queue metrics
+	 */
+	async getQueueHealthMetrics(queue) {
+		const [waiting, active, completed, failed, delayed] = await Promise.all([
+			queue.getWaitingCount(),
+			queue.getActiveCount(),
+			queue.getCompletedCount(),
+			queue.getFailedCount(),
+			queue.getDelayedCount(),
+		]);
+
+		return { waiting, active, completed, failed, delayed };
+	}
+
+	getQueueIdleTimes() {
+		const now = Date.now();
+		const idleTimes = {};
+		Object.entries(this.lastJobProcessedTime).forEach(([queueName, lastProcessed]) => {
+			idleTimes[queueName] = now - lastProcessed;
+		});
+		return idleTimes;
+	}
+	async checkQueueHealth() {
+		try {
+			const currentTime = Date.now();
+			const stuckQueues = [];
+			for (const queueName of QUEUE_NAMES) {
+				const queue = this.queues[queueName];
+				const healthMetrics = await this.getQueueHealthMetrics(queue);
+				const hasJobs =
+					healthMetrics.waiting > 0 ||
+					healthMetrics.active > 0 ||
+					healthMetrics.delayed > 0 ||
+					healthMetrics.completed > 0 ||
+					healthMetrics.failed > 0;
+				const timeSinceLastProcessed = currentTime - this.lastJobProcessedTime[queueName];
+				const isStuck = hasJobs && timeSinceLastProcessed > HEALTH_CHECK_INTERVAL;
+				if (isStuck) {
+					stuckQueues.push(queueName);
+				}
+			}
+
+			if (stuckQueues.length > 0) {
+				return {
+					stuck: true,
+					stuckQueues,
+					idleTimes: this.getQueueIdleTimes(),
+				};
+			}
+			return { stuck: false, stuckQueues, idleTimes: this.getQueueIdleTimes() };
+		} catch (error) {
+			error.service === undefined ? (error.service = SERVICE_NAME) : null;
+			error.method === undefined ? (error.method = "checkQueueHealth") : null;
 			throw error;
 		}
 	}
