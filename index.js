@@ -111,7 +111,8 @@ const shutdown = async () => {
 			ServiceRegistry.get(SettingsService.SERVICE_NAME).getSettings() || {};
 
 		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
-		const redis = new IORedis({
+		const { redisUrl } = settings;
+		const redis = new IORedis(redisUrl || {
 			host: redisHost,
 			port: redisPort,
 		});

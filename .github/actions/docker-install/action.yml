@@ -1,0 +1,40 @@
+name: docker install
+description: 'Install Docker and Nginx on remote server'
+inputs:
+  REMOTE_USER:
+    description: 'Remote Server User'
+    required: true
+  SERVER_IP:
+    description: 'Remote Server IP'
+    required: true
+runs: 
+  using: 'composite'
+  steps:
+    - name: Install Docker
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+        if ! [ -x "$(command -v docker)" ]; then
+          curl -fsSL https://get.docker.com -o get-docker.sh
+          sudo sh get-docker.sh
+          if ! groups $USER | grep &>/dev/null '\bdocker\b'; then
+            sudo usermod -aG docker $USER
+          fi
+          if ! sudo systemctl is-active --quiet docker; then
+            sudo systemctl restart docker
+          fi
+        fi
+        EOF
+
+    - name: Install Nginx
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+        if ! [ -x "$(command -v nginx)" ]; then
+          sudo apt update -qq
+          sudo apt install -y nginx
+          if ! sudo systemctl is-active --quiet nginx; then
+            sudo systemctl restart nginx
+          fi
+        fi
+        EOF
