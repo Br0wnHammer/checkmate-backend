@@ -34,12 +34,15 @@ const AppSettingsSchema = mongoose.Schema(
 		},
 		redisHost: {
 			type: String,
-			required: true,
 			default: "127.0.0.1",
 		},
 		redisPort: {
 			type: Number,
 			default: "6379",
+		},
+		redisUrl: {
+			type: String,
+			default: "redis://127.0.0.1:6379",
 		},
 		jwtTTL: {
 			type: String,

@@ -1,0 +1,57 @@
+name: setup ssh
+description: 'Update AWS Security Groups & Setup SSH Key'
+inputs:
+  AWS_ACCESS_KEY_ID:
+    description: 'AWS Access Key ID'
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    description: 'AWS Secret Access Key'
+    required: true
+  SECURITY_GROUPS:
+    description: 'Security Group IDs'
+    required: true
+  REGIONS:
+    description: 'AWS Regions for the Security Groups'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Get Public IP of GitHub Actions Runner
+      shell: bash
+      run: |
+        # Fetch the public IP using an external service
+        IP=$(curl -s http://ifconfig.me)
+        echo "Public IP is $IP"
+        echo "IP=$IP/32" >> $GITHUB_ENV
+
+    - name: Configure AWS CLI
+      shell: bash
+      run: |
+        aws configure set aws_access_key_id ${{ inputs.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws configure set region us-east-1  # Default region for setup
+
+    - name: Update AWS Security Groups in Multiple Regions
+      shell: bash
+      run: |
+        IFS=' ' read -r -a REGION_ARRAY <<< "${{ inputs.REGIONS }}"
+        IFS=' ' read -r -a SG_ARRAY <<< "${{ inputs.SECURITY_GROUPS }}"
+
+        for i in "${!REGION_ARRAY[@]}"; do
+          REGION=${REGION_ARRAY[$i]}
+          SG_ID=${SG_ARRAY[$i]}
+          echo "Updating Security Group $SG_ID in $REGION"
+
+          # Set AWS Region
+          aws configure set region $REGION
+
+          # Remove old rules
+          EXISTING_IPS=$(aws ec2 describe-security-groups --group-id $SG_ID --query "SecurityGroups[0].IpPermissions[?ToPort==\`22\`].IpRanges[*].CidrIp" --output text)
+          for OLD_IP in $EXISTING_IPS; do
+            aws ec2 revoke-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $OLD_IP || true
+          done
+
+          # Add new GitHub Actions IPs
+          echo "Updating security group for $IP..."
+          aws ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr $IP || true
+        done

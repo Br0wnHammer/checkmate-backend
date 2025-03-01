@@ -1,0 +1,28 @@
+name: docker start
+description: 'Start Backend Service on remote server'
+inputs:
+  REMOTE_USER:
+    description: 'Remote Server User'
+    required: true
+  SERVER_IP:
+    description: 'Remote Server IP'
+    required: true
+  MONGODB_URL:
+    description: 'MongoDB Connection String'
+    required: true
+  REDIS_URL:
+    description: 'Redis URL'
+    required: true
+runs: 
+  using: 'composite'
+  steps:
+    - name: Start Backend Service
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          cd ~/uptime-backend
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          docker stop uptime-backend || true
+          docker rm uptime-backend || true
+          docker run -d --name uptime-backend -p 5000:5000 -e DB_CONNECTION_STRING="${{ inputs.MONGODB_URL }}" -e REDIS_URL="${{ inputs.REDIS_URL }}" uptime-backend:$COMMIT_HASH
+        EOF

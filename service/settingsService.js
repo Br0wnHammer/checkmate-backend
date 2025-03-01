@@ -10,6 +10,7 @@ const envConfig = {
 	dbConnectionString: process.env.DB_CONNECTION_STRING,
 	redisHost: process.env.REDIS_HOST,
 	redisPort: process.env.REDIS_PORT,
+	redisUrl: process.env.REDIS_URL,
 	jwtTTL: process.env.TOKEN_TTL,
 	pagespeedApiKey: process.env.PAGESPEED_API_KEY,
 	systemEmailHost: process.env.SYSTEM_EMAIL_HOST,

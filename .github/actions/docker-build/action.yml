@@ -1,0 +1,40 @@
+name: docker build
+description: 'Build Docker image on remote server'
+inputs:
+  REMOTE_USER:
+    description: 'Remote Server User'
+    required: true
+  SERVER_IP:
+    description: 'Remote Server IP'
+    required: true
+runs: 
+  using: 'composite'
+  steps:
+    - name: Build Docker
+      shell: bash
+      run: |
+        # Copy the code to the remote server
+        rsync -az --delete -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime" . ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }}:~/uptime-backend
+
+        # Build the Docker image
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          docker system prune --all --force
+          cd ~/uptime-backend
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          sed -i 's/\.\/Server/./g' docker/prod/server.Dockerfile
+          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
+          docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/server.Dockerfile .
+        EOF
+
+    - name: Copy Nginx Config
+      shell: bash
+      run: |
+        # Update the Nginx config and restart.
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          sudo cp ~/uptime-backend/docker/prod/nginx/uptime.conf /etc/nginx/sites-available/default
+          sudo mkdir -p /etc/nginx/ssl || true
+          sudo cp ~/uptime-backend/docker/prod/nginx/uptime.uprock.com.crt /etc/nginx/ssl/uptime.uprock.com.crt
+          sudo cp ~/uptime-backend/docker/prod/nginx/uptime.uprock.com.key /etc/nginx/ssl/uptime.uprock.com.key
+          sudo nginx -t
+          sudo systemctl restart nginx
+        EOF
