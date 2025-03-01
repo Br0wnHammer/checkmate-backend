@@ -21,9 +21,8 @@ runs:
           docker system prune --all --force
           cd ~/uptime-backend
           COMMIT_HASH=$(git rev-parse --short HEAD)
-          sed -i 's/\.\/Server/./g' docker/prod/server.Dockerfile
           sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
-          docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/server.Dockerfile .
+          docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/ci.Dockerfile .
         EOF
 
     - name: Copy Nginx Config
