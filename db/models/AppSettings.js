@@ -7,6 +7,10 @@ const AppSettingsSchema = mongoose.Schema(
 			required: true,
 			default: "http://localhost:5000/api/v1",
 		},
+		language: {
+			type: String,
+			default: "en",
+		},
 		logLevel: {
 			type: String,
 			default: "debug",
