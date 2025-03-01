@@ -16,8 +16,7 @@ jobs:
     - name: Build Docker image
       run: |
         COMMIT_HASH=$(git rev-parse --short HEAD)
-        sed -i 's/\.\/Server/./g' docker/prod/server.Dockerfile
-        docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/server.Dockerfile .
+        docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/ci.Dockerfile .
 
     - name: Clean and Run Docker container
       run: |
