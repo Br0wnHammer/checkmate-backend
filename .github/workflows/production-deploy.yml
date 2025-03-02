@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  docker-setup-uptime-1:
+  setup-uptime-1:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,7 +37,7 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
           
-  docker-setup-uptime-2:
+  setup-uptime-2:
     runs-on: ubuntu-latest
 
     steps:
@@ -68,7 +68,7 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
 
-  docker-setup-uptime-3:
+  setup-uptime-3:
     runs-on: ubuntu-latest
 
     steps:
@@ -99,7 +99,7 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
 
-  docker-setup-uptime-4:
+  setup-uptime-4:
     runs-on: ubuntu-latest
 
     steps:
@@ -130,10 +130,10 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
           
-  docker-build-uptime-1:
+  configure-uptime-1:
     runs-on: ubuntu-latest
     needs: 
-      - docker-setup-uptime-1
+      - setup-uptime-1
 
     steps:
       - name: Checkout Code
@@ -172,10 +172,10 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
        
-  docker-build-uptime-2:
+  configure-uptime-2:
     runs-on: ubuntu-latest
     needs: 
-      - docker-setup-uptime-2
+      - setup-uptime-2
 
     steps:
       - name: Checkout Code
@@ -214,10 +214,10 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
 
-  docker-build-uptime-3:
+  configure-uptime-3:
     runs-on: ubuntu-latest
     needs: 
-      - docker-setup-uptime-3
+      - setup-uptime-3
 
     steps:
       - name: Checkout Code
@@ -256,10 +256,10 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
        
-  docker-build-uptime-4:
+  configure-uptime-4:
     runs-on: ubuntu-latest
     needs: 
-      - docker-setup-uptime-4
+      - setup-uptime-4
 
     steps:
       - name: Checkout Code
@@ -298,10 +298,10 @@ jobs:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
 
-  docker-run-uptime-1:
+  deploy-uptime-1:
     runs-on: ubuntu-latest
     needs: 
-      - docker-build-uptime-1
+      - configure-uptime-1
 
     steps:
       - name: Checkout Code
@@ -333,10 +333,10 @@ jobs:
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
 
-  docker-run-uptime-2:
+  deploy-uptime-2:
     runs-on: ubuntu-latest
     needs: 
-      - docker-build-uptime-2
+      - configure-uptime-2
 
     steps:
       - name: Checkout Code
@@ -368,10 +368,10 @@ jobs:
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
 
-  docker-run-uptime-3:
+  deploy-uptime-3:
     runs-on: ubuntu-latest
     needs: 
-      - docker-build-uptime-3
+      - configure-uptime-3
 
     steps:
       - name: Checkout Code
@@ -403,10 +403,10 @@ jobs:
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
 
-  docker-run-uptime-4:
+  deploy-uptime-4:
     runs-on: ubuntu-latest
     needs: 
-      - docker-build-uptime-4
+      - configure-uptime-4
 
     steps:
       - name: Checkout Code
@@ -442,10 +442,10 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     needs: 
-      - docker-run-uptime-1
-      - docker-run-uptime-2
-      - docker-run-uptime-3
-      - docker-run-uptime-4
+      - deploy-uptime-1
+      - deploy-uptime-2
+      - deploy-uptime-3
+      - deploy-uptime-4
 
     steps:
       - name: Checkout Code
