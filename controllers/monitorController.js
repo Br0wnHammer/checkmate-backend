@@ -21,6 +21,7 @@ import logger from "../utils/logger.js";
 import { handleError, handleValidationError } from "./controllerUtils.js";
 import axios from "axios";
 import seedDb from "../db/mongo/utils/seedDb.js";
+import { seedDistributedTest } from "../db/mongo/utils/seedDb.js";
 const SERVICE_NAME = "monitorController";
 
 class MonitorController {
@@ -263,28 +264,29 @@ class MonitorController {
 			const monitors = await this.db.createBulkMonitors(req);
 
 			// create notifications for each monitor
-			await Promise.all(monitors.map(async (monitor, index) => {
-				const notifications = req.body[index].notifications;
+			await Promise.all(
+				monitors.map(async (monitor, index) => {
+					const notifications = req.body[index].notifications;
 
-				if (notifications?.length) {
-					monitor.notifications = await Promise.all(
-						notifications.map(async (notification) => {
-							notification.monitorId = monitor._id;
-							return await this.db.createNotification(notification);
-						})
-					);
-					await monitor.save();
-				}
+					if (notifications?.length) {
+						monitor.notifications = await Promise.all(
+							notifications.map(async (notification) => {
+								notification.monitorId = monitor._id;
+								return await this.db.createNotification(notification);
+							})
+						);
+						await monitor.save();
+					}
 
-				// Add monitor to job queue
-				this.jobQueue.addJob(monitor._id, monitor);
-			}));
+					// Add monitor to job queue
+					this.jobQueue.addJob(monitor._id, monitor);
+				})
+			);
 
 			return res.success({
 				msg: this.stringService.bulkMonitorsCreate,
 				data: monitors,
 			});
-
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "createBulkMonitors"));
 		}
@@ -478,10 +480,10 @@ class MonitorController {
 
 			await Promise.all(
 				notifications &&
-				notifications.map(async (notification) => {
-					notification.monitorId = editedMonitor._id;
-					await this.db.createNotification(notification);
-				})
+					notifications.map(async (notification) => {
+						notification.monitorId = editedMonitor._id;
+						await this.db.createNotification(notification);
+					})
 			);
 
 			// Delete the old job(editedMonitor has the same ID as the old monitor)
@@ -586,10 +588,16 @@ class MonitorController {
 
 	seedDb = async (req, res, next) => {
 		try {
+			const { type } = req.body;
 			const token = getTokenFromHeaders(req.headers);
 			const { jwtSecret } = this.settingsService.getSettings();
 			const { _id, teamId } = jwt.verify(token, jwtSecret);
-			await seedDb(_id, teamId);
+			if (type === "distributed_test") {
+				await seedDistributedTest(_id, teamId);
+			} else {
+				await seedDb(_id, teamId);
+			}
+			res.success({ msg: "Database seeded" });
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "seedDb"));
 		}

@@ -313,7 +313,7 @@ const calculateGroupStats = (group) => {
 		avgResponseTime:
 			checksWithResponseTime.length > 0
 				? checksWithResponseTime.reduce((sum, check) => sum + check.responseTime, 0) /
-				checksWithResponseTime.length
+					checksWithResponseTime.length
 				: 0,
 	};
 };
@@ -390,6 +390,13 @@ const getDistributedUptimeDetailsById = async (req) => {
 		};
 
 		const dateString = formatLookup[dateRange];
+
+		// if (monitor.type === "distributed_test") {
+		// 	const stats = await DistributedUptimeCheck.aggregate(
+		// 		buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
+		// 	).explain("executionStats");
+		// 	fs.writeFileSync("aggregation-stats.json", JSON.stringify(stats, null, 2));
+		// }
 		const results = await DistributedUptimeCheck.aggregate(
 			buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
 		);
@@ -608,98 +615,98 @@ const getMonitorsByTeamId = async (req) => {
 				filteredMonitors: [
 					...(filter !== undefined
 						? [
-							{
-								$match: {
-									$or: [
-										{ name: { $regex: filter, $options: "i" } },
-										{ url: { $regex: filter, $options: "i" } },
-									],
+								{
+									$match: {
+										$or: [
+											{ name: { $regex: filter, $options: "i" } },
+											{ url: { $regex: filter, $options: "i" } },
+										],
+									},
 								},
-							},
-						]
+							]
 						: []),
 					{ $sort: sort },
 					{ $skip: skip },
 					...(rowsPerPage ? [{ $limit: rowsPerPage }] : []),
 					...(limit
 						? [
-							{
-								$lookup: {
-									from: "checks",
-									let: { monitorId: "$_id" },
-									pipeline: [
-										{
-											$match: {
-												$expr: { $eq: ["$monitorId", "$$monitorId"] },
+								{
+									$lookup: {
+										from: "checks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
 											},
-										},
-										{ $sort: { createdAt: -1 } },
-										...(limit ? [{ $limit: limit }] : []),
-									],
-									as: "standardchecks",
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "standardchecks",
+									},
 								},
-							},
-						]
+							]
 						: []),
 					...(limit
 						? [
-							{
-								$lookup: {
-									from: "pagespeedchecks",
-									let: { monitorId: "$_id" },
-									pipeline: [
-										{
-											$match: {
-												$expr: { $eq: ["$monitorId", "$$monitorId"] },
+								{
+									$lookup: {
+										from: "pagespeedchecks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
 											},
-										},
-										{ $sort: { createdAt: -1 } },
-										...(limit ? [{ $limit: limit }] : []),
-									],
-									as: "pagespeedchecks",
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "pagespeedchecks",
+									},
 								},
-							},
-						]
+							]
 						: []),
 					...(limit
 						? [
-							{
-								$lookup: {
-									from: "hardwarechecks",
-									let: { monitorId: "$_id" },
-									pipeline: [
-										{
-											$match: {
-												$expr: { $eq: ["$monitorId", "$$monitorId"] },
+								{
+									$lookup: {
+										from: "hardwarechecks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
 											},
-										},
-										{ $sort: { createdAt: -1 } },
-										...(limit ? [{ $limit: limit }] : []),
-									],
-									as: "hardwarechecks",
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "hardwarechecks",
+									},
 								},
-							},
-						]
+							]
 						: []),
 					...(limit
 						? [
-							{
-								$lookup: {
-									from: "distributeduptimechecks",
-									let: { monitorId: "$_id" },
-									pipeline: [
-										{
-											$match: {
-												$expr: { $eq: ["$monitorId", "$$monitorId"] },
+								{
+									$lookup: {
+										from: "distributeduptimechecks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
 											},
-										},
-										{ $sort: { createdAt: -1 } },
-										...(limit ? [{ $limit: limit }] : []),
-									],
-									as: "distributeduptimechecks",
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "distributeduptimechecks",
+									},
 								},
-							},
-						]
+							]
 						: []),
 
 					{
@@ -721,6 +728,10 @@ const getMonitorsByTeamId = async (req) => {
 										},
 										{
 											case: { $eq: ["$type", "distributed_http"] },
+											then: "$distributeduptimechecks",
+										},
+										{
+											case: { $eq: ["$type", "distributed_test"] },
 											then: "$distributeduptimechecks",
 										},
 									],
@@ -756,6 +767,7 @@ const getMonitorsByTeamId = async (req) => {
 		monitor.checks = NormalizeData(monitor.checks, 10, 100);
 		return monitor;
 	});
+
 	return { monitors, filteredMonitors, summary };
 };
 
@@ -790,7 +802,9 @@ const createMonitor = async (req, res) => {
  */
 const createBulkMonitors = async (req) => {
 	try {
-		const monitors = req.body.map(item => new Monitor({ ...item, notifications: undefined }));
+		const monitors = req.body.map(
+			(item) => new Monitor({ ...item, notifications: undefined })
+		);
 		await Monitor.bulkSave(monitors);
 		return monitors;
 	} catch (error) {

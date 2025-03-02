@@ -197,7 +197,10 @@ class NewJobQueue {
 				// Get the current status
 				await job.updateProgress(30);
 				const networkResponse = await this.networkService.getStatus(job);
-				if (job.data.type === "distributed_http") {
+				if (
+					job.data.type === "distributed_http" ||
+					job.data.type === "distributed_test"
+				) {
 					return;
 				}
 				// Handle status change
