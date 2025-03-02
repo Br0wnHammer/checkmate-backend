@@ -1,5 +1,5 @@
 name: docker install
-description: 'Install Docker and Nginx on remote server'
+description: 'Install Docker'
 inputs:
   REMOTE_USER:
     description: 'Remote Server User'
@@ -36,5 +36,22 @@ runs:
           if ! sudo systemctl is-active --quiet nginx; then
             sudo systemctl restart nginx
           fi
+        fi
+        EOF
+
+    - name: Install HAProxy
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+        if ! [ -x "$(command -v haproxy)" ]; then
+          sudo apt update -qq
+          sudo apt install -y haproxy
+          if ! sudo systemctl is-active --quiet haproxy; then
+            sudo systemctl restart haproxy
+          fi
+        fi
+        if ! [ -x "$(command -v socat)" ]; then
+          sudo apt update -qq
+          sudo apt install -y socat
         fi
         EOF

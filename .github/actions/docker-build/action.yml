@@ -37,3 +37,82 @@ runs:
           sudo nginx -t
           sudo systemctl restart nginx
         EOF
+
+    - name: Copy HAProxy Config
+      shell: bash
+      run: |
+        # Check if haproxy-hosts.map exists
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          if [ ! -f ~/haproxy-hosts.map ]; then
+            echo "active green" | tee ~/haproxy-hosts.map
+          fi
+        EOF
+
+        # Update the HAProxy config and restart.
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          sudo cp ~/uptime-backend/docker/prod/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg
+          sudo haproxy -c -f /etc/haproxy/haproxy.cfg
+          sudo systemctl reload haproxy
+        EOF
+
+    - name: Configure systctl.conf
+      shell: bash
+      run: |
+        # Update the sysctl.conf file on the remote server
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          # Increase the maximum number of open files globally
+          sudo sysctl -w fs.file-max=2097152
+
+          # Increase the range of local ports available for outgoing connections
+          sudo sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+
+          # Allow more TCP connections in the backlog
+          sudo sysctl -w net.core.somaxconn=65535
+
+          # Increase TCP socket buffer sizes
+          sudo sysctl -w net.core.rmem_max=16777216
+          sudo sysctl -w net.core.wmem_max=16777216
+          sudo sysctl -w net.ipv4.tcp_rmem="4096 87380 16777216"
+          sudo sysctl -w net.ipv4.tcp_wmem="4096 65536 16777216"
+
+          # Enable TCP window scaling for better throughput
+          sudo sysctl -w net.ipv4.tcp_window_scaling=1
+
+          # Increase the maximum number of remembered connection requests
+          sudo sysctl -w net.ipv4.tcp_max_syn_backlog=8192
+
+          # Allow faster recycling of TIME_WAIT sockets (reduces lingering connections)
+          sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+
+          # Reduce TIME_WAIT timeout
+          sudo sysctl -w net.ipv4.tcp_fin_timeout=15
+
+          # Increase the maximum number of TCP connections
+          sudo sysctl -w net.ipv4.tcp_max_tw_buckets=2000000
+
+          # Optimize memory pressure for TCP
+          sudo sysctl -w net.ipv4.tcp_mem="786432 1048576 3145728"
+
+          # Disable TCP slow start after idle
+          sudo sysctl -w net.ipv4.tcp_slow_start_after_idle=0
+
+          # Enable selective ACKs and fast retransmit for better performance
+          sudo sysctl -w net.ipv4.tcp_sack=1
+          sudo sysctl -w net.ipv4.tcp_fack=1
+
+          # Increase the number of file descriptors per process
+          sudo sysctl -w fs.nr_open=1048576
+
+          sudo sysctl -p
+        EOF
+
+    - name: Update /etc/security/limits.conf
+      shell: bash
+      run: |
+        # Update the limits.conf file on the remote server
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+            grep -qxF '* soft nofile 1048576' /etc/security/limits.conf || echo '* soft nofile 1048576' | sudo tee -a /etc/security/limits.conf
+            grep -qxF '* hard nofile 1048576' /etc/security/limits.conf || echo '* hard nofile 1048576' | sudo tee -a /etc/security/limits.conf
+            grep -qxF '* soft nproc 1048576' /etc/security/limits.conf || echo '* soft nproc 1048576' | sudo tee -a /etc/security/limits.conf
+            grep -qxF '* hard nproc 1048576' /etc/security/limits.conf || echo '* hard nproc 1048576' | sudo tee -a /etc/security/limits.conf
+        EOF
