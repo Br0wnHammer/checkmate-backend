@@ -29,11 +29,9 @@ runs:
           if [ "${CURRENT_LIVE}" == "green" ]; then
             NEXT_LIVE="blue"
             NEXT_PORT=4000
-            OLD_PORT=5000
           else
             NEXT_LIVE="green"
             NEXT_PORT=5000
-            OLD_PORT=4000
           fi
           
           docker stop uptime-backend-${NEXT_LIVE} || true
@@ -49,21 +47,14 @@ runs:
             -e REDIS_URL="${{ inputs.REDIS_URL }}" \
             uptime-backend:${COMMIT_HASH}
             
-          STATUS=$(echo "show stat" | socat stdio tcp4-connect:127.0.0.1:9000 | cut -d "," -f 2,18 | column -s, -t | grep ${NEXT_LIVE} | awk "{print \$2}")
+          STATUS=$(echo "show stat" | socat stdio tcp4-connect:127.0.0.1:9000 | cut -d "," -f 2,18 | column -s, -t | grep ${NEXT_LIVE} | uniq | awk "{print \$2}")
           for i in {1..60}; do
             if [ "$STATUS" == "UP" ]; then
               echo "set map /home/ubuntu/haproxy-hosts.map active ${NEXT_LIVE}" | socat stdio tcp4-connect:127.0.0.1:9000
-
-              docker stop uptime-backend-${CURRENT_LIVE} || true
-              docker rm uptime-backend-${CURRENT_LIVE} || true
-
-              docker ps -q --filter "status=running" --filter "publish=${OLD_PORT}" | xargs -r docker stop || true
-              docker rm `docker ps -a -q --filter "status=exited" --filter "publish=${OLD_PORT}"` || true
-
               break
             fi
             sleep 1
-            STATUS=$(echo "show stat" | socat stdio tcp4-connect:127.0.0.1:9000 | cut -d "," -f 2,18 | column -s, -t | grep ${NEXT_LIVE} | awk "{print \$2}")
+            STATUS=$(echo "show stat" | socat stdio tcp4-connect:127.0.0.1:9000 | cut -d "," -f 2,18 | column -s, -t | grep ${NEXT_LIVE} | uniq | awk "{print \$2}")
           done
 
           if [ "$STATUS" != "UP" ]; then
