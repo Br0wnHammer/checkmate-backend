@@ -282,11 +282,25 @@ const startApp = async () => {
 	);
 
 	const notificationRoutes = new NotificationRoutes(notificationController);
+	const allowedOrigins = process.env.CLIENT_HOST || "*";
 
 	// Init job queue
 	await jobQueue.initJobQueue();
 	// Middleware
-	app.use(cors());
+	app.use(
+		cors({
+			origin: function (origin, callback) {
+				if (!origin || allowedOrigins.split(",").includes(origin)) {
+					callback(null, true);
+				} else {
+					callback(new Error("Not allowed by CORS"));
+				}
+			},
+			credentials: true,
+			methods: "GET,POST,PUT,DELETE,OPTIONS",
+			allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+		})
+	);
 	app.use(express.json());
 	app.use(helmet());
 	app.use(languageMiddleware(stringService, translationService));
