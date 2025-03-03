@@ -22,6 +22,7 @@ class NetworkService {
 		this.TYPE_DOCKER = "docker";
 		this.TYPE_PORT = "port";
 		this.TYPE_DISTRIBUTED_HTTP = "distributed_http";
+		this.TYPE_DISTRIBUTED_TEST = "distributed_test";
 		this.SERVICE_NAME = SERVICE_NAME;
 		this.NETWORK_ERROR = 5000;
 		this.PING_ERROR = 5001;
@@ -497,7 +498,8 @@ class NetworkService {
 				return await this.requestPort(job);
 			case this.TYPE_DISTRIBUTED_HTTP:
 				return await this.requestDistributedHttp(job);
-
+			case this.TYPE_DISTRIBUTED_TEST:
+				return;
 			default:
 				return this.handleUnsupportedType(type);
 		}
