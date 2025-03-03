@@ -41,6 +41,10 @@ const AppSettingsSchema = mongoose.Schema(
             type: Number,
             default: process.env.REDIS_PORT || 6379,
         },
+        redisPassword: {
+            type: String,
+            default: process.env.REDIS_PASSWORD || "", 
+        },
         jwtTTL: {
             type: String,
             required: true,
