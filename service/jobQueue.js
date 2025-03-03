@@ -30,16 +30,8 @@ class NewJobQueue {
 		Worker
 	) {
 		const settings = settingsService.getSettings() || {};
-		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
-		// const connection = {
-		// 	host: redisHost,
-		// 	port: redisPort,
-		// };
-		const connection = new IORedis({
-			host: redisHost,
-			port: redisPort,
-			maxRetriesPerRequest: null,
-		});
+		const { redisUrl } = settings;
+		const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
 
 		this.queues = {};
 		this.workers = {};
