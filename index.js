@@ -282,24 +282,32 @@ const startApp = async () => {
 	);
 
 	const notificationRoutes = new NotificationRoutes(notificationController);
-	const allowedOrigins = "http://165.232.159.167:5173";
+	// const allowedOrigins = "http://165.232.159.167:5173";
 	// Init job queue
 	await jobQueue.initJobQueue();
 	// Middleware
-	app.use(
-		cors({
-			origin: function (origin, callback) {
-				if (!origin || allowedOrigins.split(",").includes(origin)) {
-					callback(null, true);
-				} else {
-					callback(new Error("Not allowed by CORS"));
-				}
-			},
-			credentials: true,
-			methods: "GET,POST,PUT,DELETE,OPTIONS",
-			allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-		})
-	);
+	app.use(cors({
+		origin: "*",  
+		methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+		allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+		credentials: true,
+		preflightContinue: false,
+		optionsSuccessStatus: 204
+	}));
+
+	app.options("*", cors());
+	app.use((req, res, next) => {
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+		res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+		
+		if (req.method === "OPTIONS") {
+			return res.status(200).end();
+		}
+		
+		next();
+	});
+	
 	app.use(express.json());
 	app.use(helmet());
 	app.use(languageMiddleware(stringService, translationService));
