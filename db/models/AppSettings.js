@@ -32,14 +32,6 @@ const AppSettingsSchema = mongoose.Schema(
 			required: true,
 			default: "mongodb://localhost:27017/uptime_db",
 		},
-		redisHost: {
-			type: String,
-			default: "127.0.0.1",
-		},
-		redisPort: {
-			type: Number,
-			default: "6379",
-		},
 		redisUrl: {
 			type: String,
 			default: "redis://127.0.0.1:6379",
