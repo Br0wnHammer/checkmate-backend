@@ -294,7 +294,7 @@ const startApp = async () => {
 	app.use(cors());
 	app.use(express.json());
 	app.use(helmet());
-	app.use(languageMiddleware(stringService, translationService));
+	app.use(languageMiddleware(stringService, translationService, settingsService));
 	// Swagger UI
 	app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
