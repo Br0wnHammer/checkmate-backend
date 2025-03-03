@@ -2,8 +2,8 @@ name: Production Deploy
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
 
 permissions:
   packages: write
