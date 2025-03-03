@@ -417,6 +417,7 @@ const updateAppSettingsBodyValidation = joi.object({
 	redisPort: joi.number().allow(null, ""),
 	jwtTTL: joi.string().allow(""),
 	pagespeedApiKey: joi.string().allow(""),
+	language: joi.string().allow(""),
 	systemEmailHost: joi.string().allow(""),
 	systemEmailPort: joi.number().allow(""),
 	systemEmailAddress: joi.string().allow(""),
