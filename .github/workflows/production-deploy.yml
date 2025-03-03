@@ -1,17 +1,39 @@
-name: Update AWS Security Groups for Multiple Regions
-
 on:
   push:
     branches:
       - main
 
+permissions:
+  packages: write
+  contents: read
+
 jobs:
-  setup-uptime-1:
+  docker-build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        
+      - name: Docker Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: Docker Build and Push
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
+          docker build -t $IMAGE_NAME . -f docker/prod/ci.Dockerfile
+          docker push $IMAGE_NAME
+
+  setup-uptime-1:
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -31,18 +53,19 @@ jobs:
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
+      - name: Install Required Packages on Remote Server
+        uses: ./.github/actions/install
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
           
   setup-uptime-2:
     runs-on: ubuntu-latest
+    needs: docker-build
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -62,18 +85,19 @@ jobs:
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
+      - name: Install Required Packages on Remote Server
+        uses: ./.github/actions/install
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
 
   setup-uptime-3:
     runs-on: ubuntu-latest
+    needs: docker-build
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -93,18 +117,19 @@ jobs:
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
+      - name: Install Required Packages on Remote Server
+        uses: ./.github/actions/install
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
 
   setup-uptime-4:
     runs-on: ubuntu-latest
+    needs: docker-build
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -124,8 +149,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
+      - name: Install Required Packages on Remote Server
+        uses: ./.github/actions/install
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
@@ -137,7 +162,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -166,8 +191,8 @@ jobs:
           echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
           echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
+      - name: Configure Nginx and HAProxy
+        uses: ./.github/actions/configure
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
@@ -179,7 +204,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -208,8 +233,8 @@ jobs:
           echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
           echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
+      - name: Configure Nginx and HAProxy
+        uses: ./.github/actions/configure
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
@@ -221,7 +246,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -250,8 +275,8 @@ jobs:
           echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
           echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
+      - name: Configure Nginx and HAProxy
+        uses: ./.github/actions/configure
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
@@ -263,7 +288,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -292,8 +317,8 @@ jobs:
           echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
           echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
+      - name: Configure Nginx and HAProxy
+        uses: ./.github/actions/configure
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
@@ -305,7 +330,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -326,12 +351,14 @@ jobs:
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
       - name: Docker Run
-        uses: ./.github/actions/docker-start
+        uses: ./.github/actions/deploy
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   deploy-uptime-2:
     runs-on: ubuntu-latest
@@ -340,7 +367,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -361,12 +388,14 @@ jobs:
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
       - name: Docker Run
-        uses: ./.github/actions/docker-start
+        uses: ./.github/actions/deploy
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   deploy-uptime-3:
     runs-on: ubuntu-latest
@@ -375,7 +404,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -394,14 +423,16 @@ jobs:
           echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
-
+  
       - name: Docker Run
-        uses: ./.github/actions/docker-start
+        uses: ./.github/actions/deploy
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   deploy-uptime-4:
     runs-on: ubuntu-latest
@@ -410,7 +441,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
@@ -431,12 +462,14 @@ jobs:
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
       - name: Docker Run
-        uses: ./.github/actions/docker-start
+        uses: ./.github/actions/deploy
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   cleanup:
     runs-on: ubuntu-latest
@@ -449,7 +482,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Cleanup AWS Security Groups
         uses: ./.github/actions/cleanup

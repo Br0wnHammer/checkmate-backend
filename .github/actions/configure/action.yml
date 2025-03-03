@@ -10,21 +10,6 @@ inputs:
 runs: 
   using: 'composite'
   steps:
-    - name: Build Docker
-      shell: bash
-      run: |
-        # Copy the code to the remote server
-        rsync -az --delete -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime" . ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }}:~/uptime-backend
-
-        # Build the Docker image
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
-          docker system prune --all --force
-          cd ~/uptime-backend
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
-          docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/ci.Dockerfile .
-        EOF
-
     - name: Copy Nginx Config
       shell: bash
       run: |
