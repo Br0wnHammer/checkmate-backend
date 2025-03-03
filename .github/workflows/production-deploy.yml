@@ -2,459 +2,477 @@ name: Update AWS Security Groups for Multiple Regions
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
 
 jobs:
-  setup-uptime-1:
+  docker-build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
-
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_1_SSH_KEY }}
-        shell: bash
+        
+      - name: Docker Login to GitHub Container Registry
         run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
+      - name: Docker Build
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
+          docker build -t ghcr.io/uprock/uptime:${COMMIT_HASH} . -f docker/prod/ci.Dockerfile
+          docker push ghcr.io/uprock/uptime:${COMMIT_HASH}
+
+  # setup-uptime-1:
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
+
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
+
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_1_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+
+  #     - name: Install Docker and Nginx on Remote Server
+  #       uses: ./.github/actions/docker-install
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
           
-  setup-uptime-2:
-    runs-on: ubuntu-latest
+  # setup-uptime-2:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_2_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_2_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
+  #     - name: Install Docker and Nginx on Remote Server
+  #       uses: ./.github/actions/docker-install
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
 
-  setup-uptime-3:
-    runs-on: ubuntu-latest
+  # setup-uptime-3:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_3_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_3_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
+  #     - name: Install Docker and Nginx on Remote Server
+  #       uses: ./.github/actions/docker-install
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
 
-  setup-uptime-4:
-    runs-on: ubuntu-latest
+  # setup-uptime-4:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_4_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_4_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Install Docker and Nginx on Remote Server
-        uses: ./.github/actions/docker-install
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
+  #     - name: Install Docker and Nginx on Remote Server
+  #       uses: ./.github/actions/docker-install
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
           
-  configure-uptime-1:
-    runs-on: ubuntu-latest
-    needs: 
-      - setup-uptime-1
+  # configure-uptime-1:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - setup-uptime-1
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_1_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_1_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Copy Certificate and Key to Remote Server
-        env:
-          UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
-          UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
-        shell: bash
-        run: |
-          echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
-          echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
+  #     - name: Copy Certificate and Key to Remote Server
+  #       env:
+  #         UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
+  #         UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
+  #       shell: bash
+  #       run: |
+  #         echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
+  #         echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
+  #     - name: Docker Build
+  #       uses: ./.github/actions/docker-build
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
        
-  configure-uptime-2:
-    runs-on: ubuntu-latest
-    needs: 
-      - setup-uptime-2
+  # configure-uptime-2:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - setup-uptime-2
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_2_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_2_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Copy Certificate and Key to Remote Server
-        env:
-          UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
-          UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
-        shell: bash
-        run: |
-          echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
-          echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
+  #     - name: Copy Certificate and Key to Remote Server
+  #       env:
+  #         UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
+  #         UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
+  #       shell: bash
+  #       run: |
+  #         echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
+  #         echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
+  #     - name: Docker Build
+  #       uses: ./.github/actions/docker-build
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
 
-  configure-uptime-3:
-    runs-on: ubuntu-latest
-    needs: 
-      - setup-uptime-3
+  # configure-uptime-3:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - setup-uptime-3
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_3_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_3_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Copy Certificate and Key to Remote Server
-        env:
-          UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
-          UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
-        shell: bash
-        run: |
-          echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
-          echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
+  #     - name: Copy Certificate and Key to Remote Server
+  #       env:
+  #         UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
+  #         UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
+  #       shell: bash
+  #       run: |
+  #         echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
+  #         echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
+  #     - name: Docker Build
+  #       uses: ./.github/actions/docker-build
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
        
-  configure-uptime-4:
-    runs-on: ubuntu-latest
-    needs: 
-      - setup-uptime-4
+  # configure-uptime-4:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - setup-uptime-4
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_4_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_4_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Copy Certificate and Key to Remote Server
-        env:
-          UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
-          UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
-        shell: bash
-        run: |
-          echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
-          echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
+  #     - name: Copy Certificate and Key to Remote Server
+  #       env:
+  #         UPROCK_COM_CRT: ${{ secrets.STAR_UPROCK_COM_CRT }}
+  #         UPROCK_COM_KEY: ${{ secrets.STAR_UPROCK_COM_KEY }}
+  #       shell: bash
+  #       run: |
+  #         echo "${UPROCK_COM_CRT}" > docker/prod/nginx/uptime.uprock.com.crt
+  #         echo "${UPROCK_COM_KEY}" > docker/prod/nginx/uptime.uprock.com.key
 
-      - name: Docker Build
-        uses: ./.github/actions/docker-build
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
+  #     - name: Docker Build
+  #       uses: ./.github/actions/docker-build
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
 
-  deploy-uptime-1:
-    runs-on: ubuntu-latest
-    needs: 
-      - configure-uptime-1
+  # deploy-uptime-1:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - configure-uptime-1
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_1_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_1_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Docker Run
-        uses: ./.github/actions/docker-start
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
-          MONGODB_URL: "${{ secrets.MONGODB_URL }}"
-          REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+  #     - name: Docker Run
+  #       uses: ./.github/actions/docker-start
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
+  #         MONGODB_URL: "${{ secrets.MONGODB_URL }}"
+  #         REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
 
-  deploy-uptime-2:
-    runs-on: ubuntu-latest
-    needs: 
-      - configure-uptime-2
+  # deploy-uptime-2:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - configure-uptime-2
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_2_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_2_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Docker Run
-        uses: ./.github/actions/docker-start
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
-          MONGODB_URL: "${{ secrets.MONGODB_URL }}"
-          REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+  #     - name: Docker Run
+  #       uses: ./.github/actions/docker-start
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
+  #         MONGODB_URL: "${{ secrets.MONGODB_URL }}"
+  #         REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
 
-  deploy-uptime-3:
-    runs-on: ubuntu-latest
-    needs: 
-      - configure-uptime-3
+  # deploy-uptime-3:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - configure-uptime-3
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_3_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_3_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Docker Run
-        uses: ./.github/actions/docker-start
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
-          MONGODB_URL: "${{ secrets.MONGODB_URL }}"
-          REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+  #     - name: Docker Run
+  #       uses: ./.github/actions/docker-start
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
+  #         MONGODB_URL: "${{ secrets.MONGODB_URL }}"
+  #         REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
 
-  deploy-uptime-4:
-    runs-on: ubuntu-latest
-    needs: 
-      - configure-uptime-4
+  # deploy-uptime-4:
+  #   runs-on: ubuntu-latest
+  #   needs: 
+  #     - configure-uptime-4
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Update AWS Security Groups & Setup SSH Key
-        uses: ./.github/actions/setup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
+  #     - name: Update AWS Security Groups & Setup SSH Key
+  #       uses: ./.github/actions/setup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
 
-      - name: Setup SSH Key for GitHub
-        env:
-          SSH_KEY: ${{ secrets.UPTIME_4_SSH_KEY }}
-        shell: bash
-        run: |
-          mkdir -p ~/.ssh || true
-          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
-          chmod 600 ~/.ssh/id_rsa_uptime
-          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+  #     - name: Setup SSH Key for GitHub
+  #       env:
+  #         SSH_KEY: ${{ secrets.UPTIME_4_SSH_KEY }}
+  #       shell: bash
+  #       run: |
+  #         mkdir -p ~/.ssh || true
+  #         echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+  #         chmod 600 ~/.ssh/id_rsa_uptime
+  #         ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Docker Run
-        uses: ./.github/actions/docker-start
-        with:
-          REMOTE_USER: "ubuntu"
-          SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
-          MONGODB_URL: "${{ secrets.MONGODB_URL }}"
-          REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
+  #     - name: Docker Run
+  #       uses: ./.github/actions/docker-start
+  #       with:
+  #         REMOTE_USER: "ubuntu"
+  #         SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
+  #         MONGODB_URL: "${{ secrets.MONGODB_URL }}"
+  #         REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
 
-  cleanup:
-    runs-on: ubuntu-latest
-    if: always()
-    needs: 
-      - deploy-uptime-1
-      - deploy-uptime-2
-      - deploy-uptime-3
-      - deploy-uptime-4
+  # cleanup:
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   needs: 
+  #     - deploy-uptime-1
+  #     - deploy-uptime-2
+  #     - deploy-uptime-3
+  #     - deploy-uptime-4
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v2
 
-      - name: Cleanup AWS Security Groups
-        uses: ./.github/actions/cleanup
-        with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }} ${{ secrets.UPTIME_2_AWS_REGION }} ${{ secrets.UPTIME_3_AWS_REGION }}  ${{ secrets.UPTIME_4_AWS_REGION }}"
-          SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }} ${{ secrets.UPTIME_2_SECURITY_GROUP }} ${{ secrets.UPTIME_3_SECURITY_GROUP }} ${{ secrets.UPTIME_4_SECURITY_GROUP }}"
+  #     - name: Cleanup AWS Security Groups
+  #       uses: ./.github/actions/cleanup
+  #       with:
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }} ${{ secrets.UPTIME_2_AWS_REGION }} ${{ secrets.UPTIME_3_AWS_REGION }}  ${{ secrets.UPTIME_4_AWS_REGION }}"
+  #         SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }} ${{ secrets.UPTIME_2_SECURITY_GROUP }} ${{ secrets.UPTIME_3_SECURITY_GROUP }} ${{ secrets.UPTIME_4_SECURITY_GROUP }}"
