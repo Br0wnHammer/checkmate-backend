@@ -16,6 +16,9 @@ inputs:
   REPOSITORY_OWNER:
     description: 'Repository Owner'
     required: true
+  DOCKER_SECRET:
+    description: 'Docker Secret'
+    required: true
 runs: 
   using: 'composite'
   steps:
@@ -23,6 +26,8 @@ runs:
       shell: bash
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          echo "${{ inputs.DOCKER_SECRET }}" | docker login ghcr.io -u ${{ inputs.REPOSITORY_OWNER }} --password-stdin
+
           set -o xtrace
 
           cd ~/uptime-backend

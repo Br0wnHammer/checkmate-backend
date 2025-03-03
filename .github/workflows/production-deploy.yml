@@ -350,10 +350,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Docker Login to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
       - name: Docker Run
         uses: ./.github/actions/deploy
         with:
@@ -362,6 +358,7 @@ jobs:
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   deploy-uptime-2:
     runs-on: ubuntu-latest
@@ -390,10 +387,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Docker Login to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
       - name: Docker Run
         uses: ./.github/actions/deploy
         with:
@@ -402,6 +395,7 @@ jobs:
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   deploy-uptime-3:
     runs-on: ubuntu-latest
@@ -429,10 +423,6 @@ jobs:
           echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
-
-      - name: Docker Login to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
   
       - name: Docker Run
         uses: ./.github/actions/deploy
@@ -442,6 +432,7 @@ jobs:
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   deploy-uptime-4:
     runs-on: ubuntu-latest
@@ -470,10 +461,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa_uptime
           ssh-keygen -l -f ~/.ssh/id_rsa_uptime
 
-      - name: Docker Login to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
       - name: Docker Run
         uses: ./.github/actions/deploy
         with:
@@ -482,6 +469,7 @@ jobs:
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
 
   cleanup:
     runs-on: ubuntu-latest
