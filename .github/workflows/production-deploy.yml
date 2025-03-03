@@ -1,3 +1,5 @@
+name: Production Deploy
+
 on:
   push:
     branches:
@@ -196,6 +198,7 @@ jobs:
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
+          DOMAIN: "uptime.uprock.com"
        
   configure-uptime-2:
     runs-on: ubuntu-latest
@@ -238,6 +241,7 @@ jobs:
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
+          DOMAIN: "uptime.uprock.com"
 
   configure-uptime-3:
     runs-on: ubuntu-latest
@@ -280,6 +284,7 @@ jobs:
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
+          DOMAIN: "uptime.uprock.com"
        
   configure-uptime-4:
     runs-on: ubuntu-latest
@@ -322,6 +327,7 @@ jobs:
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
+          DOMAIN: "uptime.uprock.com"
 
   deploy-uptime-1:
     runs-on: ubuntu-latest

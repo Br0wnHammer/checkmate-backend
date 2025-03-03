@@ -7,14 +7,24 @@ inputs:
   SERVER_IP:
     description: 'Remote Server IP'
     required: true
+  DOMAIN:
+    description: 'Domain name for the SSL certificate'
+    required: true
 runs: 
   using: 'composite'
   steps:
+    - name: Rsync files to remote server
+      shell: bash
+      run: |
+        # Rsync the files to the remote server
+        rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime" . ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }}:~/uptime-backend
+
     - name: Copy Nginx Config
       shell: bash
       run: |
         # Update the Nginx config and restart.
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          sed -i "s/uptime.uprock.com/${{ inputs.DOMAIN }}/g" ~/uptime-backend/docker/prod/nginx/uptime.conf
           LOCAL_HASH=$(md5sum ~/uptime-backend/docker/prod/nginx/uptime.conf | awk '{ print $1 }')
           REMOTE_HASH=$(md5sum /etc/nginx/sites-available/default | awk '{ print $1 }' || echo "file_not_found")
           if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
@@ -25,15 +35,15 @@ runs:
               echo "Nginx config has not changed. Skipping copy."
           fi
           
-          LOCAL_CRT_HASH=$(md5sum ~/uptime-backend/docker/prod/nginx/uptime.uprock.com.crt | awk '{ print $1 }')
-          REMOTE_CRT_HASH=$(md5sum /etc/nginx/ssl/uptime.uprock.com.crt | awk '{ print $1 }' || echo "file_not_found")
-          LOCAL_KEY_HASH=$(md5sum ~/uptime-backend/docker/prod/nginx/uptime.uprock.com.key | awk '{ print $1 }')
-          REMOTE_KEY_HASH=$(md5sum /etc/nginx/ssl/uptime.uprock.com.key | awk '{ print $1 }' || echo "file_not_found")
+          LOCAL_CRT_HASH=$(md5sum ~/uptime-backend/docker/prod/nginx/${{ inputs.DOMAIN }}.crt | awk '{ print $1 }')
+          REMOTE_CRT_HASH=$(md5sum /etc/nginx/ssl/${{ inputs.DOMAIN }}.crt | awk '{ print $1 }' || echo "file_not_found")
+          LOCAL_KEY_HASH=$(md5sum ~/uptime-backend/docker/prod/nginx/${{ inputs.DOMAIN }}.key | awk '{ print $1 }')
+          REMOTE_KEY_HASH=$(md5sum /etc/nginx/ssl/${{ inputs.DOMAIN }}.key | awk '{ print $1 }' || echo "file_not_found")
 
           if [ "$LOCAL_CRT_HASH" != "$REMOTE_CRT_HASH" ] || [ "$LOCAL_KEY_HASH" != "$REMOTE_KEY_HASH" ]; then
             sudo mkdir -p /etc/nginx/ssl || true
-            sudo cp ~/uptime-backend/docker/prod/nginx/uptime.uprock.com.crt /etc/nginx/ssl/uptime.uprock.com.crt
-            sudo cp ~/uptime-backend/docker/prod/nginx/uptime.uprock.com.key /etc/nginx/ssl/uptime.uprock.com.key
+            sudo cp ~/uptime-backend/docker/prod/nginx/${{ inputs.DOMAIN }}.crt /etc/nginx/ssl/${{ inputs.DOMAIN }}.crt
+            sudo cp ~/uptime-backend/docker/prod/nginx/${{ inputs.DOMAIN }}.key /etc/nginx/ssl/${{ inputs.DOMAIN }}.key
             sudo systemctl reload nginx
           else
             echo "SSL cert and key have not changed. Skipping copy."
