@@ -6,24 +6,49 @@ on:
       - develop
 
 jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Docker Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: Docker Build and Push
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
+          docker build -t $IMAGE_NAME . -f docker/prod/ci.Dockerfile
+          docker push $IMAGE_NAME
+
   deploy:
     runs-on: self-hosted
+    needs: docker-build
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Build Docker image
+    - name: Docker Login to GitHub Container Registry
       run: |
-        COMMIT_HASH=$(git rev-parse --short HEAD)
-        docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/ci.Dockerfile .
+        echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
     - name: Clean and Run Docker container
       run: |
+        COMMIT_HASH=$(git rev-parse --short HEAD)
         docker stop uptime-backend || true
         docker rm uptime-backend || true
         COMMIT_HASH=$(git rev-parse --short HEAD)
-        docker run -d --name uptime-backend -p 5000:5000 -e DB_CONNECTION_STRING=mongodb://172.31.40.27:27017/uptime_db -e REDIS_URI=redis://172.31.40.27 uptime-backend:$COMMIT_HASH
+        docker run -d \
+          --name uptime-backend \
+          -p 5000:5000 \
+          -e DB_CONNECTION_STRING=mongodb://172.31.40.27:27017/uptime_db \
+          -e REDIS_URL=redis://172.31.40.27 \
+          ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
 
   cleanup:
     runs-on: self-hosted
