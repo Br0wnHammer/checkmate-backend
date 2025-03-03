@@ -282,8 +282,7 @@ const startApp = async () => {
 	);
 
 	const notificationRoutes = new NotificationRoutes(notificationController);
-	const allowedOrigins = process.env.CLIENT_HOST || "*";
-
+	const allowedOrigins = "http://165.232.159.167:5173";
 	// Init job queue
 	await jobQueue.initJobQueue();
 	// Middleware
