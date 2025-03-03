@@ -20,7 +20,6 @@ jobs:
       - name: Docker Build and Push
         run: |
           COMMIT_HASH=$(git rev-parse --short HEAD)
-          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
           docker build -t $IMAGE_NAME . -f docker/prod/ci.Dockerfile
           docker push $IMAGE_NAME
@@ -56,7 +55,50 @@ jobs:
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_STAGING_HOST_IP }}"
-          
+
+  configure-uptime-1:
+    runs-on: ubuntu-latest
+    needs: 
+      - setup-uptime
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Update AWS Security Groups & Setup SSH Key
+        uses: ./.github/actions/setup
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGIONS: "${{ secrets.UPTIME_STAGING_AWS_REGION }}"
+          SECURITY_GROUPS: "${{ secrets.UPTIME_STAGING_SECURITY_GROUP }}"
+
+      - name: Setup SSH Key for GitHub
+        env:
+          SSH_KEY: ${{ secrets.UPTIME_STAGING_SSH_KEY }}
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh || true
+          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+          chmod 600 ~/.ssh/id_rsa_uptime
+          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+
+      - name: Copy Certificate and Key to Remote Server
+        env:
+          UPROCKSTAGING_COM_CRT: ${{ secrets.STAR_UPROCKSTAGING_COM_CRT }}
+          UPROCKSTAGING_COM_KEY: ${{ secrets.STAR_UPROCKSTAGING_COM_KEY }}
+        shell: bash
+        run: |
+          echo "${UPROCKSTAGING_COM_CRT}" > docker/prod/nginx/uptime.uprockrockstaging.com.crt
+          echo "${UPROCKSTAGING_COM_KEY}" > docker/prod/nginx/uptime.uprockrockstaging.com.key
+
+      - name: Configure Nginx and HAProxy
+        uses: ./.github/actions/configure
+        with:
+          REMOTE_USER: "ubuntu"
+          SERVER_IP: "${{ secrets.UPTIME_STAGING_HOST_IP }}"
+          DOMAIN: "uptime.uprockrockstaging.com"
+
   # deploy:
   #   runs-on: self-hosted
   #   needs: docker-build
