@@ -110,11 +110,9 @@ const shutdown = async () => {
 		const settings =
 			ServiceRegistry.get(SettingsService.SERVICE_NAME).getSettings() || {};
 
-		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
-		const redis = new IORedis({
-			host: redisHost,
-			port: redisPort,
-		});
+		const { redisUrl } = settings;
+		const redis = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+
 		logger.info({ message: "Flushing Redis" });
 		await redis.flushall();
 		logger.info({ message: "Redis flushed" });
@@ -312,6 +310,11 @@ const startApp = async () => {
 	app.use("/api/v1/distributed-uptime", distributedUptimeRoutes.getRouter());
 	app.use("/api/v1/status-page", statusPageRoutes.getRouter());
 	app.use("/api/v1/notifications", verifyJWT, notificationRoutes.getRouter());
+	app.use("/api/v1/health", (req, res) => {
+		res.json({
+			status: "OK",
+		});
+	});
 	app.use(handleErrors);
 };
 
