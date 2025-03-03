@@ -443,7 +443,14 @@ const createStatusPageBodyValidation = joi.object({
 	teamId: joi.string().required(),
 	type: joi.string().valid("uptime", "distributed").required(),
 	companyName: joi.string().required(),
-	url: joi.string().required(),
+	url: joi
+		.string()
+		.pattern(/^[a-zA-Z0-9_-]+$/) // Only allow alphanumeric, underscore, and hyphen
+		.required()
+		.messages({
+			"string.pattern.base":
+				"URL can only contain letters, numbers, underscores, and hyphens",
+		}),
 	timezone: joi.string().optional(),
 	color: joi.string().optional(),
 	monitors: joi
