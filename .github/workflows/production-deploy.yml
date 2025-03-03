@@ -1,5 +1,3 @@
-name: Update AWS Security Groups for Multiple Regions
-
 on:
   push:
     # branches:
@@ -19,14 +17,15 @@ jobs:
         
       - name: Docker Login to GitHub Container Registry
         run: |
-          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-      - name: Docker Build
+      - name: Docker Build and Push
         run: |
           COMMIT_HASH=$(git rev-parse --short HEAD)
           sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
-          docker build -t ghcr.io/uprock/uptime:${COMMIT_HASH} . -f docker/prod/ci.Dockerfile
-          docker push ghcr.io/uprock/uptime:${COMMIT_HASH}
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
+          docker build -t $IMAGE_NAME . -f docker/prod/ci.Dockerfile
+          docker push $IMAGE_NAME
 
   # setup-uptime-1:
   #   runs-on: ubuntu-latest
