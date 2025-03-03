@@ -16,8 +16,8 @@ runs:
     - name: Rsync files to remote server
       shell: bash
       run: |
-        # Rsync the files to the remote server
-        rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime" . ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }}:~/uptime-backend
+        # Rsync the files to the remote server, ensuring files are mirrored including deletions
+        rsync -az --delete -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime" . ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }}:~/uptime-backend
 
     - name: Copy Nginx Config
       shell: bash
