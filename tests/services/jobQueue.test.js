@@ -51,7 +51,7 @@ class WorkerStub {
 	}
 }
 
-describe("JobQueue", function() {
+describe("JobQueue", function () {
 	let settingsService,
 		logger,
 		db,
@@ -60,7 +60,7 @@ describe("JobQueue", function() {
 		notificationService,
 		jobQueue;
 
-	beforeEach(async function() {
+	beforeEach(async function () {
 		settingsService = { getSettings: sinon.stub() };
 		statusService = { updateStatus: sinon.stub() };
 		notificationService = { handleNotifications: sinon.stub() };
@@ -83,12 +83,12 @@ describe("JobQueue", function() {
 		);
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	describe("createJobQueue", function() {
-		it("should create a new JobQueue and add jobs for active monitors", async function() {
+	describe("createJobQueue", function () {
+		it("should create a new JobQueue and add jobs for active monitors", async function () {
 			db.getAllMonitors.returns([
 				{ id: 1, isActive: true },
 				{ id: 2, isActive: true },
@@ -108,7 +108,7 @@ describe("JobQueue", function() {
 			expect(jobQueue.queue.jobs.length).to.equal(4);
 		});
 
-		it("should reject with an error if an error occurs", async function() {
+		it("should reject with an error if an error occurs", async function () {
 			db.getAllMonitors.throws("Error");
 			try {
 				const jobQueue = await JobQueue.createJobQueue(
@@ -127,7 +127,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should reject with an error if an error occurs, should not overwrite error data", async function() {
+		it("should reject with an error if an error occurs, should not overwrite error data", async function () {
 			const error = new Error("Error");
 			error.service = "otherService";
 			error.method = "otherMethod";
@@ -151,15 +151,15 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("Constructor", function() {
-		it("should construct a new JobQueue with default port and host if not provided", async function() {
+	describe("Constructor", function () {
+		it("should construct a new JobQueue with default port and host if not provided", async function () {
 			settingsService.getSettings.returns({});
 
 			expect(jobQueue.connection.host).to.equal("127.0.0.1");
 			expect(jobQueue.connection.port).to.equal(6379);
 		});
 
-		it("should construct a new JobQueue with provided port and host", async function() {
+		it("should construct a new JobQueue with provided port and host", async function () {
 			settingsService.getSettings.returns({ redisHost: "localhost", redisPort: 1234 });
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
@@ -176,8 +176,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("isMaintenanceWindow", function() {
-		it("should throw an error if error occurs", async function() {
+	describe("isMaintenanceWindow", function () {
+		it("should throw an error if error occurs", async function () {
 			db.getMaintenanceWindowsByMonitorId.throws("Error");
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
@@ -197,7 +197,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should return true if in maintenance window with no repeat", async function() {
+		it("should return true if in maintenance window with no repeat", async function () {
 			db.getMaintenanceWindowsByMonitorId.returns([
 				{
 					active: true,
@@ -220,7 +220,7 @@ describe("JobQueue", function() {
 			expect(inWindow).to.be.true;
 		});
 
-		it("should return true if in maintenance window with repeat", async function() {
+		it("should return true if in maintenance window with repeat", async function () {
 			db.getMaintenanceWindowsByMonitorId.returns([
 				{
 					active: true,
@@ -243,7 +243,7 @@ describe("JobQueue", function() {
 			expect(inWindow).to.be.true;
 		});
 
-		it("should return false if in end < start", async function() {
+		it("should return false if in end < start", async function () {
 			db.getMaintenanceWindowsByMonitorId.returns([
 				{
 					active: true,
@@ -266,7 +266,7 @@ describe("JobQueue", function() {
 			expect(inWindow).to.be.false;
 		});
 
-		it("should return false if not in maintenance window", async function() {
+		it("should return false if not in maintenance window", async function () {
 			db.getMaintenanceWindowsByMonitorId.returns([
 				{
 					active: false,
@@ -290,8 +290,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("createJobHandler", function() {
-		it("resolve to an error if an error is thrown within", async function() {
+	describe("createJobHandler", function () {
+		it("resolve to an error if an error is thrown within", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -312,7 +312,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should log info if job is in maintenance window", async function() {
+		it("should log info if job is in maintenance window", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -332,7 +332,7 @@ describe("JobQueue", function() {
 			);
 		});
 
-		it("should return if status has not changed", async function() {
+		it("should return if status has not changed", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -350,7 +350,7 @@ describe("JobQueue", function() {
 			expect(jobQueue.notificationService.handleNotifications.notCalled).to.be.true;
 		});
 
-		it("should return if status has changed, but prevStatus was undefined (monitor paused)", async function() {
+		it("should return if status has changed, but prevStatus was undefined (monitor paused)", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -370,7 +370,7 @@ describe("JobQueue", function() {
 			expect(jobQueue.notificationService.handleNotifications.notCalled).to.be.true;
 		});
 
-		it("should call notification service if status changed and monitor was not paused", async function() {
+		it("should call notification service if status changed and monitor was not paused", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -391,8 +391,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("getWorkerStats", function() {
-		it("should throw an error if getRepeatable Jobs fails", async function() {
+	describe("getWorkerStats", function () {
+		it("should throw an error if getRepeatable Jobs fails", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -414,7 +414,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should throw an error if getRepeatable Jobs fails but respect existing error data", async function() {
+		it("should throw an error if getRepeatable Jobs fails but respect existing error data", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -440,8 +440,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("scaleWorkers", function() {
-		it("should scale workers to 5 if no workers", async function() {
+	describe("scaleWorkers", function () {
+		it("should scale workers to 5 if no workers", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -455,7 +455,7 @@ describe("JobQueue", function() {
 			expect(jobQueue.workers.length).to.equal(5);
 		});
 
-		it("should scale workers up", async function() {
+		it("should scale workers up", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -473,7 +473,7 @@ describe("JobQueue", function() {
 			expect(jobQueue.workers.length).to.equal(20);
 		});
 
-		it("should scale workers down, even with error of worker.close fails", async function() {
+		it("should scale workers down, even with error of worker.close fails", async function () {
 			WorkerStub.prototype.close = async () => {
 				throw new Error("Error");
 			};
@@ -499,7 +499,7 @@ describe("JobQueue", function() {
 			expect(jobQueue.workers.length).to.equal(5);
 		});
 
-		it("should scale workers down", async function() {
+		it("should scale workers down", async function () {
 			WorkerStub.prototype.close = async () => {
 				return true;
 			};
@@ -525,7 +525,7 @@ describe("JobQueue", function() {
 			expect(jobQueue.workers.length).to.equal(5);
 		});
 
-		it("should return false if scaling doesn't happen", async function() {
+		it("should return false if scaling doesn't happen", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -542,8 +542,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("getJobs", function() {
-		it("should return jobs", async function() {
+	describe("getJobs", function () {
+		it("should return jobs", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -558,7 +558,7 @@ describe("JobQueue", function() {
 			expect(jobs.length).to.equal(0);
 		});
 
-		it("should throw an error if getRepeatableJobs fails", async function() {
+		it("should throw an error if getRepeatableJobs fails", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -581,7 +581,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should throw an error if getRepeatableJobs fails but respect existing error data", async function() {
+		it("should throw an error if getRepeatableJobs fails but respect existing error data", async function () {
 			const jobQueue = await JobQueue.createJobQueue(
 				db,
 				networkService,
@@ -608,13 +608,13 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("getJobStats", function() {
-		it("should return job stats for no jobs", async function() {
+	describe("getJobStats", function () {
+		it("should return job stats for no jobs", async function () {
 			const jobStats = await jobQueue.getJobStats();
 			expect(jobStats).to.deep.equal({ jobs: [], workers: 5 });
 		});
 
-		it("should return job stats for jobs", async function() {
+		it("should return job stats for jobs", async function () {
 			jobQueue.queue.getJobs = async () => {
 				return [{ data: { url: "test" }, getState: async () => "completed" }];
 			};
@@ -625,7 +625,7 @@ describe("JobQueue", function() {
 			});
 		});
 
-		it("should reject with an error if mapping jobs fails", async function() {
+		it("should reject with an error if mapping jobs fails", async function () {
 			jobQueue.queue.getJobs = async () => {
 				return [
 					{
@@ -645,7 +645,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should reject with an error if mapping jobs fails but respect existing error data", async function() {
+		it("should reject with an error if mapping jobs fails but respect existing error data", async function () {
 			jobQueue.queue.getJobs = async () => {
 				return [
 					{
@@ -669,13 +669,13 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("addJob", function() {
-		it("should add a job to the queue", async function() {
+	describe("addJob", function () {
+		it("should add a job to the queue", async function () {
 			jobQueue.addJob("test", { url: "test" });
 			expect(jobQueue.queue.jobs.length).to.equal(1);
 		});
 
-		it("should reject with an error if adding fails", async function() {
+		it("should reject with an error if adding fails", async function () {
 			jobQueue.queue.add = async () => {
 				throw new Error("Error adding job");
 			};
@@ -688,7 +688,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should reject with an error if adding fails but respect existing error data", async function() {
+		it("should reject with an error if adding fails but respect existing error data", async function () {
 			jobQueue.queue.add = async () => {
 				const error = new Error("Error adding job");
 				error.service = "otherService";
@@ -705,8 +705,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("deleteJob", function() {
-		it("should delete a job from the queue", async function() {
+	describe("deleteJob", function () {
+		it("should delete a job from the queue", async function () {
 			jobQueue.getWorkerStats = sinon.stub().returns({ load: 1, jobs: [{}] });
 			jobQueue.scaleWorkers = sinon.stub();
 			const monitor = { _id: 1 };
@@ -719,7 +719,7 @@ describe("JobQueue", function() {
 			// expect(jobQueue.scaleWorkers.calledOnce).to.be.true;
 		});
 
-		it("should log an error if job is not found", async function() {
+		it("should log an error if job is not found", async function () {
 			jobQueue.getWorkerStats = sinon.stub().returns({ load: 1, jobs: [{}] });
 			jobQueue.scaleWorkers = sinon.stub();
 			const monitor = { _id: 1 };
@@ -729,7 +729,7 @@ describe("JobQueue", function() {
 			expect(logger.error.calledOnce).to.be.true;
 		});
 
-		it("should reject with an error if removeRepeatable fails", async function() {
+		it("should reject with an error if removeRepeatable fails", async function () {
 			jobQueue.queue.removeRepeatable = async () => {
 				const error = new Error("removeRepeatable error");
 				throw error;
@@ -744,7 +744,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should reject with an error if removeRepeatable fails but respect existing error data", async function() {
+		it("should reject with an error if removeRepeatable fails but respect existing error data", async function () {
 			jobQueue.queue.removeRepeatable = async () => {
 				const error = new Error("removeRepeatable error");
 				error.service = "otherService";
@@ -762,8 +762,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("getMetrics", function() {
-		it("should return metrics for the job queue", async function() {
+	describe("getMetrics", function () {
+		it("should return metrics for the job queue", async function () {
 			jobQueue.queue.getWaitingCount = async () => 1;
 			jobQueue.queue.getActiveCount = async () => 2;
 			jobQueue.queue.getCompletedCount = async () => 3;
@@ -781,7 +781,7 @@ describe("JobQueue", function() {
 			});
 		});
 
-		it("should log an error if metrics operations fail", async function() {
+		it("should log an error if metrics operations fail", async function () {
 			jobQueue.queue.getWaitingCount = async () => {
 				throw new Error("Error");
 			};
@@ -791,8 +791,8 @@ describe("JobQueue", function() {
 		});
 	});
 
-	describe("obliterate", function() {
-		it("should return true if obliteration is successful", async function() {
+	describe("obliterate", function () {
+		it("should return true if obliteration is successful", async function () {
 			jobQueue.queue.pause = async () => true;
 			jobQueue.getJobs = async () => [{ key: 1, id: 1 }];
 			jobQueue.queue.removeRepeatableByKey = async () => true;
@@ -802,7 +802,7 @@ describe("JobQueue", function() {
 			expect(obliteration).to.be.true;
 		});
 
-		it("should throw an error if obliteration fails", async function() {
+		it("should throw an error if obliteration fails", async function () {
 			jobQueue.getMetrics = async () => {
 				throw new Error("Error");
 			};
@@ -815,7 +815,7 @@ describe("JobQueue", function() {
 			}
 		});
 
-		it("should throw an error if obliteration fails but respect existing error data", async function() {
+		it("should throw an error if obliteration fails but respect existing error data", async function () {
 			jobQueue.getMetrics = async () => {
 				const error = new Error("Error");
 				error.service = "otherService";

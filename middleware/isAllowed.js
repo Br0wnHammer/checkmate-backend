@@ -5,7 +5,6 @@ import ServiceRegistry from "../service/serviceRegistry.js";
 import StringService from "../service/stringService.js";
 import SettingsService from "../service/settingsService.js";
 
-
 const isAllowed = (allowedRoles) => {
 	return (req, res, next) => {
 		const token = req.headers["authorization"];

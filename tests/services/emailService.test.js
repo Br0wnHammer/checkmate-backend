@@ -1,7 +1,7 @@
 import sinon from "sinon";
 import EmailService from "../../service/emailService.js";
 
-describe("EmailService - Constructor", function() {
+describe("EmailService - Constructor", function () {
 	let settingsServiceMock;
 	let fsMock;
 	let pathMock;
@@ -10,7 +10,7 @@ describe("EmailService - Constructor", function() {
 	let nodemailerMock;
 	let loggerMock;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		settingsServiceMock = {
 			getSettings: sinon.stub().returns({
 				systemEmailHost: "smtp.example.com",
@@ -43,11 +43,11 @@ describe("EmailService - Constructor", function() {
 		};
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should initialize template loaders and email transporter", function() {
+	it("should initialize template loaders and email transporter", function () {
 		const emailService = new EmailService(
 			settingsServiceMock,
 			fsMock,
@@ -79,7 +79,7 @@ describe("EmailService - Constructor", function() {
 		});
 	});
 
-	it("should have undefined templates if FS fails", function() {
+	it("should have undefined templates if FS fails", function () {
 		fsMock = {
 			readFileSync: sinon.stub().throws(new Error("File read error")),
 		};
@@ -97,7 +97,7 @@ describe("EmailService - Constructor", function() {
 	});
 });
 
-describe("EmailService - buildAndSendEmail", function() {
+describe("EmailService - buildAndSendEmail", function () {
 	let settingsServiceMock;
 	let fsMock;
 	let pathMock;
@@ -107,7 +107,7 @@ describe("EmailService - buildAndSendEmail", function() {
 	let loggerMock;
 	let emailService;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		settingsServiceMock = {
 			getSettings: sinon.stub().returns({
 				systemEmailHost: "smtp.example.com",
@@ -150,11 +150,11 @@ describe("EmailService - buildAndSendEmail", function() {
 		);
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should build and send email successfully", async function() {
+	it("should build and send email successfully", async function () {
 		const messageId = await emailService.buildAndSendEmail(
 			"welcomeEmailTemplate",
 			{},
@@ -166,7 +166,7 @@ describe("EmailService - buildAndSendEmail", function() {
 		expect(nodemailerMock.createTransport().sendMail.calledOnce).to.be.true;
 	});
 
-	it("should log error if building HTML fails", async function() {
+	it("should log error if building HTML fails", async function () {
 		mjml2htmlMock.throws(new Error("MJML error"));
 
 		const messageId = await emailService.buildAndSendEmail(
@@ -179,7 +179,7 @@ describe("EmailService - buildAndSendEmail", function() {
 		expect(loggerMock.error.getCall(0).args[0].message).to.equal("MJML error");
 	});
 
-	it("should log error if sending email fails", async function() {
+	it("should log error if sending email fails", async function () {
 		nodemailerMock.createTransport().sendMail.rejects(new Error("SMTP error"));
 		await emailService.buildAndSendEmail(
 			"welcomeEmailTemplate",
@@ -191,7 +191,7 @@ describe("EmailService - buildAndSendEmail", function() {
 		expect(loggerMock.error.getCall(0).args[0].message).to.equal("SMTP error");
 	});
 
-	it("should log error if both building HTML and sending email fail", async function() {
+	it("should log error if both building HTML and sending email fail", async function () {
 		mjml2htmlMock.throws(new Error("MJML error"));
 		nodemailerMock.createTransport().sendMail.rejects(new Error("SMTP error"));
 
@@ -208,5 +208,5 @@ describe("EmailService - buildAndSendEmail", function() {
 		expect(loggerMock.error.getCall(1).args[0].message).to.equal("SMTP error");
 	});
 
-	it("should log an error if buildHtml fails", async function() {});
+	it("should log an error if buildHtml fails", async function () {});
 });
