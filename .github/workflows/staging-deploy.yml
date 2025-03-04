@@ -20,6 +20,7 @@ jobs:
       - name: Docker Build and Push
         run: |
           COMMIT_HASH=$(git rev-parse --short HEAD)
+          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
           docker build -t $IMAGE_NAME . -f docker/prod/ci.Dockerfile
           docker push $IMAGE_NAME
