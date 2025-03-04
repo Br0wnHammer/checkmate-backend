@@ -114,7 +114,8 @@ const shutdown = async () => {
 		const redis = new IORedis({
 			host: redisHost,
 			port: redisPort,
-		});
+			password: process.env.REDIS_PASSWORD
+		});		
 		logger.info({ message: "Flushing Redis" });
 		await redis.flushall();
 		logger.info({ message: "Redis flushed" });

@@ -28,10 +28,11 @@ class NewJobQueue {
 		Worker
 	) {
 		const settings = settingsService.getSettings() || {};
-		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
+		const { redisHost = "127.0.0.1", redisPort = 6379, redisPassword = process.env.REDIS_PASSWORD } = settings;
 		const connection = {
 			host: redisHost,
 			port: redisPort,
+			password: redisPassword,
 		};
 
 		this.queues = {};
@@ -48,7 +49,11 @@ class NewJobQueue {
 		this.stringService = stringService;
 
 		QUEUE_NAMES.forEach((name) => {
-			this.queues[name] = new Queue(name, { connection });
+			this.queues[name] = new Queue(name, { connection: {
+				host: redisHost,
+				port: redisPort,
+				password: redisPassword,
+			} });
 			this.workers[name] = [];
 		});
 	}
