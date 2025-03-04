@@ -36,6 +36,7 @@ const MonitorSchema = mongoose.Schema(
 				"docker",
 				"port",
 				"distributed_http",
+				"distributed_test",
 			],
 		},
 		jsonPath: {
@@ -46,11 +47,7 @@ const MonitorSchema = mongoose.Schema(
 		},
 		matchMethod: {
 			type: String,
-			enum: [
-				"equal",
-				"include",
-				"regex",
-			],
+			enum: ["equal", "include", "regex"],
 		},
 		url: {
 			type: String,

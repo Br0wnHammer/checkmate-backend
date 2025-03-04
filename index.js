@@ -110,12 +110,15 @@ const shutdown = async () => {
 		const settings =
 			ServiceRegistry.get(SettingsService.SERVICE_NAME).getSettings() || {};
 
-		const { redisHost = "127.0.0.1", redisPort = 6379 } = settings;
-		const redis = new IORedis({
+		const { redisHost = "127.0.0.1", redisPort = 6379, redisPassword = process.env.REDIS_PASSWORD, redisUrl, } = settings;
+		const redis = redisUrl
+		? new IORedis(redisUrl, { maxRetriesPerRequest: null }) // Use redisUrl for local setup
+		: new IORedis({
 			host: redisHost,
 			port: redisPort,
-			password: process.env.REDIS_PASSWORD
-		});		
+			password: redisPassword, //Use this config for coolify setup
+		}); 	
+
 		logger.info({ message: "Flushing Redis" });
 		await redis.flushall();
 		logger.info({ message: "Redis flushed" });
@@ -179,7 +182,13 @@ const startApp = async () => {
 		logger
 	);
 	const statusService = new StatusService(db, logger);
-	const notificationService = new NotificationService(emailService, db, logger, networkService, stringService);
+	const notificationService = new NotificationService(
+		emailService,
+		db,
+		logger,
+		networkService,
+		stringService
+	);
 
 	const jobQueue = new JobQueue(
 		db,
@@ -296,15 +305,15 @@ const startApp = async () => {
 	await jobQueue.initJobQueue();
 
 	// Middleware
+	app.use(responseHandler);
+	app.use(cors());
 	app.use(express.json());
 	app.use(helmet());
-	app.use(languageMiddleware(stringService, translationService));
-
+	app.use(languageMiddleware(stringService, translationService, settingsService));
 	// Swagger UI
 	app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 	//routes
-	app.use(responseHandler);
 	app.use("/api/v1/auth", authRoutes.getRouter());
 	app.use("/api/v1/settings", verifyJWT, settingsRoutes.getRouter());
 	app.use("/api/v1/invite", inviteRoutes.getRouter());
@@ -315,6 +324,11 @@ const startApp = async () => {
 	app.use("/api/v1/distributed-uptime", distributedUptimeRoutes.getRouter());
 	app.use("/api/v1/status-page", statusPageRoutes.getRouter());
 	app.use("/api/v1/notifications", verifyJWT, notificationRoutes.getRouter());
+	app.use("/api/v1/health", (req, res) => {
+		res.json({
+			status: "OK",
+		});
+	});
 	app.use(handleErrors);
 };
 

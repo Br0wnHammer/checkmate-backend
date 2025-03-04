@@ -35,16 +35,21 @@ const loginValidation = joi.object({
 		}),
 	password: joi.string().min(8).required().pattern(passwordPattern),
 });
+const nameValidation = joi
+	.string()
+	.trim()
+	.max(50)
+	.pattern(/^(?=.*[\p{L}\p{Sc}])[\p{L}\p{Sc}\s']+$/u)
+	.messages({
+		"string.empty": "Name is required",
+		"string.max": "Name must be less than 50 characters",
+		"string.pattern.base":
+			"Name must contain at least 1 letter or currency symbol and only allow letters, spaces, apostrophes, and currency symbols",
+	});
 
 const registrationBodyValidation = joi.object({
-	firstName: joi
-		.string()
-		.required()
-		.pattern(/^[A-Za-z]+$/),
-	lastName: joi
-		.string()
-		.required()
-		.pattern(/^[A-Za-z]+$/),
+	firstName: nameValidation.required(),
+	lastName: nameValidation.required(),
 	email: joi
 		.string()
 		.email()
@@ -72,8 +77,8 @@ const editUserParamValidation = joi.object({
 });
 
 const editUserBodyValidation = joi.object({
-	firstName: joi.string().pattern(/^[A-Za-z]+$/),
-	lastName: joi.string().pattern(/^[A-Za-z]+$/),
+	firstName: nameValidation.required(),
+	lastName: nameValidation.required(),
 	profileImage: joi.any(),
 	newPassword: joi.string().min(8).pattern(passwordPattern),
 	password: joi.string().min(8).pattern(passwordPattern),
@@ -198,6 +203,8 @@ const createMonitorBodyValidation = joi.object({
 	expectedValue: joi.string().allow(""),
 	matchMethod: joi.string(),
 });
+
+const createMonitorsBodyValidation = joi.array().items(createMonitorBodyValidation);
 
 const editMonitorBodyValidation = joi.object({
 	name: joi.string(),
@@ -408,8 +415,10 @@ const updateAppSettingsBodyValidation = joi.object({
 	dbConnectionString: joi.string().allow(""),
 	redisHost: joi.string().allow(""),
 	redisPort: joi.number().allow(null, ""),
+	redisUrl: joi.string().allow(""),
 	jwtTTL: joi.string().allow(""),
 	pagespeedApiKey: joi.string().allow(""),
+	language: joi.string().allow(""),
 	systemEmailHost: joi.string().allow(""),
 	systemEmailPort: joi.number().allow(""),
 	systemEmailAddress: joi.string().allow(""),
@@ -434,7 +443,14 @@ const createStatusPageBodyValidation = joi.object({
 	teamId: joi.string().required(),
 	type: joi.string().valid("uptime", "distributed").required(),
 	companyName: joi.string().required(),
-	url: joi.string().required(),
+	url: joi
+		.string()
+		.pattern(/^[a-zA-Z0-9_-]+$/) // Only allow alphanumeric, underscore, and hyphen
+		.required()
+		.messages({
+			"string.pattern.base":
+				"URL can only contain letters, numbers, underscores, and hyphens",
+		}),
 	timezone: joi.string().optional(),
 	color: joi.string().optional(),
 	monitors: joi
@@ -560,6 +576,7 @@ export {
 	inviteBodyValidation,
 	inviteVerificationBodyValidation,
 	createMonitorBodyValidation,
+	createMonitorsBodyValidation,
 	getMonitorByIdParamValidation,
 	getMonitorByIdQueryValidation,
 	getMonitorsByTeamIdParamValidation,

@@ -390,6 +390,13 @@ const getDistributedUptimeDetailsById = async (req) => {
 		};
 
 		const dateString = formatLookup[dateRange];
+
+		// if (monitor.type === "distributed_test") {
+		// 	const stats = await DistributedUptimeCheck.aggregate(
+		// 		buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
+		// 	).explain("executionStats");
+		// 	fs.writeFileSync("aggregation-stats.json", JSON.stringify(stats, null, 2));
+		// }
 		const results = await DistributedUptimeCheck.aggregate(
 			buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
 		);
@@ -723,6 +730,10 @@ const getMonitorsByTeamId = async (req) => {
 											case: { $eq: ["$type", "distributed_http"] },
 											then: "$distributeduptimechecks",
 										},
+										{
+											case: { $eq: ["$type", "distributed_test"] },
+											then: "$distributeduptimechecks",
+										},
 									],
 									default: [],
 								},
@@ -756,6 +767,7 @@ const getMonitorsByTeamId = async (req) => {
 		monitor.checks = NormalizeData(monitor.checks, 10, 100);
 		return monitor;
 	});
+
 	return { monitors, filteredMonitors, summary };
 };
 
@@ -777,6 +789,27 @@ const createMonitor = async (req, res) => {
 	} catch (error) {
 		error.service = SERVICE_NAME;
 		error.method = "createMonitor";
+		throw error;
+	}
+};
+
+/**
+ * Create bulk monitors
+ * @async
+ * @param {Express.Request} req
+ * @returns {Promise<Monitors>}
+ * @throws {Error}
+ */
+const createBulkMonitors = async (req) => {
+	try {
+		const monitors = req.body.map(
+			(item) => new Monitor({ ...item, notifications: undefined })
+		);
+		await Monitor.bulkSave(monitors);
+		return monitors;
+	} catch (error) {
+		error.service = SERVICE_NAME;
+		error.method = "createBulkMonitors";
 		throw error;
 	}
 };
@@ -894,6 +927,7 @@ export {
 	getUptimeDetailsById,
 	getDistributedUptimeDetailsById,
 	createMonitor,
+	createBulkMonitors,
 	deleteMonitor,
 	deleteAllMonitors,
 	deleteMonitorsByUserId,

@@ -11,6 +11,10 @@ const AppSettingsSchema = mongoose.Schema(
 			type: String,
 			default: "en",
 		},
+		language: {
+			type: String,
+			default: "en",
+		},
 		logLevel: {
 			type: String,
 			default: process.env.LOG_LEVEL || "debug",
@@ -49,6 +53,10 @@ const AppSettingsSchema = mongoose.Schema(
             type: String,
             default: process.env.REDIS_PASSWORD || "", 
         },
+		redisUrl: {
+			type: String,
+			default: "redis://127.0.0.1:6379",
+		},
 		jwtTTL: {
 			type: String,
 			required: true,
