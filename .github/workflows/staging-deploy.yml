@@ -138,7 +138,7 @@ jobs:
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
           CALLBACK_URL: "https://api-uptime.uprockrockstaging.com"
-          UPROCK_API_KEY: ${{ secrets.UPROCK_API_KEY }}
+          UPROCK_API_KEY: ${{ secrets.BACKEND_API_KEY }}
 
   cleanup:
     runs-on: ubuntu-latest
