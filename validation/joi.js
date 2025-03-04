@@ -299,6 +299,7 @@ const getChecksParamValidation = joi.object({
 });
 
 const getChecksQueryValidation = joi.object({
+	type: joi.string().valid("http", "ping", "pagespeed", "hardware", "docker", "port", "distributed_http", "distributed_test"),
 	sortOrder: joi.string().valid("asc", "desc"),
 	limit: joi.number(),
 	dateRange: joi.string().valid("hour", "day", "week", "month", "all"),

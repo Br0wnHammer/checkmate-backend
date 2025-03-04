@@ -73,7 +73,7 @@ const createCheck = async (checkData) => {
 const getChecksByMonitor = async (req) => {
 	try {
 		const { monitorId } = req.params;
-		let { sortOrder, dateRange, filter, page, rowsPerPage, status } = req.query;
+		let { type, sortOrder, dateRange, filter, page, rowsPerPage, status } = req.query;
 		status = typeof status !== "undefined" ? false : undefined;
 		page = parseInt(page);
 		rowsPerPage = parseInt(rowsPerPage);
@@ -116,9 +116,6 @@ const getChecksByMonitor = async (req) => {
 			skip = page * rowsPerPage;
 		}
 
-		const monitor= await Monitor.findOne({ _id: matchStage.monitorId });
-		const monitorType = monitor?.type;
-
 		const checkModels = {
 			http: Check,
 			ping: Check,
@@ -127,9 +124,10 @@ const getChecksByMonitor = async (req) => {
 			pagespeed: PageSpeedCheck,
 			hardware: HardwareCheck,
 			distributed_http: DistributedUptimeCheck,
+			distributed_test: DistributedUptimeCheck
 		}
 
-		const Model = checkModels[monitorType];
+		const Model = checkModels[type];
 
 		const checks = await Model.aggregate([
 			{ $match: matchStage },
