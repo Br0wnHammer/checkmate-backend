@@ -18,6 +18,10 @@ class DistributedUptimeRoutes {
 		);
 		this.router.get(
 			"/monitors/details/:monitorId",
+			this.distributedUptimeController.subscribeToDistributedUptimeMonitorDetails
+		);
+		this.router.get(
+			"/monitors/details/:monitorId/initial",
 			this.distributedUptimeController.getDistributedUptimeMonitorDetails
 		);
 	}

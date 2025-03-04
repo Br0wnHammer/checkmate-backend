@@ -12,6 +12,9 @@ class DistributedUptimeController {
 		this.getDistributedUptimeMonitors = this.getDistributedUptimeMonitors.bind(this);
 		this.subscribeToDistributedUptimeMonitors =
 			this.subscribeToDistributedUptimeMonitors.bind(this);
+
+		this.subscribeToDistributedUptimeMonitorDetails =
+			this.subscribeToDistributedUptimeMonitorDetails.bind(this);
 		this.getDistributedUptimeMonitorDetails =
 			this.getDistributedUptimeMonitorDetails.bind(this);
 	}
@@ -152,6 +155,18 @@ class DistributedUptimeController {
 
 	async getDistributedUptimeMonitorDetails(req, res, next) {
 		try {
+			const monitor = await this.db.getDistributedUptimeDetailsById(req);
+			return res.success({
+				msg: "OK",
+				data: monitor,
+			});
+		} catch (error) {
+			next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitorDetails"));
+		}
+	}
+
+	async subscribeToDistributedUptimeMonitorDetails(req, res, next) {
+		try {
 			res.setHeader("Content-Type", "text/event-stream");
 			res.setHeader("Cache-Control", "no-cache");
 			res.setHeader("Connection", "keep-alive");
@@ -191,10 +206,6 @@ class DistributedUptimeController {
 			);
 
 			checksStream.on("change", handleChange);
-
-			// Send initial data
-			const monitor = await this.db.getDistributedUptimeDetailsById(req);
-			res.write(`data: ${JSON.stringify({ monitor })}\n\n`);
 
 			// Handle client disconnect
 			req.on("close", () => {
