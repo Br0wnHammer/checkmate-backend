@@ -2,8 +2,8 @@ name: Staging Deploy
 
 on:
   push:
-    branches:
-      - develop
+    # branches:
+    #   - develop
 
 jobs:
   docker-build:
@@ -137,6 +137,7 @@ jobs:
           REDIS_URL: "redis://172.31.40.27"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          CALLBACK_URL: "https://uptime.uprockrockstaging.com"
 
   cleanup:
     runs-on: ubuntu-latest

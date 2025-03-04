@@ -2,8 +2,8 @@ name: Production Deploy
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
 
 permissions:
   packages: write
@@ -365,6 +365,7 @@ jobs:
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          CALLBACK_URL: "https://uptime.uprock.com"
 
   deploy-uptime-2:
     runs-on: ubuntu-latest
@@ -402,6 +403,7 @@ jobs:
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          CALLBACK_URL: "https://uptime.uprock.com"
 
   deploy-uptime-3:
     runs-on: ubuntu-latest
@@ -439,6 +441,7 @@ jobs:
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          CALLBACK_URL: "https://uptime.uprock.com"
 
   deploy-uptime-4:
     runs-on: ubuntu-latest
@@ -476,6 +479,7 @@ jobs:
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          CALLBACK_URL: "https://uptime.uprock.com"
 
   cleanup:
     runs-on: ubuntu-latest
