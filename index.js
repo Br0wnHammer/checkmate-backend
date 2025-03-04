@@ -139,28 +139,14 @@ const shutdown = async () => {
 // Need to wrap server setup in a function to handle async nature of JobQueue
 const startApp = async () => {
 	const app = express();
+	const allowedOrigin = "http://165.232.159.167:5173";
 
 	app.use(cors({
-		origin: "*",  
+		origin: allowedOrigin,
 		methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-		allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-		credentials: true,
-		preflightContinue: false,
-		optionsSuccessStatus: 204
-	}));
-
-	app.options("*", cors());
-	app.use((req, res, next) => {
-		res.header("Access-Control-Allow-Origin", "*");
-		res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-		res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-		
-		if (req.method === "OPTIONS") {
-			return res.status(200).end();
-		}
-		
-		next();
-	});
+		allowedHeaders: "Content-Type, Authorization",
+		credentials: true
+	}));	
 
 	// Create and Register Primary services
 	const translationService = new TranslationService(logger);
@@ -305,21 +291,20 @@ const startApp = async () => {
 	);
 
 	const notificationRoutes = new NotificationRoutes(notificationController);
-	// const allowedOrigins = "http://165.232.159.167:5173";
+
 	// Init job queue
 	await jobQueue.initJobQueue();
+
 	// Middleware
-	
-	
 	app.use(express.json());
 	app.use(helmet());
 	app.use(languageMiddleware(stringService, translationService));
+
 	// Swagger UI
 	app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 	//routes
 	app.use(responseHandler);
-
 	app.use("/api/v1/auth", authRoutes.getRouter());
 	app.use("/api/v1/settings", verifyJWT, settingsRoutes.getRouter());
 	app.use("/api/v1/invite", inviteRoutes.getRouter());
