@@ -19,13 +19,13 @@ jobs:
         
       - name: Docker Login to GitHub Container Registry
         run: |
-          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+          echo ""${{ secrets.GH_UPTIME_PAT }}"" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
 
       - name: Docker Build and Push
         run: |
           COMMIT_HASH=$(git rev-parse --short HEAD)
           sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
+          IMAGE_NAME=ghcr.io/"${{ github.repository_owner }}"/uptime:${COMMIT_HASH}
           docker build -t $IMAGE_NAME . -f docker/prod/ci.Dockerfile
           docker push $IMAGE_NAME
 
@@ -40,8 +40,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
 
@@ -72,8 +72,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
 
@@ -104,8 +104,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
 
@@ -136,8 +136,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
 
@@ -169,8 +169,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
 
@@ -212,8 +212,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
 
@@ -255,8 +255,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
 
@@ -298,8 +298,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
 
@@ -341,8 +341,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }}"
 
@@ -363,10 +363,10 @@ jobs:
           SERVER_IP: "${{ secrets.UPTIME_1_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          REPOSITORY_OWNER: "${{ github.repository_owner }}"
+          DOCKER_SECRET: "${{ secrets.GH_UPTIME_PAT }}"
           CALLBACK_URL: "https://api-uptime.uprock.com"
-          UPROCK_API_KEY: ${{ secrets.BACKEND_API_KEY }}
+          UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
 
   deploy-uptime-2:
     runs-on: ubuntu-latest
@@ -380,8 +380,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_2_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_2_SECURITY_GROUP }}"
 
@@ -402,10 +402,10 @@ jobs:
           SERVER_IP: "${{ secrets.UPTIME_2_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          REPOSITORY_OWNER: "${{ github.repository_owner }}"
+          DOCKER_SECRET: "${{ secrets.GH_UPTIME_PAT }}"
           CALLBACK_URL: "https://api-uptime.uprock.com"
-          UPROCK_API_KEY: ${{ secrets.BACKEND_API_KEY }}
+          UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
 
   deploy-uptime-3:
     runs-on: ubuntu-latest
@@ -419,8 +419,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_3_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_3_SECURITY_GROUP }}"
 
@@ -441,10 +441,10 @@ jobs:
           SERVER_IP: "${{ secrets.UPTIME_3_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          REPOSITORY_OWNER: "${{ github.repository_owner }}"
+          DOCKER_SECRET: "${{ secrets.GH_UPTIME_PAT }}"
           CALLBACK_URL: "https://api-uptime.uprock.com"
-          UPROCK_API_KEY: ${{ secrets.BACKEND_API_KEY }}
+          UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
 
   deploy-uptime-4:
     runs-on: ubuntu-latest
@@ -458,8 +458,8 @@ jobs:
       - name: Update AWS Security Groups & Setup SSH Key
         uses: ./.github/actions/setup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_4_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_4_SECURITY_GROUP }}"
 
@@ -480,10 +480,10 @@ jobs:
           SERVER_IP: "${{ secrets.UPTIME_4_HOST_IP }}"
           MONGODB_URL: "${{ secrets.MONGODB_URL }}"
           REDIS_URL: "rediss://default:${{ secrets.REDIS_PASSWORD }}@${{ secrets.REDIS_HOST }}"
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          REPOSITORY_OWNER: "${{ github.repository_owner }}"
+          DOCKER_SECRET: "${{ secrets.GH_UPTIME_PAT }}"
           CALLBACK_URL: "https://api-uptime.uprock.com"
-          UPROCK_API_KEY: ${{ secrets.BACKEND_API_KEY }}
+          UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
 
   cleanup:
     runs-on: ubuntu-latest
@@ -501,7 +501,7 @@ jobs:
       - name: Cleanup AWS Security Groups
         uses: ./.github/actions/cleanup
         with:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           REGIONS: "${{ secrets.UPTIME_1_AWS_REGION }} ${{ secrets.UPTIME_2_AWS_REGION }} ${{ secrets.UPTIME_3_AWS_REGION }}  ${{ secrets.UPTIME_4_AWS_REGION }}"
           SECURITY_GROUPS: "${{ secrets.UPTIME_1_SECURITY_GROUP }} ${{ secrets.UPTIME_2_SECURITY_GROUP }} ${{ secrets.UPTIME_3_SECURITY_GROUP }} ${{ secrets.UPTIME_4_SECURITY_GROUP }}"

@@ -135,10 +135,10 @@ jobs:
           SERVER_IP: "${{ secrets.UPTIME_STAGING_HOST_IP }}"
           MONGODB_URL: "mongodb://172.31.40.27:27017/uptime_db"
           REDIS_URL: "redis://172.31.40.27"
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          DOCKER_SECRET: ${{ secrets.GH_UPTIME_PAT }}
+          REPOSITORY_OWNER: "${{ github.repository_owner }}"
+          DOCKER_SECRET: "${{ secrets.GH_UPTIME_PAT }}"
           CALLBACK_URL: "https://api-uptime.uprockrockstaging.com"
-          UPROCK_API_KEY: ${{ secrets.BACKEND_API_KEY }}
+          UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
 
   cleanup:
     runs-on: ubuntu-latest
