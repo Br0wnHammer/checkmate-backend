@@ -139,7 +139,7 @@ const shutdown = async () => {
 // Need to wrap server setup in a function to handle async nature of JobQueue
 const startApp = async () => {
 	const app = express();
-	const allowedOrigin = "http://165.232.159.167:5173";
+	const allowedOrigin = process.env.CLIENT_HOST;
 
 	app.use(cors({
 		origin: allowedOrigin,

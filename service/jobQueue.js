@@ -49,11 +49,7 @@ class NewJobQueue {
 		this.stringService = stringService;
 
 		QUEUE_NAMES.forEach((name) => {
-			this.queues[name] = new Queue(name, { connection: {
-				host: redisHost,
-				port: redisPort,
-				password: redisPassword,
-			} });
+			this.queues[name] = new Queue(name, { connection });
 			this.workers[name] = [];
 		});
 	}
