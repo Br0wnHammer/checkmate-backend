@@ -1,5 +1,8 @@
 import Check from "../../models/Check.js";
 import Monitor from "../../models/Monitor.js";
+import HardwareCheck from "../../models/HardwareCheck.js";
+import PageSpeedCheck from "../../models/PageSpeedCheck.js";
+import DistributedUptimeCheck from "../../models/DistributedUptimeCheck.js";
 import User from "../../models/User.js";
 import logger from "../../../utils/logger.js";
 import { ObjectId } from "mongodb";
@@ -112,7 +115,23 @@ const getChecksByMonitor = async (req) => {
 		if (page && rowsPerPage) {
 			skip = page * rowsPerPage;
 		}
-		const checks = await Check.aggregate([
+
+		const monitor= await Monitor.findOne({ _id: matchStage.monitorId });
+		const monitorType = monitor?.type;
+
+		const checkModels = {
+			http: Check,
+			ping: Check,
+			docker: Check,
+			port: Check,
+			pagespeed: PageSpeedCheck,
+			hardware: HardwareCheck,
+			distributed_http: DistributedUptimeCheck,
+		}
+
+		const Model = checkModels[monitorType];
+
+		const checks = await Model.aggregate([
 			{ $match: matchStage },
 			{ $sort: { createdAt: sortOrder } },
 			{
@@ -184,25 +203,51 @@ const getChecksByTeam = async (req) => {
 			skip = page * rowsPerPage;
 		}
 
-		const checks = await Check.aggregate([
-			{ $match: matchStage },
-			{ $sort: { createdAt: sortOrder } },
+		const aggregateChecks = async (Model) => {
+			return Model.aggregate([
+				{ $match: matchStage },
+				{ $sort: { createdAt: sortOrder } },
+				{
+					$facet: {
+						summary: [{ $count: "checksCount" }],
+						checks: [{ $skip: skip }, { $limit: rowsPerPage }],
+					},
+				},
+				{
+					$project: {
+						checksCount: { $arrayElemAt: ["$summary.checksCount", 0] },
+						checks: "$checks",
+					},
+				},
+			]);
+		};
 
-			{
-				$facet: {
-					summary: [{ $count: "checksCount" }],
-					checks: [{ $skip: skip }, { $limit: rowsPerPage }],
-				},
-			},
-			{
-				$project: {
-					checksCount: { $arrayElemAt: ["$summary.checksCount", 0] },
-					checks: "$checks",
-				},
-			},
+		const [uptimeChecks, hardwareChecks, pagespeedChecks, distributedChecks] = await Promise.all([
+			aggregateChecks(Check),
+			aggregateChecks(HardwareCheck),
+			aggregateChecks(PageSpeedCheck),
+			aggregateChecks(DistributedUptimeCheck),
 		]);
 
-		return checks[0];
+		const totalChecks =
+			(uptimeChecks[0]?.checksCount || 0) +
+			(hardwareChecks[0]?.checksCount || 0) +
+			(pagespeedChecks[0]?.checksCount || 0) +
+			(distributedChecks[0]?.checksCount || 0);
+
+		const combinedChecks = [
+			...(uptimeChecks[0]?.checks || []),
+			...(hardwareChecks[0]?.checks || []),
+			...(pagespeedChecks[0]?.checks || []),
+			...(distributedChecks[0]?.checks || []),
+		].sort((a, b) =>
+			sortOrder === 1 ? a.createdAt - b.createdAt : b.createdAt - a.createdAt
+		);
+
+		return {
+			checksCount: totalChecks,
+			checks: combinedChecks,
+		};
 	} catch (error) {
 		error.service = SERVICE_NAME;
 		error.method = "getChecksByTeam";
