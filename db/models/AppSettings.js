@@ -5,7 +5,7 @@ const AppSettingsSchema = mongoose.Schema(
         apiBaseUrl: {
             type: String,
             required: true,
-            default: process.env.VITE_APP_API_BASE_URL || "http://localhost:5000/api/v1",
+            default: process.env.API_BASE_URL || "http://localhost:5000/api/v1",
         },
         logLevel: {
             type: String,

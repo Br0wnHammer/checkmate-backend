@@ -139,6 +139,28 @@ const shutdown = async () => {
 const startApp = async () => {
 	const app = express();
 
+	app.use(cors({
+		origin: "*",  
+		methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+		allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+		credentials: true,
+		preflightContinue: false,
+		optionsSuccessStatus: 204
+	}));
+
+	app.options("*", cors());
+	app.use((req, res, next) => {
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+		res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+		
+		if (req.method === "OPTIONS") {
+			return res.status(200).end();
+		}
+		
+		next();
+	});
+
 	// Create and Register Primary services
 	const translationService = new TranslationService(logger);
 	const stringService = new StringService(translationService);
@@ -282,11 +304,12 @@ const startApp = async () => {
 	);
 
 	const notificationRoutes = new NotificationRoutes(notificationController);
-
+	// const allowedOrigins = "http://165.232.159.167:5173";
 	// Init job queue
 	await jobQueue.initJobQueue();
 	// Middleware
-	app.use(cors());
+	
+	
 	app.use(express.json());
 	app.use(helmet());
 	app.use(languageMiddleware(stringService, translationService));
