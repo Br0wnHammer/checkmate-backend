@@ -179,7 +179,7 @@ class DistributedUptimeController {
 			// Keep connection alive
 			const keepAlive = setInterval(() => {
 				res.write(": keepalive\n\n");
-			}, 30000);
+			}, 10000);
 
 			// Clean up on close
 			req.on("close", () => {
@@ -276,7 +276,13 @@ class DistributedUptimeController {
 			// Keep connection alive
 			const keepAlive = setInterval(() => {
 				res.write(": keepalive\n\n");
-			}, 30000);
+			}, 10000);
+
+			// Clean up on close
+			req.on("close", () => {
+				clearInterval(keepAlive);
+			});
+
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitorDetails"));
 		}
