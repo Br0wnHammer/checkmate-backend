@@ -11,10 +11,10 @@ import jwt from "jsonwebtoken";
 import { successMessages } from "../../utils/messages.js";
 import sinon from "sinon";
 
-describe("maintenanceWindowController - createMaintenanceWindows", function() {
+describe("maintenanceWindowController - createMaintenanceWindows", function () {
 	let req, res, next, stub;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			body: {
 				monitors: ["66ff52e7c5911c61698ac724"],
@@ -41,11 +41,11 @@ describe("maintenanceWindowController - createMaintenanceWindows", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if body validation fails", async function() {
+	it("should reject with an error if body validation fails", async function () {
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { teamId: "123" };
 		});
@@ -56,14 +56,14 @@ describe("maintenanceWindowController - createMaintenanceWindows", function() {
 		stub.restore();
 	});
 
-	it("should reject with an error if jwt.verify fails", async function() {
+	it("should reject with an error if jwt.verify fails", async function () {
 		stub = sinon.stub(jwt, "verify").throws(new jwt.JsonWebTokenError());
 		await createMaintenanceWindows(req, res, next);
 		expect(next.firstCall.args[0]).to.be.instanceOf(jwt.JsonWebTokenError);
 		stub.restore();
 	});
 
-	it("should reject with an error DB operations fail", async function() {
+	it("should reject with an error DB operations fail", async function () {
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { teamId: "123" };
 		});
@@ -74,7 +74,7 @@ describe("maintenanceWindowController - createMaintenanceWindows", function() {
 		stub.restore();
 	});
 
-	it("should return success message if all operations are successful", async function() {
+	it("should return success message if all operations are successful", async function () {
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { teamId: "123" };
 		});
@@ -89,7 +89,7 @@ describe("maintenanceWindowController - createMaintenanceWindows", function() {
 		stub.restore();
 	});
 
-	it("should return success message if all operations are successful with active set to undefined", async function() {
+	it("should return success message if all operations are successful with active set to undefined", async function () {
 		req.body.active = undefined;
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { teamId: "123" };
@@ -106,10 +106,10 @@ describe("maintenanceWindowController - createMaintenanceWindows", function() {
 	});
 });
 
-describe("maintenanceWindowController - getMaintenanceWindowById", function() {
+describe("maintenanceWindowController - getMaintenanceWindowById", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			body: {},
 			params: {
@@ -132,21 +132,21 @@ describe("maintenanceWindowController - getMaintenanceWindowById", function() {
 		next = sinon.stub();
 	});
 
-	it("should reject if param validation fails", async function() {
+	it("should reject if param validation fails", async function () {
 		req.params = {};
 		await getMaintenanceWindowById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject if DB operations fail", async function() {
+	it("should reject if DB operations fail", async function () {
 		req.db.getMaintenanceWindowById.throws(new Error("DB error"));
 		await getMaintenanceWindowById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message with data if all operations are successful", async function() {
+	it("should return success message with data if all operations are successful", async function () {
 		req.db.getMaintenanceWindowById.returns({ id: "123" });
 		await getMaintenanceWindowById(req, res, next);
 		expect(res.status.firstCall.args[0]).to.equal(200);
@@ -160,10 +160,10 @@ describe("maintenanceWindowController - getMaintenanceWindowById", function() {
 	});
 });
 
-describe("maintenanceWindowController - getMaintenanceWindowsByTeamId", function() {
+describe("maintenanceWindowController - getMaintenanceWindowsByTeamId", function () {
 	let req, res, next, stub;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			body: {},
 			params: {},
@@ -185,7 +185,7 @@ describe("maintenanceWindowController - getMaintenanceWindowsByTeamId", function
 		next = sinon.stub();
 	});
 
-	it("should reject if query validation fails", async function() {
+	it("should reject if query validation fails", async function () {
 		req.query = {
 			invalid: 1,
 		};
@@ -194,14 +194,14 @@ describe("maintenanceWindowController - getMaintenanceWindowsByTeamId", function
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject if jwt.verify fails", async function() {
+	it("should reject if jwt.verify fails", async function () {
 		stub = sinon.stub(jwt, "verify").throws(new jwt.JsonWebTokenError());
 		await getMaintenanceWindowsByTeamId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.instanceOf(jwt.JsonWebTokenError);
 		stub.restore();
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { teamId: "123" };
 		});
@@ -212,7 +212,7 @@ describe("maintenanceWindowController - getMaintenanceWindowsByTeamId", function
 		stub.restore();
 	});
 
-	it("should return success message with data if all operations are successful", async function() {
+	it("should return success message with data if all operations are successful", async function () {
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { teamId: "123" };
 		});
@@ -230,10 +230,10 @@ describe("maintenanceWindowController - getMaintenanceWindowsByTeamId", function
 	});
 });
 
-describe("maintenanceWindowController - getMaintenanceWindowsByMonitorId", function() {
+describe("maintenanceWindowController - getMaintenanceWindowsByMonitorId", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			body: {},
 			params: {
@@ -257,25 +257,25 @@ describe("maintenanceWindowController - getMaintenanceWindowsByMonitorId", funct
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject if param validation fails", async function() {
+	it("should reject if param validation fails", async function () {
 		req.params = {};
 		await getMaintenanceWindowsByMonitorId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.getMaintenanceWindowsByMonitorId.throws(new Error("DB error"));
 		await getMaintenanceWindowsByMonitorId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message with data if all operations are successful", async function() {
+	it("should return success message with data if all operations are successful", async function () {
 		const data = [{ monitorId: "123" }];
 		req.db.getMaintenanceWindowsByMonitorId.returns(data);
 		await getMaintenanceWindowsByMonitorId(req, res, next);
@@ -291,10 +291,10 @@ describe("maintenanceWindowController - getMaintenanceWindowsByMonitorId", funct
 	});
 });
 
-describe("maintenanceWindowController - deleteMaintenanceWindow", function() {
+describe("maintenanceWindowController - deleteMaintenanceWindow", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			body: {},
 			params: {
@@ -318,25 +318,25 @@ describe("maintenanceWindowController - deleteMaintenanceWindow", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject if param validation fails", async function() {
+	it("should reject if param validation fails", async function () {
 		req.params = {};
 		await deleteMaintenanceWindow(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.deleteMaintenanceWindowById.throws(new Error("DB error"));
 		await deleteMaintenanceWindow(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message if all operations are successful", async function() {
+	it("should return success message if all operations are successful", async function () {
 		await deleteMaintenanceWindow(req, res, next);
 		expect(req.db.deleteMaintenanceWindowById.calledOnceWith(req.params.id));
 		expect(res.status.firstCall.args[0]).to.equal(200);
@@ -349,10 +349,10 @@ describe("maintenanceWindowController - deleteMaintenanceWindow", function() {
 	});
 });
 
-describe("maintenanceWindowController - editMaintenanceWindow", function() {
+describe("maintenanceWindowController - editMaintenanceWindow", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			body: {
 				active: true,
@@ -379,32 +379,32 @@ describe("maintenanceWindowController - editMaintenanceWindow", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject if param validation fails", async function() {
+	it("should reject if param validation fails", async function () {
 		req.params = {};
 		await editMaintenanceWindow(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject if body validation fails", async function() {
+	it("should reject if body validation fails", async function () {
 		req.body = { invalid: 1 };
 		await editMaintenanceWindow(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.editMaintenanceWindowById.throws(new Error("DB error"));
 		await editMaintenanceWindow(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message with data if all operations are successful", async function() {
+	it("should return success message with data if all operations are successful", async function () {
 		const data = { id: "123" };
 		req.db.editMaintenanceWindowById.returns(data);
 

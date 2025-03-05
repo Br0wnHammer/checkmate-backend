@@ -1,11 +1,11 @@
 const SERVICE_NAME = "NotificationService";
 const TELEGRAM_API_BASE_URL = "https://api.telegram.org/bot";
-const PLATFORM_TYPES = ['telegram', 'slack', 'discord'];
+const PLATFORM_TYPES = ["telegram", "slack", "discord"];
 
 const MESSAGE_FORMATTERS = {
-    telegram: (messageText, chatId) => ({ chat_id: chatId, text: messageText }),
-    slack: (messageText) => ({ text: messageText }),
-    discord: (messageText) => ({ content: messageText })
+	telegram: (messageText, chatId) => ({ chat_id: chatId, text: messageText }),
+	slack: (messageText) => ({ text: messageText }),
+	discord: (messageText) => ({ content: messageText }),
 };
 
 class NotificationService {
@@ -28,99 +28,99 @@ class NotificationService {
 	}
 
 	/**
- * Formats a notification message based on the monitor status and platform.
- *
- * @param {Object} monitor - The monitor object.
- * @param {string} monitor.name - The name of the monitor.
- * @param {string} monitor.url - The URL of the monitor.
- * @param {boolean} status - The current status of the monitor (true for up, false for down).
- * @param {string} platform - The notification platform (e.g., "telegram", "slack", "discord").
- * @param {string} [chatId] - The chat ID for platforms that require it (e.g., Telegram).
- * @returns {Object|null} The formatted message object for the specified platform, or null if the platform is unsupported.
- */
+	 * Formats a notification message based on the monitor status and platform.
+	 *
+	 * @param {Object} monitor - The monitor object.
+	 * @param {string} monitor.name - The name of the monitor.
+	 * @param {string} monitor.url - The URL of the monitor.
+	 * @param {boolean} status - The current status of the monitor (true for up, false for down).
+	 * @param {string} platform - The notification platform (e.g., "telegram", "slack", "discord").
+	 * @param {string} [chatId] - The chat ID for platforms that require it (e.g., Telegram).
+	 * @returns {Object|null} The formatted message object for the specified platform, or null if the platform is unsupported.
+	 */
 
 	formatNotificationMessage(monitor, status, platform, chatId) {
-        const messageText = this.stringService.getMonitorStatus(
-            monitor.name,
-            status,
-            monitor.url
-        );
+		const messageText = this.stringService.getMonitorStatus(
+			monitor.name,
+			status,
+			monitor.url
+		);
 
-        if (!PLATFORM_TYPES.includes(platform)) {
-            return undefined;
-        }
+		if (!PLATFORM_TYPES.includes(platform)) {
+			return undefined;
+		}
 
-        return MESSAGE_FORMATTERS[platform](messageText, chatId);
-    }
+		return MESSAGE_FORMATTERS[platform](messageText, chatId);
+	}
 
 	/**
- * Sends a webhook notification to a specified platform.
- *
- * @param {Object} networkResponse - The response object from the network.
- * @param {Object} networkResponse.monitor - The monitor object.
- * @param {boolean} networkResponse.status - The monitor's status (true for up, false for down).
- * @param {Object} notification - The notification settings.
- * @param {string} notification.platform - The target platform ("telegram", "slack", "discord").
- * @param {Object} notification.config - The configuration object for the webhook.
- * @param {string} notification.config.webhookUrl - The webhook URL for the platform.
- * @param {string} [notification.config.botToken] - The bot token for Telegram notifications.
- * @param {string} [notification.config.chatId] - The chat ID for Telegram notifications.
- * @returns {Promise<boolean>} A promise that resolves to true if the notification was sent successfully, otherwise false.
- */
+	 * Sends a webhook notification to a specified platform.
+	 *
+	 * @param {Object} networkResponse - The response object from the network.
+	 * @param {Object} networkResponse.monitor - The monitor object.
+	 * @param {boolean} networkResponse.status - The monitor's status (true for up, false for down).
+	 * @param {Object} notification - The notification settings.
+	 * @param {string} notification.platform - The target platform ("telegram", "slack", "discord").
+	 * @param {Object} notification.config - The configuration object for the webhook.
+	 * @param {string} notification.config.webhookUrl - The webhook URL for the platform.
+	 * @param {string} [notification.config.botToken] - The bot token for Telegram notifications.
+	 * @param {string} [notification.config.chatId] - The chat ID for Telegram notifications.
+	 * @returns {Promise<boolean>} A promise that resolves to true if the notification was sent successfully, otherwise false.
+	 */
 
 	async sendWebhookNotification(networkResponse, notification) {
-        const { monitor, status } = networkResponse;
-        const { platform } = notification;
-        const { webhookUrl, botToken, chatId } = notification.config;
+		const { monitor, status } = networkResponse;
+		const { platform } = notification;
+		const { webhookUrl, botToken, chatId } = notification.config;
 
-        // Early return if platform is not supported
-        if (!PLATFORM_TYPES.includes(platform)) {
-            this.logger.warn({
-                message: this.stringService.getWebhookUnsupportedPlatform(platform),
-                service: this.SERVICE_NAME,
-                method: 'sendWebhookNotification',
-                platform
-            });
-            return false;
-        }
+		// Early return if platform is not supported
+		if (!PLATFORM_TYPES.includes(platform)) {
+			this.logger.warn({
+				message: this.stringService.getWebhookUnsupportedPlatform(platform),
+				service: this.SERVICE_NAME,
+				method: "sendWebhookNotification",
+				platform,
+			});
+			return false;
+		}
 
-        // Early return for telegram if required fields are missing
-        if (platform === 'telegram' && (!botToken || !chatId)) {
-            this.logger.warn({
-                message: 'Missing required fields for Telegram notification',
-                service: this.SERVICE_NAME,
-                method: 'sendWebhookNotification',
-                platform
-            });
-            return false;
-        }
+		// Early return for telegram if required fields are missing
+		if (platform === "telegram" && (!botToken || !chatId)) {
+			this.logger.warn({
+				message: "Missing required fields for Telegram notification",
+				service: this.SERVICE_NAME,
+				method: "sendWebhookNotification",
+				platform,
+			});
+			return false;
+		}
 
-        let url = webhookUrl;
-        if (platform === 'telegram') {
-            url = `${TELEGRAM_API_BASE_URL}${botToken}/sendMessage`;
-        }
+		let url = webhookUrl;
+		if (platform === "telegram") {
+			url = `${TELEGRAM_API_BASE_URL}${botToken}/sendMessage`;
+		}
 
-        // Now that we know the platform is valid, format the message
-        const message = this.formatNotificationMessage(monitor, status, platform, chatId);
+		// Now that we know the platform is valid, format the message
+		const message = this.formatNotificationMessage(monitor, status, platform, chatId);
 
-        try {
-            const response = await this.networkService.requestWebhook(platform, url, message);
-            return response.status;
-        } catch (error) {
-            this.logger.error({
-                message: this.stringService.getWebhookSendError(platform),
-                service: this.SERVICE_NAME,
-                method: 'sendWebhookNotification',
-                error: error.message,
-                stack: error.stack,
-                url,
-                platform,
-                requestPayload: message
-            });
-            return false;
-        }
-   	}
-		
+		try {
+			const response = await this.networkService.requestWebhook(platform, url, message);
+			return response.status;
+		} catch (error) {
+			this.logger.error({
+				message: this.stringService.getWebhookSendError(platform),
+				service: this.SERVICE_NAME,
+				method: "sendWebhookNotification",
+				error: error.message,
+				stack: error.stack,
+				url,
+				platform,
+				requestPayload: message,
+			});
+			return false;
+		}
+	}
+
 	/**
 	 * Sends an email notification for hardware infrastructure alerts
 	 *
@@ -166,9 +166,11 @@ class NotificationService {
 			if (networkResponse.statusChanged === false) return false;
 			// if prevStatus is undefined, monitor is resuming, we're done
 			if (networkResponse.prevStatus === undefined) return false;
-	
-			const notifications = await this.db.getNotificationsByMonitorId(networkResponse.monitorId);
-	
+
+			const notifications = await this.db.getNotificationsByMonitorId(
+				networkResponse.monitorId
+			);
+
 			for (const notification of notifications) {
 				if (notification.type === "email") {
 					await this.sendEmail(networkResponse, notification.address);

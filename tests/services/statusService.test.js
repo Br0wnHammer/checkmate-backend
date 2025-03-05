@@ -5,7 +5,7 @@ import { afterEach, describe } from "node:test";
 describe("StatusService", () => {
 	let db, logger, statusService;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		db = {
 			getMonitorById: sinon.stub(),
 			createCheck: sinon.stub(),
@@ -23,27 +23,27 @@ describe("StatusService", () => {
 	});
 
 	describe("constructor", () => {
-		it("should create an instance of StatusService", function() {
+		it("should create an instance of StatusService", function () {
 			expect(statusService).to.be.an.instanceOf(StatusService);
 		});
 	});
 
 	describe("getStatusString", () => {
-		it("should return 'up' if status is true", function() {
+		it("should return 'up' if status is true", function () {
 			expect(statusService.getStatusString(true)).to.equal("up");
 		});
 
-		it("should return 'down' if status is false", function() {
+		it("should return 'down' if status is false", function () {
 			expect(statusService.getStatusString(false)).to.equal("down");
 		});
 
-		it("should return 'unknown' if status is undefined or null", function() {
+		it("should return 'unknown' if status is undefined or null", function () {
 			expect(statusService.getStatusString(undefined)).to.equal("unknown");
 		});
 	});
 
 	describe("updateStatus", () => {
-		beforeEach(function() {
+		beforeEach(function () {
 			// statusService.insertCheck = sinon.stub().resolves;
 		});
 
@@ -51,7 +51,7 @@ describe("StatusService", () => {
 			sinon.restore();
 		});
 
-		it("should throw an error if an error occurs", async function() {
+		it("should throw an error if an error occurs", async function () {
 			const error = new Error("Test error");
 			statusService.db.getMonitorById = sinon.stub().throws(error);
 			try {
@@ -62,7 +62,7 @@ describe("StatusService", () => {
 			// expect(statusService.insertCheck.calledOnce).to.be.true;
 		});
 
-		it("should return {statusChanged: false} if status hasn't changed", async function() {
+		it("should return {statusChanged: false} if status hasn't changed", async function () {
 			statusService.db.getMonitorById = sinon.stub().returns({ status: true });
 			const result = await statusService.updateStatus({
 				monitorId: "test",
@@ -72,7 +72,7 @@ describe("StatusService", () => {
 			// expect(statusService.insertCheck.calledOnce).to.be.true;
 		});
 
-		it("should return {statusChanged: true} if status has changed from down to up", async function() {
+		it("should return {statusChanged: true} if status has changed from down to up", async function () {
 			statusService.db.getMonitorById = sinon
 				.stub()
 				.returns({ status: false, save: sinon.stub() });
@@ -86,7 +86,7 @@ describe("StatusService", () => {
 			// expect(statusService.insertCheck.calledOnce).to.be.true;
 		});
 
-		it("should return {statusChanged: true} if status has changed from up to down", async function() {
+		it("should return {statusChanged: true} if status has changed from up to down", async function () {
 			statusService.db.getMonitorById = sinon
 				.stub()
 				.returns({ status: true, save: sinon.stub() });
@@ -102,7 +102,7 @@ describe("StatusService", () => {
 	});
 
 	describe("buildCheck", () => {
-		it("should build a check object", function() {
+		it("should build a check object", function () {
 			const check = statusService.buildCheck({
 				monitorId: "test",
 				type: "test",
@@ -119,7 +119,7 @@ describe("StatusService", () => {
 			expect(check.message).to.equal("Test message");
 		});
 
-		it("should build a check object for pagespeed type", function() {
+		it("should build a check object for pagespeed type", function () {
 			const check = statusService.buildCheck({
 				monitorId: "test",
 				type: "pagespeed",
@@ -163,7 +163,7 @@ describe("StatusService", () => {
 			});
 		});
 
-		it("should build a check object for pagespeed type with missing data", function() {
+		it("should build a check object for pagespeed type with missing data", function () {
 			const check = statusService.buildCheck({
 				monitorId: "test",
 				type: "pagespeed",
@@ -196,7 +196,7 @@ describe("StatusService", () => {
 			});
 		});
 
-		it("should build a check for hardware type", function() {
+		it("should build a check for hardware type", function () {
 			const check = statusService.buildCheck({
 				monitorId: "test",
 				type: "hardware",
@@ -217,7 +217,7 @@ describe("StatusService", () => {
 			expect(check.host).to.equal("host");
 		});
 
-		it("should build a check for hardware type with missing data", function() {
+		it("should build a check for hardware type with missing data", function () {
 			const check = statusService.buildCheck({
 				monitorId: "test",
 				type: "hardware",
@@ -240,7 +240,7 @@ describe("StatusService", () => {
 	});
 
 	describe("insertCheck", () => {
-		it("should log an error if one is thrown", async function() {
+		it("should log an error if one is thrown", async function () {
 			const testError = new Error("Test error");
 			statusService.db.createCheck = sinon.stub().throws(testError);
 			try {
@@ -251,7 +251,7 @@ describe("StatusService", () => {
 			expect(statusService.logger.error.calledOnce).to.be.true;
 		});
 
-		it("should insert a check into the database", async function() {
+		it("should insert a check into the database", async function () {
 			await statusService.insertCheck({ monitorId: "test", type: "http" });
 			expect(statusService.db.createCheck.calledOnce).to.be.true;
 		});
