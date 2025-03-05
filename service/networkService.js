@@ -14,7 +14,7 @@ const UPROCK_ENDPOINT = "https://api.uprock.com/checkmate/push";
 class NetworkService {
 	static SERVICE_NAME = SERVICE_NAME;
 
-	constructor(axios, ping, logger, http, Docker, net, stringService) {
+	constructor(axios, ping, logger, http, Docker, net, stringService, settingsService) {
 		this.TYPE_PING = "ping";
 		this.TYPE_HTTP = "http";
 		this.TYPE_PAGESPEED = "pagespeed";
@@ -33,6 +33,8 @@ class NetworkService {
 		this.Docker = Docker;
 		this.net = net;
 		this.stringService = stringService;
+		this.settingsService = settingsService;
+		this.settings = settingsService.getSettings();
 	}
 
 	/**
@@ -242,7 +244,10 @@ class NetworkService {
 		try {
 			const url = job.data.url;
 			const updatedJob = { ...job };
-			const pagespeedUrl = `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&category=seo&category=accessibility&category=best-practices&category=performance`;
+			let pagespeedUrl = `https://pagespeedonline.googleapis.com/pagespeedonline/v5/runPagespeed?url=${url}&category=seo&category=accessibility&category=best-practices&category=performance`;
+			if (this.settings?.pagespeedApiKey) {
+				pagespeedUrl += `&key=${this.settings.pagespeedApiKey}`;
+			}
 			updatedJob.data.url = pagespeedUrl;
 			return await this.requestHttp(updatedJob);
 		} catch (error) {
