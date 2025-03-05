@@ -201,51 +201,43 @@ const getChecksByTeam = async (req) => {
 			skip = page * rowsPerPage;
 		}
 
-		const aggregateChecks = async (Model) => {
-			return Model.aggregate([
-				{ $match: matchStage },
-				{ $sort: { createdAt: sortOrder } },
-				{
-					$facet: {
-						summary: [{ $count: "checksCount" }],
-						checks: [{ $skip: skip }, { $limit: rowsPerPage }],
-					},
+		const aggregatePipeline = [
+			{ $match: matchStage },
+			{ $unionWith: {
+				coll: 'hardwarechecks',
+				pipeline: [
+					{ $match: matchStage }
+				]
+			}},
+			{ $unionWith: {
+				coll: 'pagespeedchecks',
+				pipeline: [
+					{ $match: matchStage }
+				]
+			}},
+			{ $unionWith: {
+				coll: 'distributeduptimechecks',
+				pipeline: [
+					{ $match: matchStage }
+				]
+			}},
+			{ $sort: { createdAt: sortOrder } },
+			{
+				$facet: {
+					summary: [{ $count: "checksCount" }],
+					checks: [{ $skip: skip }, { $limit: rowsPerPage }],
 				},
-				{
-					$project: {
-						checksCount: { $arrayElemAt: ["$summary.checksCount", 0] },
-						checks: "$checks",
-					},
+			},
+			{
+				$project: {
+					checksCount: { $arrayElemAt: ["$summary.checksCount", 0] },
+					checks: "$checks",
 				},
-			]);
-		};
+			}
+		];
 
-		const [uptimeChecks, hardwareChecks, pagespeedChecks, distributedChecks] = await Promise.all([
-			aggregateChecks(Check),
-			aggregateChecks(HardwareCheck),
-			aggregateChecks(PageSpeedCheck),
-			aggregateChecks(DistributedUptimeCheck),
-		]);
-
-		const totalChecks =
-			(uptimeChecks[0]?.checksCount || 0) +
-			(hardwareChecks[0]?.checksCount || 0) +
-			(pagespeedChecks[0]?.checksCount || 0) +
-			(distributedChecks[0]?.checksCount || 0);
-
-		const combinedChecks = [
-			...(uptimeChecks[0]?.checks || []),
-			...(hardwareChecks[0]?.checks || []),
-			...(pagespeedChecks[0]?.checks || []),
-			...(distributedChecks[0]?.checks || []),
-		].sort((a, b) =>
-			sortOrder === 1 ? a.createdAt - b.createdAt : b.createdAt - a.createdAt
-		);
-
-		return {
-			checksCount: totalChecks,
-			checks: combinedChecks,
-		};
+		const checks = await Check.aggregate(aggregatePipeline);
+		return checks[0];
 	} catch (error) {
 		error.service = SERVICE_NAME;
 		error.method = "getChecksByTeam";
