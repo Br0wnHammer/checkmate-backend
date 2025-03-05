@@ -147,6 +147,9 @@ const startApp = async () => {
 	await db.connect();
 
 	// Create services
+	const settingsService = new SettingsService(AppSettings);
+	await settingsService.loadSettings();
+
 	const networkService = new NetworkService(
 		axios,
 		ping,
@@ -154,10 +157,9 @@ const startApp = async () => {
 		http,
 		Docker,
 		net,
-		stringService
+		stringService,
+		settingsService
 	);
-	const settingsService = new SettingsService(AppSettings);
-	await settingsService.loadSettings();
 	const emailService = new EmailService(
 		settingsService,
 		fs,

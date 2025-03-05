@@ -230,7 +230,7 @@ const getHardwareDetailsByIdParamValidation = joi.object({
 });
 
 const getHardwareDetailsByIdQueryValidation = joi.object({
-	dateRange: joi.string().valid("hour", "day", "week", "month", "all"),
+	dateRange: joi.string().valid("recent", "hour", "day", "week", "month", "all"),
 });
 
 //****************************************
@@ -301,7 +301,7 @@ const getChecksParamValidation = joi.object({
 const getChecksQueryValidation = joi.object({
 	sortOrder: joi.string().valid("asc", "desc"),
 	limit: joi.number(),
-	dateRange: joi.string().valid("hour", "day", "week", "month", "all"),
+	dateRange: joi.string().valid("recent", "hour", "day", "week", "month", "all"),
 	filter: joi.string().valid("all", "down", "resolve"),
 	page: joi.number(),
 	rowsPerPage: joi.number(),
@@ -443,7 +443,14 @@ const createStatusPageBodyValidation = joi.object({
 	teamId: joi.string().required(),
 	type: joi.string().valid("uptime", "distributed").required(),
 	companyName: joi.string().required(),
-	url: joi.string().required(),
+	url: joi
+		.string()
+		.pattern(/^[a-zA-Z0-9_-]+$/) // Only allow alphanumeric, underscore, and hyphen
+		.required()
+		.messages({
+			"string.pattern.base":
+				"URL can only contain letters, numbers, underscores, and hyphens",
+		}),
 	timezone: joi.string().optional(),
 	color: joi.string().optional(),
 	monitors: joi

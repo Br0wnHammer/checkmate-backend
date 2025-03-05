@@ -10,6 +10,11 @@ class DistributedUptimeController {
 		this.statusService = statusService;
 		this.resultsCallback = this.resultsCallback.bind(this);
 		this.getDistributedUptimeMonitors = this.getDistributedUptimeMonitors.bind(this);
+		this.subscribeToDistributedUptimeMonitors =
+			this.subscribeToDistributedUptimeMonitors.bind(this);
+
+		this.subscribeToDistributedUptimeMonitorDetails =
+			this.subscribeToDistributedUptimeMonitorDetails.bind(this);
 		this.getDistributedUptimeMonitorDetails =
 			this.getDistributedUptimeMonitorDetails.bind(this);
 	}
@@ -71,6 +76,18 @@ class DistributedUptimeController {
 	}
 
 	async getDistributedUptimeMonitors(req, res, next) {
+		try {
+			const monitors = await this.db.getMonitorsByTeamId(req);
+			return res.success({
+				msg: "OK",
+				data: monitors,
+			});
+		} catch (error) {
+			next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitors"));
+		}
+	}
+
+	async subscribeToDistributedUptimeMonitors(req, res, next) {
 		try {
 			res.setHeader("Content-Type", "text/event-stream");
 			res.setHeader("Cache-Control", "no-cache");
@@ -150,13 +167,6 @@ class DistributedUptimeController {
 			createMonitorStream();
 			createChecksStream();
 
-			checksStream.on("change", handleChange);
-
-			// Send initial data
-			const monitors = await this.db.getMonitorsByTeamId(req);
-			res.write(`data: ${JSON.stringify({ monitors })}\n\n`);
-
-			// Handle client disconnect
 			req.on("close", () => {
 				if (batchTimeout) {
 					clearTimeout(batchTimeout);
@@ -182,6 +192,18 @@ class DistributedUptimeController {
 	}
 
 	async getDistributedUptimeMonitorDetails(req, res, next) {
+		try {
+			const monitor = await this.db.getDistributedUptimeDetailsById(req);
+			return res.success({
+				msg: "OK",
+				data: monitor,
+			});
+		} catch (error) {
+			next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitorDetails"));
+		}
+	}
+
+	async subscribeToDistributedUptimeMonitorDetails(req, res, next) {
 		try {
 			res.setHeader("Content-Type", "text/event-stream");
 			res.setHeader("Cache-Control", "no-cache");
@@ -241,9 +263,6 @@ class DistributedUptimeController {
 			};
 
 			createCheckStream();
-			// Send initial data
-			const monitor = await this.db.getDistributedUptimeDetailsById(req);
-			res.write(`data: ${JSON.stringify({ monitor })}\n\n`);
 
 			// Handle client disconnect
 			req.on("close", () => {
@@ -263,6 +282,7 @@ class DistributedUptimeController {
 			req.on("close", () => {
 				clearInterval(keepAlive);
 			});
+
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitorDetails"));
 		}

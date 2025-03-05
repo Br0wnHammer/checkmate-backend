@@ -6,30 +6,154 @@ on:
       - develop
 
 jobs:
-  deploy:
-    runs-on: self-hosted
+  docker-build:
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Docker Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GH_UPTIME_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-    - name: Build Docker image
-      run: |
-        COMMIT_HASH=$(git rev-parse --short HEAD)
-        docker build -t uptime-backend:$COMMIT_HASH -f docker/prod/ci.Dockerfile .
+      - name: Docker Build and Push
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          sed -i '/"dependencies": {/a \    "aws4": "^1.13.2",' package.json
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/uptime:${COMMIT_HASH}
+          docker build -t $IMAGE_NAME . -f docker/prod/ci.Dockerfile
+          docker push $IMAGE_NAME
 
-    - name: Clean and Run Docker container
-      run: |
-        docker stop uptime-backend || true
-        docker rm uptime-backend || true
-        COMMIT_HASH=$(git rev-parse --short HEAD)
-        docker run -d --name uptime-backend -p 5000:5000 -e DB_CONNECTION_STRING=mongodb://172.31.40.27:27017/uptime_db -e REDIS_URI=redis://172.31.40.27 uptime-backend:$COMMIT_HASH
+  setup-uptime:
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Update AWS Security Groups & Setup SSH Key
+        uses: ./.github/actions/setup
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGIONS: "${{ secrets.UPTIME_STAGING_AWS_REGION }}"
+          SECURITY_GROUPS: "${{ secrets.UPTIME_STAGING_SECURITY_GROUP }}"
+
+      - name: Setup SSH Key for GitHub
+        env:
+          SSH_KEY: ${{ secrets.UPTIME_STAGING_SSH_KEY }}
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh || true
+          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+          chmod 600 ~/.ssh/id_rsa_uptime
+          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+
+      - name: Install Required Packages on Remote Server
+        uses: ./.github/actions/install
+        with:
+          REMOTE_USER: "ubuntu"
+          SERVER_IP: "${{ secrets.UPTIME_STAGING_HOST_IP }}"
+
+  configure-uptime:
+    runs-on: ubuntu-latest
+    needs: 
+      - setup-uptime
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Update AWS Security Groups & Setup SSH Key
+        uses: ./.github/actions/setup
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGIONS: "${{ secrets.UPTIME_STAGING_AWS_REGION }}"
+          SECURITY_GROUPS: "${{ secrets.UPTIME_STAGING_SECURITY_GROUP }}"
+
+      - name: Setup SSH Key for GitHub
+        env:
+          SSH_KEY: ${{ secrets.UPTIME_STAGING_SSH_KEY }}
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh || true
+          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+          chmod 600 ~/.ssh/id_rsa_uptime
+          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+
+      - name: Copy Certificate and Key to Remote Server
+        env:
+          UPROCKSTAGING_COM_CRT: ${{ secrets.STAR_UPROCKSTAGING_COM_CRT }}
+          UPROCKSTAGING_COM_KEY: ${{ secrets.STAR_UPROCKSTAGING_COM_KEY }}
+        shell: bash
+        run: |
+          echo "${UPROCKSTAGING_COM_CRT}" > docker/prod/nginx/uptime.uprockrockstaging.com.crt
+          echo "${UPROCKSTAGING_COM_KEY}" > docker/prod/nginx/uptime.uprockrockstaging.com.key
+
+      - name: Configure Nginx and HAProxy
+        uses: ./.github/actions/configure
+        with:
+          REMOTE_USER: "ubuntu"
+          SERVER_IP: "${{ secrets.UPTIME_STAGING_HOST_IP }}"
+          DOMAIN: "uptime.uprockrockstaging.com"
+
+
+  deploy-uptime:
+    runs-on: ubuntu-latest
+    needs: 
+      - configure-uptime
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Update AWS Security Groups & Setup SSH Key
+        uses: ./.github/actions/setup
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGIONS: "${{ secrets.UPTIME_STAGING_AWS_REGION }}"
+          SECURITY_GROUPS: "${{ secrets.UPTIME_STAGING_SECURITY_GROUP }}"
+
+      - name: Setup SSH Key for GitHub
+        env:
+          SSH_KEY: ${{ secrets.UPTIME_STAGING_SSH_KEY }}
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh || true
+          echo "${SSH_KEY}" > ~/.ssh/id_rsa_uptime
+          chmod 600 ~/.ssh/id_rsa_uptime
+          ssh-keygen -l -f ~/.ssh/id_rsa_uptime
+
+      - name: Docker Run
+        uses: ./.github/actions/deploy
+        with:
+          REMOTE_USER: "ubuntu"
+          SERVER_IP: "${{ secrets.UPTIME_STAGING_HOST_IP }}"
+          MONGODB_URL: "mongodb://172.31.40.27:27017/uptime_db"
+          REDIS_URL: "redis://172.31.40.27"
+          REPOSITORY_OWNER: "${{ github.repository_owner }}"
+          DOCKER_SECRET: "${{ secrets.GH_UPTIME_PAT }}"
+          CALLBACK_URL: "https://api-uptime.uprockrockstaging.com"
+          UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
 
   cleanup:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: always()
-    needs: deploy
+    needs: 
+      - deploy-uptime
+
     steps:
-    - name: 'Cleanup build folder'
-      run: |
-        rm -rf ./${{github.workspace}}\*
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Cleanup AWS Security Groups
+        uses: ./.github/actions/cleanup
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          REGIONS: "${{ secrets.UPTIME_STAGING_AWS_REGION }}"
+          SECURITY_GROUPS: "${{ secrets.UPTIME_STAGING_SECURITY_GROUP }}"

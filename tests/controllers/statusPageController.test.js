@@ -4,10 +4,10 @@ import {
 	getStatusPageByUrl,
 } from "../../controllers/statusPageController.js";
 
-describe("statusPageController", function() {
+describe("statusPageController", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {},
 			body: {},
@@ -23,12 +23,12 @@ describe("statusPageController", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	describe("createStatusPage", function() {
-		beforeEach(function() {
+	describe("createStatusPage", function () {
+		beforeEach(function () {
 			req.body = {
 				companyName: "Test Company",
 				url: "123456",
@@ -39,11 +39,11 @@ describe("statusPageController", function() {
 			};
 		});
 
-		afterEach(function() {
+		afterEach(function () {
 			sinon.restore();
 		});
 
-		it("should handle a validation error", async function() {
+		it("should handle a validation error", async function () {
 			req.body = {
 				// Invalid data that will trigger validation error
 				companyName: "",
@@ -61,7 +61,7 @@ describe("statusPageController", function() {
 			}
 		});
 
-		it("should handle a db error", async function() {
+		it("should handle a db error", async function () {
 			const err = new Error("DB error");
 			req.db.createStatusPage.throws(err);
 
@@ -72,25 +72,25 @@ describe("statusPageController", function() {
 			}
 		});
 
-		it("should insert a properly formatted status page", async function() {
+		it("should insert a properly formatted status page", async function () {
 			const result = await createStatusPage(req, res, next);
 			expect(res.status.firstCall.args[0]).to.equal(200);
 			expect(res.json.firstCall.args[0].success).to.be.true;
 		});
 	});
 
-	describe("getStatusPageByUrl", function() {
-		beforeEach(function() {
+	describe("getStatusPageByUrl", function () {
+		beforeEach(function () {
 			req.params = {
 				url: "123456",
 			};
 		});
 
-		afterEach(function() {
+		afterEach(function () {
 			sinon.restore();
 		});
 
-		it("should handle a validation error", async function() {
+		it("should handle a validation error", async function () {
 			req.params = {
 				url: "",
 			};
@@ -103,7 +103,7 @@ describe("statusPageController", function() {
 			}
 		});
 
-		it("should handle a DB error", async function() {
+		it("should handle a DB error", async function () {
 			const err = new Error("DB error");
 			req.db.getStatusPageByUrl.throws(err);
 
@@ -114,7 +114,7 @@ describe("statusPageController", function() {
 			}
 		});
 
-		it("should return a status page", async function() {
+		it("should return a status page", async function () {
 			const statusPage = {
 				_id: "123456",
 				companyName: "Test Company",

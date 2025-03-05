@@ -21,10 +21,10 @@ import logger from "../../utils/logger.js";
 import axios from "axios";
 const SERVICE_NAME = "monitorController";
 
-describe("Monitor Controller - getAllMonitors", function() {
+describe("Monitor Controller - getAllMonitors", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {},
 			query: {},
@@ -40,18 +40,18 @@ describe("Monitor Controller - getAllMonitors", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.getAllMonitors.throws(new Error("DB error"));
 		await getAllMonitors(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message and data if all operations succeed", async function() {
+	it("should return success message and data if all operations succeed", async function () {
 		const data = [{ monitor: "data" }];
 		req.db.getAllMonitors.returns(data);
 		await getAllMonitors(req, res, next);
@@ -65,10 +65,10 @@ describe("Monitor Controller - getAllMonitors", function() {
 		).to.be.true;
 	});
 });
-describe("Monitor Controller - getAllMonitorsWithUptimeStats", function() {
+describe("Monitor Controller - getAllMonitorsWithUptimeStats", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {},
 			query: {},
@@ -84,18 +84,18 @@ describe("Monitor Controller - getAllMonitorsWithUptimeStats", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.getAllMonitorsWithUptimeStats.throws(new Error("DB error"));
 		await getAllMonitorsWithUptimeStats(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message and data if all operations succeed", async function() {
+	it("should return success message and data if all operations succeed", async function () {
 		const data = [{ monitor: "data" }];
 		req.db.getAllMonitorsWithUptimeStats.returns(data);
 		await getAllMonitorsWithUptimeStats(req, res, next);
@@ -110,10 +110,10 @@ describe("Monitor Controller - getAllMonitorsWithUptimeStats", function() {
 	});
 });
 
-describe("Monitor Controller - getMonitorStatsById", function() {
+describe("Monitor Controller - getMonitorStatsById", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {
 				monitorId: "123",
@@ -131,32 +131,32 @@ describe("Monitor Controller - getMonitorStatsById", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await getMonitorStatsById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if query validation fails", async function() {
+	it("should reject with an error if query validation fails", async function () {
 		req.query = { invalid: 1 };
 		await getMonitorStatsById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.getMonitorStatsById.throws(new Error("DB error"));
 		await getMonitorStatsById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message and data if all operations succeed", async function() {
+	it("should return success message and data if all operations succeed", async function () {
 		const data = [{ monitorStats: "data" }];
 		req.db.getMonitorStatsById.returns(data);
 		await getMonitorStatsById(req, res, next);
@@ -171,10 +171,10 @@ describe("Monitor Controller - getMonitorStatsById", function() {
 	});
 });
 
-describe("Monitor Controller - getMonitorCertificate", function() {
+describe("Monitor Controller - getMonitorCertificate", function () {
 	let req, res, next, fetchMonitorCertificate;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {
 				monitorId: "123",
@@ -193,25 +193,25 @@ describe("Monitor Controller - getMonitorCertificate", function() {
 		fetchMonitorCertificate = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await getMonitorCertificate(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if getMonitorById operation fails", async function() {
+	it("should reject with an error if getMonitorById operation fails", async function () {
 		req.db.getMonitorById.throws(new Error("DB error"));
 		await getMonitorCertificate(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message and data if all operations succeed with a valid cert", async function() {
+	it("should return success message and data if all operations succeed with a valid cert", async function () {
 		req.db.getMonitorById.returns({ url: "https://www.google.com" });
 		const data = { certificate: "cert", validTo: "2024/08/08" };
 		fetchMonitorCertificate.returns(data);
@@ -226,7 +226,7 @@ describe("Monitor Controller - getMonitorCertificate", function() {
 		).to.be.true;
 	});
 
-	it("should return an error if fetchMonitorCertificate fails", async function() {
+	it("should return an error if fetchMonitorCertificate fails", async function () {
 		req.db.getMonitorById.returns({ url: "https://www.google.com" });
 		fetchMonitorCertificate.throws(new Error("Certificate error"));
 		await getMonitorCertificate(req, res, next, fetchMonitorCertificate);
@@ -235,10 +235,10 @@ describe("Monitor Controller - getMonitorCertificate", function() {
 	});
 });
 
-describe("Monitor Controller - getMonitorById", function() {
+describe("Monitor Controller - getMonitorById", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {
 				monitorId: "123",
@@ -256,32 +256,32 @@ describe("Monitor Controller - getMonitorById", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await getMonitorById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if query param validation fails", async function() {
+	it("should reject with an error if query param validation fails", async function () {
 		req.query = { invalid: 1 };
 		await getMonitorById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.getMonitorById.throws(new Error("DB error"));
 		await getMonitorById(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return 404 if a monitor is not found", async function() {
+	it("should return 404 if a monitor is not found", async function () {
 		const error = new Error("Monitor not found");
 		error.status = 404;
 		req.db.getMonitorById.throws(error);
@@ -290,7 +290,7 @@ describe("Monitor Controller - getMonitorById", function() {
 		expect(next.firstCall.args[0].status).to.equal(404);
 	});
 
-	it("should return success message and data if all operations succeed", async function() {
+	it("should return success message and data if all operations succeed", async function () {
 		const data = { monitor: "data" };
 		req.db.getMonitorById.returns(data);
 		await getMonitorById(req, res, next);
@@ -305,10 +305,10 @@ describe("Monitor Controller - getMonitorById", function() {
 	});
 });
 
-describe("Monitor Controller - getMonitorsAndSummaryByTeamId", function() {
+describe("Monitor Controller - getMonitorsAndSummaryByTeamId", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {
 				teamId: "123",
@@ -326,32 +326,32 @@ describe("Monitor Controller - getMonitorsAndSummaryByTeamId", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await getMonitorsAndSummaryByTeamId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if query validation fails", async function() {
+	it("should reject with an error if query validation fails", async function () {
 		req.query = { invalid: 1 };
 		await getMonitorsAndSummaryByTeamId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.getMonitorsAndSummaryByTeamId.throws(new Error("DB error"));
 		await getMonitorsAndSummaryByTeamId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message and data if all operations succeed", async function() {
+	it("should return success message and data if all operations succeed", async function () {
 		const data = { monitors: "data", summary: "data" };
 		req.db.getMonitorsAndSummaryByTeamId.returns(data);
 		await getMonitorsAndSummaryByTeamId(req, res, next);
@@ -366,10 +366,10 @@ describe("Monitor Controller - getMonitorsAndSummaryByTeamId", function() {
 	});
 });
 
-describe("Monitor Controller - getMonitorsByTeamId", function() {
+describe("Monitor Controller - getMonitorsByTeamId", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {
 				teamId: "123",
@@ -387,32 +387,32 @@ describe("Monitor Controller - getMonitorsByTeamId", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await getMonitorsByTeamId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if query validation fails", async function() {
+	it("should reject with an error if query validation fails", async function () {
 		req.query = { invalid: 1 };
 		await getMonitorsByTeamId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB operations fail", async function() {
+	it("should reject with an error if DB operations fail", async function () {
 		req.db.getMonitorsByTeamId.throws(new Error("DB error"));
 		await getMonitorsByTeamId(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should return success message and data if all operations succeed", async function() {
+	it("should return success message and data if all operations succeed", async function () {
 		const data = { monitors: "data" };
 		req.db.getMonitorsByTeamId.returns(data);
 		await getMonitorsByTeamId(req, res, next);
@@ -427,10 +427,10 @@ describe("Monitor Controller - getMonitorsByTeamId", function() {
 	});
 });
 
-describe("Monitor Controller - createMonitor", function() {
+describe("Monitor Controller - createMonitor", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {},
 			query: {},
@@ -458,25 +458,25 @@ describe("Monitor Controller - createMonitor", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if body validation fails", async function() {
+	it("should reject with an error if body validation fails", async function () {
 		req.body = {};
 		await createMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB createMonitor operation fail", async function() {
+	it("should reject with an error if DB createMonitor operation fail", async function () {
 		req.db.createMonitor.throws(new Error("DB error"));
 		await createMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if DB createNotification operation fail", async function() {
+	it("should reject with an error if DB createNotification operation fail", async function () {
 		req.db.createNotification.throws(new Error("DB error"));
 		req.db.createMonitor.returns({ _id: "123" });
 		await createMonitor(req, res, next);
@@ -484,7 +484,7 @@ describe("Monitor Controller - createMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if monitor.save operation fail", async function() {
+	it("should reject with an error if monitor.save operation fail", async function () {
 		req.db.createMonitor.returns({
 			_id: "123",
 			save: sinon.stub().throws(new Error("Monitor save error")),
@@ -494,7 +494,7 @@ describe("Monitor Controller - createMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("Monitor save error");
 	});
 
-	it("should throw an error if addJob operation fails", async function() {
+	it("should throw an error if addJob operation fails", async function () {
 		req.db.createMonitor.returns({ _id: "123", save: sinon.stub() });
 		req.jobQueue.addJob.throws(new Error("Job error"));
 		await createMonitor(req, res, next);
@@ -502,7 +502,7 @@ describe("Monitor Controller - createMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("Job error");
 	});
 
-	it("should return success message and data if all operations succeed", async function() {
+	it("should return success message and data if all operations succeed", async function () {
 		const monitor = { _id: "123", save: sinon.stub() };
 		req.db.createMonitor.returns(monitor);
 		await createMonitor(req, res, next);
@@ -517,21 +517,21 @@ describe("Monitor Controller - createMonitor", function() {
 	});
 });
 
-describe("Monitor Controller - checkEndpointResolution", function() {
+describe("Monitor Controller - checkEndpointResolution", function () {
 	let req, res, next, axiosGetStub;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = { query: { monitorURL: "https://example.com" } };
 		res = { status: sinon.stub().returnsThis(), json: sinon.stub() };
 		next = sinon.stub();
 		axiosGetStub = sinon.stub(axios, "get");
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should resolve the URL successfully", async function() {
+	it("should resolve the URL successfully", async function () {
 		axiosGetStub.resolves({ status: 200, statusText: "OK" });
 		await checkEndpointResolution(req, res, next);
 		expect(res.status.calledWith(200)).to.be.true;
@@ -546,7 +546,7 @@ describe("Monitor Controller - checkEndpointResolution", function() {
 		expect(next.called).to.be.false;
 	});
 
-	it("should return an error if endpoint resolution fails", async function() {
+	it("should return an error if endpoint resolution fails", async function () {
 		const axiosError = new Error("resolution failed");
 		axiosError.code = "ENOTFOUND";
 		axiosGetStub.rejects(axiosError);
@@ -559,7 +559,7 @@ describe("Monitor Controller - checkEndpointResolution", function() {
 		expect(errorPassedToNext.status).to.equal(500);
 	});
 
-	it("should reject with an error if query validation fails", async function() {
+	it("should reject with an error if query validation fails", async function () {
 		req.query.monitorURL = "invalid-url";
 		await checkEndpointResolution(req, res, next);
 		expect(next.calledOnce).to.be.true;
@@ -570,10 +570,10 @@ describe("Monitor Controller - checkEndpointResolution", function() {
 	});
 });
 
-describe("Monitor Controller - deleteMonitor", function() {
+describe("Monitor Controller - deleteMonitor", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			params: {
 				monitorId: "123",
@@ -598,25 +598,25 @@ describe("Monitor Controller - deleteMonitor", function() {
 		sinon.stub(logger, "error");
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await deleteMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if DB deleteMonitor operation fail", async function() {
+	it("should reject with an error if DB deleteMonitor operation fail", async function () {
 		req.db.deleteMonitor.throws(new Error("DB error"));
 		await deleteMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should log an error if deleteJob throws an error", async function() {
+	it("should log an error if deleteJob throws an error", async function () {
 		const error = new Error("Job error");
 		const monitor = { name: "test_monitor", _id: "123" };
 		req.db.deleteMonitor.returns(monitor);
@@ -628,7 +628,7 @@ describe("Monitor Controller - deleteMonitor", function() {
 		);
 	});
 
-	it("should log an error if deleteChecks throws an error", async function() {
+	it("should log an error if deleteChecks throws an error", async function () {
 		const error = new Error("Checks error");
 		const monitor = { name: "test_monitor", _id: "123" };
 		req.db.deleteMonitor.returns(monitor);
@@ -640,7 +640,7 @@ describe("Monitor Controller - deleteMonitor", function() {
 		);
 	});
 
-	it("should log an error if deletePageSpeedChecksByMonitorId throws an error", async function() {
+	it("should log an error if deletePageSpeedChecksByMonitorId throws an error", async function () {
 		const error = new Error("PageSpeed error");
 		const monitor = { name: "test_monitor", _id: "123" };
 		req.db.deleteMonitor.returns(monitor);
@@ -652,7 +652,7 @@ describe("Monitor Controller - deleteMonitor", function() {
 		);
 	});
 
-	it("should log an error if deleteNotificationsByMonitorId throws an error", async function() {
+	it("should log an error if deleteNotificationsByMonitorId throws an error", async function () {
 		const error = new Error("Notifications error");
 		const monitor = { name: "test_monitor", _id: "123" };
 		req.db.deleteMonitor.returns(monitor);
@@ -664,7 +664,7 @@ describe("Monitor Controller - deleteMonitor", function() {
 		);
 	});
 
-	it("should return success message if all operations succeed", async function() {
+	it("should return success message if all operations succeed", async function () {
 		const monitor = { name: "test_monitor", _id: "123" };
 		req.db.deleteMonitor.returns(monitor);
 		await deleteMonitor(req, res, next);
@@ -678,10 +678,10 @@ describe("Monitor Controller - deleteMonitor", function() {
 	});
 });
 
-describe("Monitor Controller - deleteAllMonitors", function() {
+describe("Monitor Controller - deleteAllMonitors", function () {
 	let req, res, next, stub;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { teamId: "123" };
 		});
@@ -715,12 +715,12 @@ describe("Monitor Controller - deleteAllMonitors", function() {
 		sinon.stub(logger, "error");
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 		stub.restore();
 	});
 
-	it("should reject with an error if getTokenFromHeaders throws an error", async function() {
+	it("should reject with an error if getTokenFromHeaders throws an error", async function () {
 		req.headers = {};
 		await deleteAllMonitors(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
@@ -728,14 +728,14 @@ describe("Monitor Controller - deleteAllMonitors", function() {
 		expect(next.firstCall.args[0].status).to.equal(500);
 	});
 
-	it("should reject with an error if token validation fails", async function() {
+	it("should reject with an error if token validation fails", async function () {
 		stub.restore();
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		await deleteAllMonitors(req, res, next);
 		expect(next.firstCall.args[0]).to.be.instanceOf(jwt.JsonWebTokenError);
 	});
 
-	it("should reject with an error if DB deleteAllMonitors operation fail", async function() {
+	it("should reject with an error if DB deleteAllMonitors operation fail", async function () {
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.deleteAllMonitors.throws(new Error("DB error"));
 		await deleteAllMonitors(req, res, next);
@@ -743,7 +743,7 @@ describe("Monitor Controller - deleteAllMonitors", function() {
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should log an error if deleteChecks throws an error", async function() {
+	it("should log an error if deleteChecks throws an error", async function () {
 		const monitors = [{ name: "test_monitor", _id: "123" }];
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.deleteAllMonitors.returns({ monitors, deletedCount: 1 });
@@ -756,7 +756,7 @@ describe("Monitor Controller - deleteAllMonitors", function() {
 		);
 	});
 
-	it("should log an error if deletePageSpeedChecksByMonitorId throws an error", async function() {
+	it("should log an error if deletePageSpeedChecksByMonitorId throws an error", async function () {
 		const monitors = [{ name: "test_monitor", _id: "123" }];
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.deleteAllMonitors.returns({ monitors, deletedCount: 1 });
@@ -769,7 +769,7 @@ describe("Monitor Controller - deleteAllMonitors", function() {
 		);
 	});
 
-	it("should log an error if deleteNotificationsByMonitorId throws an error", async function() {
+	it("should log an error if deleteNotificationsByMonitorId throws an error", async function () {
 		const monitors = [{ name: "test_monitor", _id: "123" }];
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.deleteAllMonitors.returns({ monitors, deletedCount: 1 });
@@ -782,7 +782,7 @@ describe("Monitor Controller - deleteAllMonitors", function() {
 		);
 	});
 
-	it("should return success message if all operations succeed", async function() {
+	it("should return success message if all operations succeed", async function () {
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.deleteAllMonitors.returns({
 			monitors: [{ name: "test_monitor", _id: "123" }],
@@ -799,10 +799,10 @@ describe("Monitor Controller - deleteAllMonitors", function() {
 	});
 });
 
-describe("Monitor Controller - editMonitor", function() {
+describe("Monitor Controller - editMonitor", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			headers: {},
 			params: {
@@ -833,32 +833,32 @@ describe("Monitor Controller - editMonitor", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await editMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if body validation fails", async function() {
+	it("should reject with an error if body validation fails", async function () {
 		req.body = { invalid: 1 };
 		await editMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if getMonitorById operation fails", async function() {
+	it("should reject with an error if getMonitorById operation fails", async function () {
 		req.db.getMonitorById.throws(new Error("DB error"));
 		await editMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if editMonitor operation fails", async function() {
+	it("should reject with an error if editMonitor operation fails", async function () {
 		req.db.getMonitorById.returns({ teamId: "123" });
 		req.db.editMonitor.throws(new Error("DB error"));
 		await editMonitor(req, res, next);
@@ -866,7 +866,7 @@ describe("Monitor Controller - editMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if deleteNotificationsByMonitorId operation fails", async function() {
+	it("should reject with an error if deleteNotificationsByMonitorId operation fails", async function () {
 		req.db.getMonitorById.returns({ teamId: "123" });
 		req.db.editMonitor.returns({ _id: "123" });
 		req.db.deleteNotificationsByMonitorId.throws(new Error("DB error"));
@@ -875,7 +875,7 @@ describe("Monitor Controller - editMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if createNotification operation fails", async function() {
+	it("should reject with an error if createNotification operation fails", async function () {
 		req.db.getMonitorById.returns({ teamId: "123" });
 		req.db.editMonitor.returns({ _id: "123" });
 		req.db.createNotification.throws(new Error("DB error"));
@@ -884,7 +884,7 @@ describe("Monitor Controller - editMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if deleteJob operation fails", async function() {
+	it("should reject with an error if deleteJob operation fails", async function () {
 		req.db.getMonitorById.returns({ teamId: "123" });
 		req.db.editMonitor.returns({ _id: "123" });
 		req.jobQueue.deleteJob.throws(new Error("Job error"));
@@ -893,7 +893,7 @@ describe("Monitor Controller - editMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("Job error");
 	});
 
-	it("should reject with an error if addJob operation fails", async function() {
+	it("should reject with an error if addJob operation fails", async function () {
 		req.db.getMonitorById.returns({ teamId: "123" });
 		req.db.editMonitor.returns({ _id: "123" });
 		req.jobQueue.addJob.throws(new Error("Add Job error"));
@@ -902,7 +902,7 @@ describe("Monitor Controller - editMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("Add Job error");
 	});
 
-	it("should return success message with data if all operations succeed", async function() {
+	it("should return success message with data if all operations succeed", async function () {
 		const monitor = { _id: "123" };
 		req.db.getMonitorById.returns({ teamId: "123" });
 		req.db.editMonitor.returns(monitor);
@@ -918,10 +918,10 @@ describe("Monitor Controller - editMonitor", function() {
 	});
 });
 
-describe("Monitor Controller - pauseMonitor", function() {
+describe("Monitor Controller - pauseMonitor", function () {
 	let req, res, next;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		req = {
 			headers: {},
 			params: {
@@ -947,25 +947,25 @@ describe("Monitor Controller - pauseMonitor", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	it("should reject with an error if param validation fails", async function() {
+	it("should reject with an error if param validation fails", async function () {
 		req.params = {};
 		await pauseMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].status).to.equal(422);
 	});
 
-	it("should reject with an error if getMonitorById operation fails", async function() {
+	it("should reject with an error if getMonitorById operation fails", async function () {
 		req.db.getMonitorById.throws(new Error("DB error"));
 		await pauseMonitor(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if deleteJob operation fails", async function() {
+	it("should reject with an error if deleteJob operation fails", async function () {
 		const monitor = { _id: req.params.monitorId, isActive: true };
 		req.db.getMonitorById.returns(monitor);
 		req.jobQueue.deleteJob.throws(new Error("Delete Job error"));
@@ -974,7 +974,7 @@ describe("Monitor Controller - pauseMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("Delete Job error");
 	});
 
-	it("should reject with an error if addJob operation fails", async function() {
+	it("should reject with an error if addJob operation fails", async function () {
 		const monitor = { _id: req.params.monitorId, isActive: false };
 		req.db.getMonitorById.returns(monitor);
 		req.jobQueue.addJob.throws(new Error("Add Job error"));
@@ -983,7 +983,7 @@ describe("Monitor Controller - pauseMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("Add Job error");
 	});
 
-	it("should reject with an error if monitor.save operation fails", async function() {
+	it("should reject with an error if monitor.save operation fails", async function () {
 		const monitor = {
 			_id: req.params.monitorId,
 			active: false,
@@ -995,7 +995,7 @@ describe("Monitor Controller - pauseMonitor", function() {
 		expect(next.firstCall.args[0].message).to.equal("Save error");
 	});
 
-	it("should return success pause message with data if all operations succeed with inactive monitor", async function() {
+	it("should return success pause message with data if all operations succeed with inactive monitor", async function () {
 		const monitor = {
 			_id: req.params.monitorId,
 			isActive: false,
@@ -1013,7 +1013,7 @@ describe("Monitor Controller - pauseMonitor", function() {
 		).to.be.true;
 	});
 
-	it("should return success resume message with data if all operations succeed with active monitor", async function() {
+	it("should return success resume message with data if all operations succeed with active monitor", async function () {
 		const monitor = {
 			_id: req.params.monitorId,
 			isActive: true,
@@ -1032,10 +1032,10 @@ describe("Monitor Controller - pauseMonitor", function() {
 	});
 });
 
-describe("Monitor Controller - addDemoMonitors", function() {
+describe("Monitor Controller - addDemoMonitors", function () {
 	let req, res, next, stub;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		stub = sinon.stub(jwt, "verify").callsFake(() => {
 			return { _id: "123", teamId: "123" };
 		});
@@ -1063,12 +1063,12 @@ describe("Monitor Controller - addDemoMonitors", function() {
 		next = sinon.stub();
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 		stub.restore();
 	});
 
-	it("should reject with an error if getTokenFromHeaders fails", async function() {
+	it("should reject with an error if getTokenFromHeaders fails", async function () {
 		req.headers = {};
 		await addDemoMonitors(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
@@ -1076,21 +1076,21 @@ describe("Monitor Controller - addDemoMonitors", function() {
 		expect(next.firstCall.args[0].status).to.equal(500);
 	});
 
-	it("should reject with an error if getting settings fails", async function() {
+	it("should reject with an error if getting settings fails", async function () {
 		req.settingsService.getSettings.throws(new Error("Settings error"));
 		await addDemoMonitors(req, res, next);
 		expect(next.firstCall.args[0]).to.be.an("error");
 		expect(next.firstCall.args[0].message).to.equal("Settings error");
 	});
 
-	it("should reject with an error if JWT validation fails", async function() {
+	it("should reject with an error if JWT validation fails", async function () {
 		stub.restore();
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		await addDemoMonitors(req, res, next);
 		expect(next.firstCall.args[0]).to.be.instanceOf(jwt.JsonWebTokenError);
 	});
 
-	it("should reject with an error if addDemoMonitors operation fails", async function() {
+	it("should reject with an error if addDemoMonitors operation fails", async function () {
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.addDemoMonitors.throws(new Error("DB error"));
 		await addDemoMonitors(req, res, next);
@@ -1098,7 +1098,7 @@ describe("Monitor Controller - addDemoMonitors", function() {
 		expect(next.firstCall.args[0].message).to.equal("DB error");
 	});
 
-	it("should reject with an error if addJob operation fails", async function() {
+	it("should reject with an error if addJob operation fails", async function () {
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.addDemoMonitors.returns([{ _id: "123" }]);
 		req.jobQueue.addJob.throws(new Error("Add Job error"));
@@ -1107,7 +1107,7 @@ describe("Monitor Controller - addDemoMonitors", function() {
 		expect(next.firstCall.args[0].message).to.equal("Add Job error");
 	});
 
-	it("should return success message with data if all operations succeed", async function() {
+	it("should return success message with data if all operations succeed", async function () {
 		const monitors = [{ _id: "123" }];
 		req.settingsService.getSettings.returns({ jwtSecret: "my_secret" });
 		req.db.addDemoMonitors.returns(monitors);
