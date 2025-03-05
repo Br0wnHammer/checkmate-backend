@@ -51,25 +51,25 @@ const mockMonitor = {
 	save: () => this,
 };
 
-describe("HardwareCheckModule", function() {
+describe("HardwareCheckModule", function () {
 	let hardwareCheckSaveStub,
 		hardwareCheckCountDocumentsStub,
 		monitorFindByIdStub,
 		loggerStub;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		loggerStub = sinon.stub(logger, "error");
 		hardwareCheckSaveStub = sinon.stub(HardwareCheck.prototype, "save");
 		monitorFindByIdStub = sinon.stub(Monitor, "findById");
 		hardwareCheckCountDocumentsStub = sinon.stub(HardwareCheck, "countDocuments");
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	describe("createHardwareCheck", function() {
-		it("should return a hardware check", async function() {
+	describe("createHardwareCheck", function () {
+		it("should return a hardware check", async function () {
 			hardwareCheckSaveStub.resolves(mockHardwareCheck);
 			monitorFindByIdStub.resolves(mockMonitor);
 			hardwareCheckCountDocumentsStub.resolves(1);
@@ -78,7 +78,7 @@ describe("HardwareCheckModule", function() {
 			expect(hardwareCheck).to.deep.equal(mockHardwareCheck);
 		});
 
-		it("should return a hardware check for a check with status false", async function() {
+		it("should return a hardware check for a check with status false", async function () {
 			hardwareCheckSaveStub.resolves(mockHardwareCheck);
 			monitorFindByIdStub.resolves(mockMonitor);
 			hardwareCheckCountDocumentsStub.resolves(1);
@@ -87,7 +87,7 @@ describe("HardwareCheckModule", function() {
 			expect(hardwareCheck).to.deep.equal(mockHardwareCheck);
 		});
 
-		it("should handle an error", async function() {
+		it("should handle an error", async function () {
 			const err = new Error("test error");
 			monitorFindByIdStub.resolves(mockMonitor);
 			hardwareCheckSaveStub.rejects(err);
@@ -99,14 +99,14 @@ describe("HardwareCheckModule", function() {
 			}
 		});
 
-		it("should log an error if a monitor is not found", async function() {
+		it("should log an error if a monitor is not found", async function () {
 			monitorFindByIdStub.resolves(null);
 			const res = await createHardwareCheck({});
 			expect(loggerStub.calledOnce).to.be.true;
 			expect(res).to.be.null;
 		});
 
-		it("should handle a monitor with undefined uptimePercentage", async function() {
+		it("should handle a monitor with undefined uptimePercentage", async function () {
 			monitorFindByIdStub.resolves({ ...mockMonitor, uptimePercentage: undefined });
 			hardwareCheckSaveStub.resolves(mockHardwareCheck);
 			hardwareCheckCountDocumentsStub.resolves(1);
@@ -114,7 +114,7 @@ describe("HardwareCheckModule", function() {
 			expect(res).to.exist;
 		});
 
-		it("should handle a monitor with undefined uptimePercentage and true status", async function() {
+		it("should handle a monitor with undefined uptimePercentage and true status", async function () {
 			monitorFindByIdStub.resolves({
 				...mockMonitor,
 				uptimePercentage: undefined,
@@ -125,7 +125,7 @@ describe("HardwareCheckModule", function() {
 			expect(res).to.exist;
 		});
 
-		it("should handle a monitor with undefined uptimePercentage and false status", async function() {
+		it("should handle a monitor with undefined uptimePercentage and false status", async function () {
 			monitorFindByIdStub.resolves({
 				...mockMonitor,
 				uptimePercentage: undefined,

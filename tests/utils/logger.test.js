@@ -3,20 +3,20 @@ import logger from "../../utils/logger.js";
 import { Logger } from "../../utils/logger.js";
 import winston from "winston";
 
-describe("Logger", function() {
+describe("Logger", function () {
 	let infoStub, warnStub, errorStub;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		infoStub = sinon.stub(logger.logger, "info");
 		warnStub = sinon.stub(logger.logger, "warn");
 		errorStub = sinon.stub(logger.logger, "error");
 	});
 
-	afterEach(function() {
+	afterEach(function () {
 		sinon.restore();
 	});
 
-	describe("constructor", function() {
+	describe("constructor", function () {
 		let createLoggerStub;
 
 		beforeEach(function () {
@@ -69,8 +69,8 @@ describe("Logger", function() {
 		});
 	});
 
-	describe("info", function() {
-		it("should log an informational message", function() {
+	describe("info", function () {
+		it("should log an informational message", function () {
 			const config = {
 				message: "Info message",
 				service: "TestService",
@@ -91,8 +91,8 @@ describe("Logger", function() {
 		});
 	});
 
-	describe("warn", function() {
-		it("should log a warning message", function() {
+	describe("warn", function () {
+		it("should log a warning message", function () {
 			const config = {
 				message: "Warning message",
 				service: "TestService",
@@ -113,8 +113,8 @@ describe("Logger", function() {
 		});
 	});
 
-	describe("error", function() {
-		it("should log an error message", function() {
+	describe("error", function () {
+		it("should log an error message", function () {
 			const config = {
 				message: "Error message",
 				service: "TestService",
