@@ -80,6 +80,8 @@ class DistributedUptimeController {
 			const BATCH_DELAY = 1000;
 			let batchTimeout = null;
 			let opInProgress = false;
+			let monitorStream = null;
+			let checksStream = null;
 
 			// Do things here
 			const notifyChange = async () => {
@@ -98,17 +100,56 @@ class DistributedUptimeController {
 				batchTimeout = setTimeout(notifyChange, BATCH_DELAY);
 			};
 
-			const monitorStream = Monitor.watch(
-				[{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }],
-				{ fullDocument: "updateLookup" }
-			);
+			const createMonitorStream = () => {
+				if (monitorStream) {
+					try {
+						monitorStream.close();
+					} catch (error) {
+						console.log(error);
+					}
+				}
+				monitorStream = Monitor.watch(
+					[{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }],
+					{ fullDocument: "updateLookup" }
+				);
 
-			const checksStream = DistributedUptimeCheck.watch(
-				[{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }],
-				{ fullDocument: "updateLookup" }
-			);
+				monitorStream.on("change", handleChange);
+				monitorStream.on("error", (error) => {
+					console.log(error);
+					createMonitorStream();
+				});
+				monitorStream.on("close", () => {
+					monitorStream = null;
+					console.log("monitorStream closed");
+				});
+			};
 
-			monitorStream.on("change", handleChange);
+			const createChecksStream = () => {
+				if (checksStream) {
+					try {
+						checksStream.close();
+					} catch (error) {
+						console.log(error);
+					}
+				}
+				checksStream = DistributedUptimeCheck.watch(
+					[{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }],
+					{ fullDocument: "updateLookup" }
+				);
+				checksStream.on("change", handleChange);
+				checksStream.on("error", (error) => {
+					console.log(error);
+					createChecksStream();
+				});
+				checksStream.on("close", () => {
+					checksStream = null;
+					console.log("checksStream closed");
+				});
+			};
+
+			createMonitorStream();
+			createChecksStream();
+
 			checksStream.on("change", handleChange);
 
 			// Send initial data
@@ -150,7 +191,7 @@ class DistributedUptimeController {
 			const BATCH_DELAY = 1000;
 			let batchTimeout = null;
 			let opInProgress = false;
-
+			let checksStream = null;
 			// Do things here
 			const notifyChange = async () => {
 				try {
@@ -175,13 +216,31 @@ class DistributedUptimeController {
 				batchTimeout = setTimeout(notifyChange, BATCH_DELAY);
 			};
 
-			const checksStream = DistributedUptimeCheck.watch(
-				[{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }],
-				{ fullDocument: "updateLookup" }
-			);
+			const createCheckStream = () => {
+				if (checksStream) {
+					try {
+						checksStream.close();
+					} catch (error) {
+						console.log(error);
+					}
+				}
+				checksStream = DistributedUptimeCheck.watch(
+					[{ $match: { operationType: { $in: ["insert", "update", "delete"] } } }],
+					{ fullDocument: "updateLookup" }
+				);
 
-			checksStream.on("change", handleChange);
+				checksStream.on("change", handleChange);
+				checksStream.on("error", (error) => {
+					console.log(error);
+					createCheckStream();
+				});
+				checksStream.on("close", () => {
+					checksStream = null;
+					console.log("checksStream closed");
+				});
+			};
 
+			createCheckStream();
 			// Send initial data
 			const monitor = await this.db.getDistributedUptimeDetailsById(req);
 			res.write(`data: ${JSON.stringify({ monitor })}\n\n`);
