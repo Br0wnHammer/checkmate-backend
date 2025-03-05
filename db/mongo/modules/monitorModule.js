@@ -211,6 +211,7 @@ const getIncidents = (checks) => {
  */
 const getDateRange = (dateRange) => {
 	const startDates = {
+		recent: new Date(new Date().setHours(new Date().getHours() - 2)),
 		day: new Date(new Date().setDate(new Date().getDate() - 1)),
 		week: new Date(new Date().setDate(new Date().getDate() - 7)),
 		month: new Date(new Date().setMonth(new Date().getMonth() - 1)),
@@ -338,6 +339,7 @@ const getUptimeDetailsById = async (req) => {
 		const { dateRange, normalize } = req.query;
 		const dates = getDateRange(dateRange);
 		const formatLookup = {
+			recent: "%Y-%m-%dT%H:%M:00Z",
 			day: "%Y-%m-%dT%H:00:00Z",
 			week: "%Y-%m-%dT%H:00:00Z",
 			month: "%Y-%m-%dT00:00:00Z",
@@ -384,19 +386,21 @@ const getDistributedUptimeDetailsById = async (req) => {
 		const { dateRange, normalize } = req.query;
 		const dates = getDateRange(dateRange);
 		const formatLookup = {
-			day: "%Y-%m-%dT%H:%M:00Z",
+			recent: "%Y-%m-%dT%H:%M:00Z",
+			day: {
+				$concat: [
+					{ $dateToString: { format: "%Y-%m-%dT%H:", date: "$createdAt" } },
+					{
+						$cond: [{ $lt: [{ $minute: "$createdAt" }, 30] }, "00:00Z", "30:00Z"],
+					},
+				],
+			},
 			week: "%Y-%m-%dT%H:00:00Z",
 			month: "%Y-%m-%dT00:00:00Z",
 		};
 
 		const dateString = formatLookup[dateRange];
 
-		// if (monitor.type === "distributed_test") {
-		// 	const stats = await DistributedUptimeCheck.aggregate(
-		// 		buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
-		// 	).explain("executionStats");
-		// 	fs.writeFileSync("aggregation-stats.json", JSON.stringify(stats, null, 2));
-		// }
 		const results = await DistributedUptimeCheck.aggregate(
 			buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
 		);
@@ -499,6 +503,7 @@ const getHardwareDetailsById = async (req) => {
 		const monitor = await Monitor.findById(monitorId);
 		const dates = getDateRange(dateRange);
 		const formatLookup = {
+			recent: "%Y-%m-%dT%H:%M:00Z",
 			day: "%Y-%m-%dT%H:00:00Z",
 			week: "%Y-%m-%dT%H:00:00Z",
 			month: "%Y-%m-%dT00:00:00Z",
