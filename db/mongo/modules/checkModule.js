@@ -6,6 +6,7 @@ import { ObjectId } from "mongodb";
 
 const SERVICE_NAME = "checkModule";
 const dateRangeLookup = {
+	recent: new Date(new Date().setDate(new Date().getDate() - 2)),
 	hour: new Date(new Date().setHours(new Date().getHours() - 1)),
 	day: new Date(new Date().setDate(new Date().getDate() - 1)),
 	week: new Date(new Date().setDate(new Date().getDate() - 7)),
@@ -132,7 +133,6 @@ const getChecksByMonitor = async (req) => {
 				},
 			},
 		]);
-
 		return checks[0];
 	} catch (error) {
 		error.service = SERVICE_NAME;
