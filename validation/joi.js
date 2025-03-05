@@ -230,7 +230,7 @@ const getHardwareDetailsByIdParamValidation = joi.object({
 });
 
 const getHardwareDetailsByIdQueryValidation = joi.object({
-	dateRange: joi.string().valid("hour", "day", "week", "month", "all"),
+	dateRange: joi.string().valid("recent", "hour", "day", "week", "month", "all"),
 });
 
 //****************************************
@@ -301,7 +301,7 @@ const getChecksParamValidation = joi.object({
 const getChecksQueryValidation = joi.object({
 	sortOrder: joi.string().valid("asc", "desc"),
 	limit: joi.number(),
-	dateRange: joi.string().valid("hour", "day", "week", "month", "all"),
+	dateRange: joi.string().valid("recent", "hour", "day", "week", "month", "all"),
 	filter: joi.string().valid("all", "down", "resolve"),
 	page: joi.number(),
 	rowsPerPage: joi.number(),
