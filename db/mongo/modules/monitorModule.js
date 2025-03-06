@@ -405,7 +405,7 @@ const getDistributedUptimeDetailsById = async (req) => {
 		const dateString = formatLookup[dateRange];
 
 		const monitorStats = await MonitorStats.findOne({ monitorId }).lean();
-		monitorStats.uptBurnt = safelyParseFloat(monitorStats.uptBurnt.toString());
+		monitorStats.uptBurnt = safelyParseFloat(monitorStats?.uptBurnt.toString());
 		const dePINDetailsByDateRange = await DistributedUptimeCheck.aggregate(
 			buildDePINDetailsByDateRange(monitor, dates, dateString)
 		);
