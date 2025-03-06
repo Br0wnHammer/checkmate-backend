@@ -580,7 +580,7 @@ const buildDePINDetails = (monitor, dates) => {
 				totalChecks: 1,
 				downChecks: 1,
 				upChecks: 1,
-				uptBurnt: 1,
+				uptBurnt: { $toString: "$uptBurnt" },
 				timeSinceLastCheck: {
 					$let: {
 						vars: {
