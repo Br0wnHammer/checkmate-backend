@@ -736,8 +736,96 @@ const buildDistributedUptimeDetailsPipeline = (monitor, dates, dateString) => {
 	];
 };
 
+const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
+	return [
+		{
+			$match: {
+				monitorId: monitor._id,
+				createdAt: { $gte: dates.start, $lte: dates.end },
+			},
+		},
+		{
+			$facet: {
+				groupedMapChecks: [
+					{
+						$group: {
+							_id: {
+								city: "$city",
+								lat: "$location.lat",
+								lng: "$location.lng",
+							},
+
+							avgResponseTime: {
+								$avg: "$responseTime",
+							},
+						},
+					},
+				],
+				groupedChecks: [
+					{
+						$group: {
+							_id: {
+								date: {
+									$dateToString: {
+										format: dateString,
+										date: "$createdAt",
+									},
+								},
+							},
+							avgResponseTime: {
+								$avg: "$responseTime",
+							},
+						},
+					},
+					{
+						$sort: {
+							"_id.date": 1,
+						},
+					},
+				],
+			},
+		},
+		{
+			$project: {
+				groupedMapChecks: "$groupedMapChecks",
+				groupedChecks: "$groupedChecks",
+			},
+		},
+	];
+};
+
+const buildDePINLatestChecks = (monitor) => {
+	return [
+		{
+			$match: {
+				monitorId: monitor._id,
+			},
+		},
+		{
+			$sort: { createdAt: -1 },
+		},
+		{
+			$limit: 5,
+		},
+		{
+			$project: {
+				responseTime: 1,
+				city: 1,
+				countryCode: 1,
+				uptBurnt: {
+					$toString: {
+						$ifNull: ["$uptBurnt", 0],
+					},
+				},
+			},
+		},
+	];
+};
+
 export {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
 	buildDistributedUptimeDetailsPipeline,
+	buildDePINDetailsByDateRange,
+	buildDePINLatestChecks,
 };

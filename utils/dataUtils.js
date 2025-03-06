@@ -84,7 +84,31 @@ const NormalizeDataUptimeDetails = (checks, rangeMin, rangeMax) => {
 	}
 };
 
+const safelyParseFloat = (value, defaultValue = 0) => {
+	if (value === null || typeof value === "undefined") {
+		return defaultValue;
+	}
+	const stringValue = String(value).trim();
+
+	if (typeof value === "number" && !isNaN(value)) {
+		return value;
+	}
+
+	if (stringValue === "") {
+		return defaultValue;
+	}
+
+	const parsedValue = parseFloat(stringValue);
+
+	if (isNaN(parsedValue) || !isFinite(parsedValue)) {
+		return defaultValue;
+	}
+
+	return parsedValue;
+};
+
 export {
+	safelyParseFloat,
 	calculatePercentile,
 	NormalizeData,
 	calculatePercentileUptimeDetails,

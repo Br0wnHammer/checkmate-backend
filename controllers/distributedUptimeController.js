@@ -32,6 +32,7 @@ class DistributedUptimeController {
 				tls_took,
 				status_code,
 				error,
+				upt_burnt,
 			} = result;
 
 			// Calculate response time
@@ -57,6 +58,7 @@ class DistributedUptimeController {
 				conn_took,
 				connect_took,
 				tls_took,
+				upt_burnt,
 			};
 			if (error) {
 				const code = status_code || this.NETWORK_ERROR;
