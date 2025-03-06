@@ -534,6 +534,127 @@ const buildHardwareDetailsPipeline = (monitor, dates, dateString) => {
 	];
 };
 
+const buildDePINDetails = (monitor) => {
+	return [
+		{
+			$match: {
+				monitorId: monitor._id,
+			},
+		},
+		{
+			$sort: {
+				createdAt: 1,
+			},
+		},
+		{
+			$group: {
+				_id: null,
+				avgResponseTime: {
+					$avg: "$responseTime",
+				},
+				lastCheck: {
+					$last: "$$ROOT",
+				},
+				totalChecks: {
+					$sum: 1,
+				},
+				downChecks: {
+					$sum: {
+						$cond: [{ $eq: ["$status", false] }, 1, 0],
+					},
+				},
+				upChecks: {
+					$sum: {
+						$cond: [{ $eq: ["$status", true] }, 1, 0],
+					},
+				},
+				uptBurnt: {
+					$sum: "$uptBurnt",
+				},
+			},
+		},
+		{
+			$project: {
+				avgResponseTime: 1,
+				totalChecks: 1,
+				downChecks: 1,
+				upChecks: 1,
+				uptBurnt: 1,
+				timeSinceLastCheck: {
+					$let: {
+						vars: {
+							lastCheck: "$lastCheck",
+						},
+						in: {
+							$cond: [
+								{
+									$ifNull: ["$$lastCheck", false],
+								},
+								{
+									$subtract: [new Date(), "$$lastCheck.createdAt"],
+								},
+								0,
+							],
+						},
+					},
+				},
+			},
+		},
+	];
+};
+
+const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
+	return [
+		{
+			$match: {
+				monitorId: monitor._id,
+				createdAt: { $gte: dates.start, $lte: dates.end },
+			},
+		},
+		{
+			$facet: {
+				groupedMapChecks: [
+					{
+						$match: {
+							createdAt: { $gte: dates.start, $lte: dates.end },
+						},
+					},
+					{
+						$group: {
+							_id: {
+								date: {
+									$dateToString: {
+										format: dateString,
+										date: "$createdAt",
+									},
+								},
+								city: "$city",
+								lat: "$location.lat",
+								lng: "$location.lng",
+							},
+							city: { $first: "$city" }, // Add this line to include city in output
+							lat: { $first: "$location.lat" },
+							lng: { $first: "$location.lng" },
+							avgResponseTime: {
+								$avg: "$responseTime",
+							},
+							totalChecks: {
+								$sum: 1,
+							},
+						},
+					},
+					{
+						$sort: {
+							"_id.date": 1,
+						},
+					},
+				],
+			},
+		},
+		{ $project: { groupedMapChecks: "$groupedMapChecks" } },
+	];
+};
+
 const buildDistributedUptimeDetailsPipeline = (monitor, dates, dateString) => {
 	return [
 		{
@@ -740,4 +861,6 @@ export {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
 	buildDistributedUptimeDetailsPipeline,
+	buildDePINDetails,
+	buildDePINDetailsByDateRange,
 };
