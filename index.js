@@ -39,8 +39,10 @@ import DistributedUptimeRoutes from "./routes/distributedUptimeRoute.js";
 import DistributedUptimeController from "./controllers/distributedUptimeController.js";
 
 import NotificationRoutes from "./routes/notificationRoute.js";
-
 import NotificationController from "./controllers/notificationController.js";
+
+import DiagnosticRoutes from "./routes/diagnosticRoute.js";
+import DiagnosticController from "./controllers/diagnosticController.js";
 
 //JobQueue service and dependencies
 import JobQueue from "./service/jobQueue.js";
@@ -272,6 +274,10 @@ const startApp = async () => {
 		ServiceRegistry.get(StatusService.SERVICE_NAME)
 	);
 
+	const diagnosticController = new DiagnosticController(
+		ServiceRegistry.get(MongoDB.SERVICE_NAME)
+	);
+
 	//Create routes
 	const authRoutes = new AuthRoutes(authController);
 	const monitorRoutes = new MonitorRoutes(monitorController);
@@ -286,9 +292,8 @@ const startApp = async () => {
 	const distributedUptimeRoutes = new DistributedUptimeRoutes(
 		distributedUptimeController
 	);
-
 	const notificationRoutes = new NotificationRoutes(notificationController);
-
+	const diagnosticRoutes = new DiagnosticRoutes(diagnosticController);
 	// Init job queue
 	await jobQueue.initJobQueue();
 	// Middleware
@@ -312,6 +317,7 @@ const startApp = async () => {
 	app.use("/api/v1/distributed-uptime", distributedUptimeRoutes.getRouter());
 	app.use("/api/v1/status-page", statusPageRoutes.getRouter());
 	app.use("/api/v1/notifications", verifyJWT, notificationRoutes.getRouter());
+	app.use("/api/v1/diagnostic", verifyJWT, diagnosticRoutes.getRouter());
 	app.use("/api/v1/health", (req, res) => {
 		res.json({
 			status: "OK",

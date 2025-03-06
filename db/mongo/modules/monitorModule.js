@@ -1,4 +1,5 @@
 import Monitor from "../../models/Monitor.js";
+import MonitorStats from "../../models/MonitorStats.js";
 import Check from "../../models/Check.js";
 import PageSpeedCheck from "../../models/PageSpeedCheck.js";
 import HardwareCheck from "../../models/HardwareCheck.js";
@@ -13,9 +14,8 @@ import { fileURLToPath } from "url";
 import {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
-	buildDistributedUptimeDetailsPipeline,
-	buildDePINDetails,
 	buildDePINDetailsByDateRange,
+	buildDePINLatestChecks,
 } from "./monitorModuleQueries.js";
 import { ObjectId } from "mongodb";
 const __filename = fileURLToPath(import.meta.url);
@@ -403,15 +403,14 @@ const getDistributedUptimeDetailsById = async (req) => {
 
 		const dateString = formatLookup[dateRange];
 
-		const dePINDetails = await DistributedUptimeCheck.aggregate(
-			buildDePINDetails(monitor, dates)
-		);
-
+		const monitorStats = await MonitorStats.findOne({ monitorId }).lean();
 		const dePINDetailsByDateRange = await DistributedUptimeCheck.aggregate(
 			buildDePINDetailsByDateRange(monitor, dates, dateString)
 		);
+		const latestChecks = await DistributedUptimeCheck.aggregate(
+			buildDePINLatestChecks(monitor)
+		);
 
-		const monitorData = dePINDetails[0];
 		const checkData = dePINDetailsByDateRange[0];
 		const normalizedGroupChecks = NormalizeDataUptimeDetails(
 			checkData.groupedChecks,
@@ -419,14 +418,21 @@ const getDistributedUptimeDetailsById = async (req) => {
 			100
 		);
 
-		const monitorStats = {
+		const data = {
 			...monitor.toObject(),
-			...monitorData,
+			latestChecks,
+			avgResponseTime: monitorStats?.avgResponseTime,
+			totalChecks: monitorStats?.totalChecks,
+			totalUpChecks: monitorStats?.totalUpChecks,
+			totalDownChecks: monitorStats?.totalDownChecks,
+			uptimePercentage: monitorStats?.uptimePercentage,
+			lastCheckTimestamp: monitorStats?.lastCheckTimestamp,
+			uptBurnt: monitorStats?.uptBurnt,
 			groupedChecks: normalizedGroupChecks,
 			groupedMapChecks: checkData.groupedMapChecks,
 		};
 
-		return monitorStats;
+		return data;
 	} catch (error) {
 		error.service = SERVICE_NAME;
 		error.method = "getDistributedUptimeDetailsById";
