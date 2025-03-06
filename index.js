@@ -111,7 +111,8 @@ const shutdown = async () => {
 			ServiceRegistry.get(SettingsService.SERVICE_NAME).getSettings() || {};
 
 		const { redisUrl } = settings;
-		const redis = new IORedis(redisUrl, { maxRetriesPerRequest: null }); 
+		const redis = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+
 		logger.info({ message: "Flushing Redis" });
 		await redis.flushall();
 		logger.info({ message: "Redis flushed" });
@@ -306,6 +307,7 @@ const startApp = async () => {
 	app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 	//routes
+	
 	app.use("/api/v1/auth", authRoutes.getRouter());
 	app.use("/api/v1/settings", verifyJWT, settingsRoutes.getRouter());
 	app.use("/api/v1/invite", inviteRoutes.getRouter());
