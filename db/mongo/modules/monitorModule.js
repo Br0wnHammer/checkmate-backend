@@ -14,6 +14,8 @@ import {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
 	buildDistributedUptimeDetailsPipeline,
+	buildDePINDetails,
+	buildDePINDetailsByDateRange,
 } from "./monitorModuleQueries.js";
 import { ObjectId } from "mongodb";
 const __filename = fileURLToPath(import.meta.url);
@@ -401,13 +403,18 @@ const getDistributedUptimeDetailsById = async (req) => {
 
 		const dateString = formatLookup[dateRange];
 
-		const results = await DistributedUptimeCheck.aggregate(
-			buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
+		const dePINDetails = await DistributedUptimeCheck.aggregate(
+			buildDePINDetails(monitor, dates)
 		);
 
-		const monitorData = results[0];
+		const dePINDetailsByDateRange = await DistributedUptimeCheck.aggregate(
+			buildDePINDetailsByDateRange(monitor, dates, dateString)
+		);
+
+		const monitorData = dePINDetails[0];
+		const checkData = dePINDetailsByDateRange[0];
 		const normalizedGroupChecks = NormalizeDataUptimeDetails(
-			monitorData.groupedChecks,
+			checkData.groupedChecks,
 			10,
 			100
 		);
@@ -416,6 +423,7 @@ const getDistributedUptimeDetailsById = async (req) => {
 			...monitor.toObject(),
 			...monitorData,
 			groupedChecks: normalizedGroupChecks,
+			groupedMapChecks: checkData.groupedMapChecks,
 		};
 
 		return monitorStats;
