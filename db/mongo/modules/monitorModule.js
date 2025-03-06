@@ -18,6 +18,7 @@ import {
 	buildDePINLatestChecks,
 } from "./monitorModuleQueries.js";
 import { ObjectId } from "mongodb";
+import { safelyParseFloat } from "../../../utils/dataUtils.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -404,6 +405,7 @@ const getDistributedUptimeDetailsById = async (req) => {
 		const dateString = formatLookup[dateRange];
 
 		const monitorStats = await MonitorStats.findOne({ monitorId }).lean();
+		monitorStats.uptBurnt = safelyParseFloat(monitorStats.uptBurnt.toString());
 		const dePINDetailsByDateRange = await DistributedUptimeCheck.aggregate(
 			buildDePINDetailsByDateRange(monitor, dates, dateString)
 		);
