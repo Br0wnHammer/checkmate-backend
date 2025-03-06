@@ -534,76 +534,6 @@ const buildHardwareDetailsPipeline = (monitor, dates, dateString) => {
 	];
 };
 
-const buildDePINDetails = (monitor, dates) => {
-	return [
-		{
-			$match: {
-				monitorId: monitor._id,
-				createdAt: { $gte: dates.start, $lte: dates.end }, // Temporary until Stats object implemented
-			},
-		},
-		{
-			$sort: {
-				createdAt: 1,
-			},
-		},
-		{
-			$group: {
-				_id: null,
-				avgResponseTime: {
-					$avg: "$responseTime",
-				},
-				lastCheck: {
-					$last: "$$ROOT",
-				},
-				totalChecks: {
-					$sum: 1,
-				},
-				downChecks: {
-					$sum: {
-						$cond: [{ $eq: ["$status", false] }, 1, 0],
-					},
-				},
-				upChecks: {
-					$sum: {
-						$cond: [{ $eq: ["$status", true] }, 1, 0],
-					},
-				},
-				uptBurnt: {
-					$sum: "$uptBurnt",
-				},
-			},
-		},
-		{
-			$project: {
-				avgResponseTime: 1,
-				totalChecks: 1,
-				downChecks: 1,
-				upChecks: 1,
-				uptBurnt: { $toString: "$uptBurnt" },
-				timeSinceLastCheck: {
-					$let: {
-						vars: {
-							lastCheck: "$lastCheck",
-						},
-						in: {
-							$cond: [
-								{
-									$ifNull: ["$$lastCheck", false],
-								},
-								{
-									$subtract: [new Date(), "$$lastCheck.createdAt"],
-								},
-								0,
-							],
-						},
-					},
-				},
-			},
-		},
-	];
-};
-
 const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 	return [
 		{
@@ -884,6 +814,5 @@ export {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
 	buildDistributedUptimeDetailsPipeline,
-	buildDePINDetails,
 	buildDePINDetailsByDateRange,
 };
