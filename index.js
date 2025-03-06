@@ -5,6 +5,7 @@ import swaggerUi from "swagger-ui-express";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
+import compression from "compression";
 import logger from "./utils/logger.js";
 import { verifyJWT } from "./middleware/verifyJWT.js";
 import { handleErrors } from "./middleware/handleErrors.js";
@@ -301,6 +302,18 @@ const startApp = async () => {
 	app.use(cors());
 	app.use(express.json());
 	app.use(helmet());
+	app.use(
+		compression({
+			level: 6,
+			threshold: 1024,
+			filter: (req, res) => {
+				if (req.headers["x-no-compression"]) {
+					return false;
+				}
+				return compression.filter(req, res);
+			},
+		})
+	);
 	app.use(languageMiddleware(stringService, translationService, settingsService));
 	// Swagger UI
 	app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
