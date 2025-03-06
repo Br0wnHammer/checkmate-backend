@@ -1,3 +1,5 @@
+import MonitorStats from "../db/models/MonitorStats.js";
+import { safelyParseFloat } from "../utils/dataUtils.js";
 const SERVICE_NAME = "StatusService";
 
 class StatusService {
@@ -12,6 +14,79 @@ class StatusService {
 		this.db = db;
 		this.logger = logger;
 		this.SERVICE_NAME = SERVICE_NAME;
+	}
+
+	async updateRunningStats({ monitor, networkResponse }) {
+		try {
+			const monitorId = monitor._id;
+			const { responseTime, status, upt_burnt } = networkResponse;
+			// Get stats
+			let stats = await MonitorStats.findOne({ monitorId });
+			if (!stats) {
+				stats = new MonitorStats({
+					monitorId,
+					avgResponseTime: 0,
+					totalChecks: 0,
+					totalUpChecks: 0,
+					totalDownChecks: 0,
+					uptimePercentage: 0,
+					lastCheck: null,
+					timeSInceLastCheck: 0,
+					uptBurnt: 0,
+				});
+			}
+
+			// Update stats
+
+			// Avg response time:
+			let avgResponseTime = stats.avgResponseTime;
+			if (typeof responseTime === "undefined" || responseTime === null) {
+				if (avgResponseTime === 0) {
+					avgResponseTime = responseTime;
+				} else {
+					avgResponseTime =
+						(avgResponseTime * (stats.totalChecks - 1) + responseTime) /
+						stats.totalChecks;
+				}
+			}
+
+			// Total checks
+			stats.totalChecks++;
+			if (status === true) {
+				stats.totalUpChecks++;
+			} else {
+				stats.totalDownChecks++;
+			}
+
+			// Calculate uptime percentage
+			let uptimePercentage;
+			if (stats.totalChecks > 0) {
+				uptimePercentage = stats.totalUpChecks / stats.totalChecks;
+			} else {
+				uptimePercentage = status === true ? 100 : 0;
+			}
+			stats.uptimePercentage = uptimePercentage;
+
+			// latest check
+			stats.lastCheckTimestamp = new Date().getTime();
+
+			// UPT burned
+			if (typeof upt_burnt !== "undefined" && upt_burnt !== null) {
+				const currentUptBurnt = safelyParseFloat(stats.uptBurnt);
+				const newUptBurnt = safelyParseFloat(upt_burnt);
+				stats.uptBurnt = currentUptBurnt + newUptBurnt;
+			}
+			await stats.save();
+			return true;
+		} catch (error) {
+			this.logger.error({
+				service: this.SERVICE_NAME,
+				message: error.message,
+				method: "updateRunningStats",
+				stack: error.stack,
+			});
+			return false;
+		}
 	}
 
 	getStatusString = (status) => {
@@ -36,6 +111,10 @@ class StatusService {
 		try {
 			const { monitorId, status } = networkResponse;
 			const monitor = await this.db.getMonitorById(monitorId);
+
+			// Update running stats
+			this.updateRunningStats({ monitor, networkResponse });
+
 			// No change in monitor status, return early
 			if (monitor.status === status)
 				return { monitor, statusChanged: false, prevStatus: monitor.status };
