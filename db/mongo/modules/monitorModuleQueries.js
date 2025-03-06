@@ -534,11 +534,12 @@ const buildHardwareDetailsPipeline = (monitor, dates, dateString) => {
 	];
 };
 
-const buildDePINDetails = (monitor) => {
+const buildDePINDetails = (monitor, dates) => {
 	return [
 		{
 			$match: {
 				monitorId: monitor._id,
+				createdAt: { $gte: dates.start, $lte: dates.end }, // Temporary until Stats object implemented
 			},
 		},
 		{
@@ -615,11 +616,6 @@ const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 			$facet: {
 				groupedMapChecks: [
 					{
-						$match: {
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
-					{
 						$group: {
 							_id: {
 								date: {
@@ -649,9 +645,36 @@ const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 						},
 					},
 				],
+				groupedChecks: [
+					{
+						$group: {
+							_id: {
+								date: {
+									$dateToString: {
+										format: dateString,
+										date: "$createdAt",
+									},
+								},
+							},
+							avgResponseTime: {
+								$avg: "$responseTime",
+							},
+						},
+					},
+					{
+						$sort: {
+							"_id.date": 1,
+						},
+					},
+				],
 			},
 		},
-		{ $project: { groupedMapChecks: "$groupedMapChecks" } },
+		{
+			$project: {
+				groupedMapChecks: "$groupedMapChecks",
+				groupedChecks: "$groupedChecks",
+			},
+		},
 	];
 };
 

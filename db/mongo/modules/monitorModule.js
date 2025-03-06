@@ -404,28 +404,17 @@ const getDistributedUptimeDetailsById = async (req) => {
 		const dateString = formatLookup[dateRange];
 
 		const dePINDetails = await DistributedUptimeCheck.aggregate(
-			buildDePINDetails(monitor)
+			buildDePINDetails(monitor, dates)
 		);
 
 		const dePINDetailsByDateRange = await DistributedUptimeCheck.aggregate(
 			buildDePINDetailsByDateRange(monitor, dates, dateString)
 		);
 
-		// const results = await DistributedUptimeCheck.aggregate(
-		// 	buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
-		// );
-
-		// let explainResults;
-		// if (process.env.NODE_ENV === "development") {
-		// 	explainResults = await DistributedUptimeCheck.aggregate(
-		// 		buildDistributedUptimeDetailsPipeline(monitor, dates, dateString)
-		// 	).explain("executionStats");
-		// }
-
 		const monitorData = dePINDetails[0];
 		const checkData = dePINDetailsByDateRange[0];
 		const normalizedGroupChecks = NormalizeDataUptimeDetails(
-			checkData.groupedMapChecks,
+			checkData.groupedChecks,
 			10,
 			100
 		);
@@ -434,7 +423,7 @@ const getDistributedUptimeDetailsById = async (req) => {
 			...monitor.toObject(),
 			...monitorData,
 			groupedChecks: normalizedGroupChecks,
-			// explainResults,
+			groupedMapChecks: checkData.groupedMapChecks,
 		};
 
 		return monitorStats;
