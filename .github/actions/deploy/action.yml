@@ -25,6 +25,15 @@ inputs:
   UPROCK_API_KEY:
     description: 'Uprock API Key'
     required: true
+  ENVIRONMENT:
+    description: 'Environment'
+    required: true
+  REPOSITORY:
+    description: 'Repository'
+    required: true
+  IMAGE_TAG:
+    description: 'Image Tag'
+    required: true
 runs: 
   using: 'composite'
   steps:
@@ -37,8 +46,7 @@ runs:
           set -o xtrace
 
           cd ~/uptime-backend
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-          IMAGE_NAME=ghcr.io/${{ inputs.REPOSITORY_OWNER }}/uptime:${COMMIT_HASH}
+          IMAGE_NAME=ghcr.io/${{ inputs.REPOSITORY }}:${{ inputs.IMAGE_TAG }}
 
           CURRENT_LIVE=$(echo "show map /home/ubuntu/haproxy-hosts.map" | socat stdio tcp4-connect:127.0.0.1:9000 | grep active | awk "{print \$3}")
 
@@ -60,6 +68,12 @@ runs:
             --name uptime-backend-${NEXT_LIVE} \
             -p 127.0.0.1:${NEXT_PORT}:5000 \
             --restart always \
+            --log-driver=awslogs \
+            --log-opt awslogs-group="/var/log/uptime-backend-${{ inputs.ENVIRONMENT }}" \
+            --log-opt awslogs-region="${{ inputs.AWS_REGION }}" \
+            --log-opt awslogs-stream="stream-$(date +%s)" \
+            --log-opt awslogs-create-group=true \
+            --log-opt awslogs-multiline-pattern="^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z" \
             -e DB_CONNECTION_STRING="${{ inputs.MONGODB_URL }}" \
             -e REDIS_URL="${{ inputs.REDIS_URL }}" \
             -e CALLBACK_URL="${{ inputs.CALLBACK_URL }}" \
