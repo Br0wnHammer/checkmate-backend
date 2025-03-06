@@ -28,12 +28,7 @@ const MonitorSatsSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
-		lastCheck: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: "Check",
-			default: null,
-		},
-		timeSinceLastCheck: {
+		lastCheckTimestamp: {
 			type: Number,
 			default: 0,
 		},
