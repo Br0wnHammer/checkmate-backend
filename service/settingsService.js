@@ -8,7 +8,7 @@ const envConfig = {
 	clientHost: process.env.CLIENT_HOST,
 	jwtSecret: process.env.JWT_SECRET,
 	dbType: process.env.DB_TYPE,
-	dbConnectionString: process.env.DB_CONNECTION_STRING ,
+	dbConnectionString: process.env.DB_CONNECTION_STRING,
 	redisUrl: process.env.REDIS_URL,
 	jwtTTL: process.env.TOKEN_TTL,
 	pagespeedApiKey: process.env.PAGESPEED_API_KEY,

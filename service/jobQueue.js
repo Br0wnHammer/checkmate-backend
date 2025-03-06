@@ -30,8 +30,9 @@ class NewJobQueue {
 		Worker
 	) {
 		const settings = settingsService.getSettings() || {};
-		const { redisUrl, } = settings;
+		const { redisUrl } = settings;
 		const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null }) 
+		
 		this.queues = {};
 		this.workers = {};
 		this.lastJobProcessedTime = {};

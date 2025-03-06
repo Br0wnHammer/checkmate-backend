@@ -111,8 +111,7 @@ const shutdown = async () => {
 			ServiceRegistry.get(SettingsService.SERVICE_NAME).getSettings() || {};
 
 		const { redisUrl } = settings;
-		const redis = new IORedis(redisUrl, { maxRetriesPerRequest: null }) 
-		
+		const redis = new IORedis(redisUrl, { maxRetriesPerRequest: null }); 
 		logger.info({ message: "Flushing Redis" });
 		await redis.flushall();
 		logger.info({ message: "Redis flushed" });
@@ -297,7 +296,6 @@ const startApp = async () => {
 
 	// Init job queue
 	await jobQueue.initJobQueue();
-
 	// Middleware
 	app.use(responseHandler);
 	app.use(cors());
