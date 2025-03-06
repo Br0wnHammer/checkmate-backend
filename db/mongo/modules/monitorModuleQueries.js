@@ -632,7 +632,7 @@ const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 								lat: "$location.lat",
 								lng: "$location.lng",
 							},
-							city: { $first: "$city" }, // Add this line to include city in output
+							city: { $first: "$city" },
 							lat: { $first: "$location.lat" },
 							lng: { $first: "$location.lng" },
 							avgResponseTime: {
