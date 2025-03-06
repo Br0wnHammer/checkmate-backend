@@ -5,11 +5,7 @@ const AppSettingsSchema = mongoose.Schema(
 		apiBaseUrl: {
 			type: String,
 			required: true,
-			default: process.env.API_BASE_URL || "http://localhost:5000/api/v1",
-		},
-		language: {
-			type: String,
-			default: "en",
+			default: "http://localhost:5000/api/v1",
 		},
 		language: {
 			type: String,
@@ -17,70 +13,61 @@ const AppSettingsSchema = mongoose.Schema(
 		},
 		logLevel: {
 			type: String,
-			default: process.env.LOG_LEVEL || "debug",
+			default: "debug",
 			enum: ["debug", "none", "error", "warn"],
 		},
 		clientHost: {
 			type: String,
 			required: true,
-			default: process.env.CLIENT_HOST || "http://localhost:5173",
+			default: "http://localhost:5173",
 		},
 		jwtSecret: {
 			type: String,
 			required: true,
-			default: process.env.JWT_SECRET || "my_secret",
+			default: "my_secret",
 		},
 		dbType: {
 			type: String,
 			required: true,
-			default: process.env.DB_TYPE || "MongoDB",
+			default: "MongoDB",
 		},
 		dbConnectionString: {
 			type: String,
 			required: true,
-			default: process.env.DBCONNECTION_STRING || "mongodb://localhost:27017/uptime_db",
+			default: "mongodb://localhost:27017/uptime_db",
 		},
-		redisHost: {
-            type: String,
-            required: true,
-            default: process.env.REDIS_HOST || "127.0.0.1",
-        },
-        redisPort: {
-            type: Number,
-            default: process.env.REDIS_PORT || 6379,
-        },
-        redisPassword: {
-            type: String,
-            default: process.env.REDIS_PASSWORD || "", 
-        },
 		redisUrl: {
 			type: String,
 			default: "redis://127.0.0.1:6379",
 		},
+		redisPassword: {
+            type: String,
+            default: "", 
+        },
 		jwtTTL: {
 			type: String,
 			required: true,
-			default: process.env.JWT_TTL || "2h",
+			default: "2h",
 		},
 		pagespeedApiKey: {
 			type: String,
-			default: process.env.PAGESPEED_API_KEY || "",
+			default: "",
 		},
 		systemEmailHost: {
 			type: String,
-			default: process.env.SYSTEM_EMAIL_HOST || "smtp.gmail.com",
+			default: "smtp.gmail.com",
 		},
 		systemEmailPort: {
 			type: Number,
-			default: process.env.SYSTEM_EMAIL_PORT || 465,
+			default: 465,
 		},
 		systemEmailAddress: {
 			type: String,
-			default: process.env.SYSTEM_EMAIL_ADDRESS || "",
+			default: "",
 		},
 		systemEmailPassword: {
 			type: String,
-			default: process.env.SYSTEM_EMAIL_PASSWORD || "",
+			default: "",
 		},
 		singleton: {
 			type: Boolean,
