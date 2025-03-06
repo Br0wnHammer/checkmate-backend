@@ -40,7 +40,7 @@ class StatusService {
 
 			// Avg response time:
 			let avgResponseTime = stats.avgResponseTime;
-			if (typeof responseTime === "undefined" || responseTime === null) {
+			if (typeof responseTime !== "undefined" && responseTime !== null) {
 				if (avgResponseTime === 0) {
 					avgResponseTime = responseTime;
 				} else {
@@ -49,6 +49,7 @@ class StatusService {
 						stats.totalChecks;
 				}
 			}
+			stats.avgResponseTime = avgResponseTime;
 
 			// Total checks
 			stats.totalChecks++;
