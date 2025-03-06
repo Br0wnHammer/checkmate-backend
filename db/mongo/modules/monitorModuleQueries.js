@@ -750,30 +750,14 @@ const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 					{
 						$group: {
 							_id: {
-								date: {
-									$dateToString: {
-										format: dateString,
-										date: "$createdAt",
-									},
-								},
 								city: "$city",
 								lat: "$location.lat",
 								lng: "$location.lng",
 							},
-							city: { $first: "$city" },
-							lat: { $first: "$location.lat" },
-							lng: { $first: "$location.lng" },
+
 							avgResponseTime: {
 								$avg: "$responseTime",
 							},
-							totalChecks: {
-								$sum: 1,
-							},
-						},
-					},
-					{
-						$sort: {
-							"_id.date": 1,
 						},
 					},
 				],
