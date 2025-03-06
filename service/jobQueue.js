@@ -30,15 +30,8 @@ class NewJobQueue {
 		Worker
 	) {
 		const settings = settingsService.getSettings() || {};
-		const { redisHost = "127.0.0.1", redisPort = 6379, redisPassword = process.env.REDIS_PASSWORD, redisUrl, } = settings;
-		const connection = redisUrl
-		? new IORedis(redisUrl, { maxRetriesPerRequest: null }) // Use redisUrl for local setup
-		: new IORedis({
-			host: redisHost,
-			port: redisPort,
-			password: redisPassword,
-		}); //Use this config for coolify setup
-
+		const { redisUrl, } = settings;
+		const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null }) 
 		this.queues = {};
 		this.workers = {};
 		this.lastJobProcessedTime = {};

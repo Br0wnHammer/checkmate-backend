@@ -40,10 +40,6 @@ const AppSettingsSchema = mongoose.Schema(
 			type: String,
 			default: "redis://127.0.0.1:6379",
 		},
-		redisPassword: {
-            type: String,
-            default: "", 
-        },
 		jwtTTL: {
 			type: String,
 			required: true,

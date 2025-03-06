@@ -110,15 +110,9 @@ const shutdown = async () => {
 		const settings =
 			ServiceRegistry.get(SettingsService.SERVICE_NAME).getSettings() || {};
 
-		const { redisHost = "127.0.0.1", redisPort = 6379, redisPassword = process.env.REDIS_PASSWORD, redisUrl, } = settings;
-		const redis = redisUrl
-		? new IORedis(redisUrl, { maxRetriesPerRequest: null }) // Use redisUrl for local setup
-		: new IORedis({
-			host: redisHost,
-			port: redisPort,
-			password: redisPassword, //Use this config for coolify setup
-		}); 	
-
+		const { redisUrl } = settings;
+		const redis = new IORedis(redisUrl, { maxRetriesPerRequest: null }) 
+		
 		logger.info({ message: "Flushing Redis" });
 		await redis.flushall();
 		logger.info({ message: "Redis flushed" });
