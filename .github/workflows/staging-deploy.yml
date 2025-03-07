@@ -104,8 +104,8 @@ jobs:
           UPROCKSTAGING_COM_KEY: ${{ secrets.STAR_UPROCKSTAGING_COM_KEY }}
         shell: bash
         run: |
-          echo "${UPROCKSTAGING_COM_CRT}" > docker/prod/nginx/uptime.uprockrockstaging.com.crt
-          echo "${UPROCKSTAGING_COM_KEY}" > docker/prod/nginx/uptime.uprockrockstaging.com.key
+          echo "${UPROCKSTAGING_COM_CRT}" > docker/prod/nginx/uptime.uprockstaging.com.crt
+          echo "${UPROCKSTAGING_COM_KEY}" > docker/prod/nginx/uptime.uprockstaging.com.key
 
       - name: Configure Nginx and HAProxy
         uses: ./.github/actions/configure
