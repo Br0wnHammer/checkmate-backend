@@ -156,6 +156,7 @@ jobs:
           ENVIRONMENT: "staging"
           IMAGE_TAG: "${{ github.sha }}"
           REPOSITORY: "${{ github.repository }}"
+          AWS_REGION: "${{ secrets.UPTIME_STAGING_AWS_REGION }}"
 
   cleanup:
     runs-on: ubuntu-latest
