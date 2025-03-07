@@ -14,6 +14,7 @@ import { fileURLToPath } from "url";
 import {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
+	buildMonitorStatsPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,
 } from "./monitorModuleQueries.js";
@@ -404,11 +405,10 @@ const getDistributedUptimeDetailsById = async (req) => {
 
 		const dateString = formatLookup[dateRange];
 
-		const monitorStats = await MonitorStats.findOne({ monitorId }).lean();
-		if (typeof monitorStats !== "undefined" && monitorStats !== null) {
-			monitorStats.uptBurnt = safelyParseFloat(monitorStats?.uptBurnt.toString());
-		}
-
+		const monitorStatsResult = await MonitorStats.aggregate(
+			buildMonitorStatsPipeline(monitor)
+		);
+		const monitorStats = monitorStatsResult[0];
 		const dePINDetailsByDateRange = await DistributedUptimeCheck.aggregate(
 			buildDePINDetailsByDateRange(monitor, dates, dateString)
 		);
@@ -422,16 +422,13 @@ const getDistributedUptimeDetailsById = async (req) => {
 			10,
 			100
 		);
-
 		const data = {
 			...monitor.toObject(),
 			latestChecks,
-			avgResponseTime: monitorStats?.avgResponseTime,
 			totalChecks: monitorStats?.totalChecks,
-			totalUpChecks: monitorStats?.totalUpChecks,
-			totalDownChecks: monitorStats?.totalDownChecks,
+			avgResponseTime: monitorStats?.avgResponseTime,
 			uptimePercentage: monitorStats?.uptimePercentage,
-			lastCheckTimestamp: monitorStats?.lastCheckTimestamp,
+			timeSinceLastCheck: monitorStats?.timeSinceLastCheck,
 			uptBurnt: monitorStats?.uptBurnt,
 			groupedChecks: normalizedGroupChecks,
 			groupedMapChecks: checkData.groupedMapChecks,

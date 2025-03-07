@@ -95,7 +95,9 @@ class DistributedUptimeController {
 			res.setHeader("Cache-Control", "no-cache");
 			res.setHeader("Connection", "keep-alive");
 			res.setHeader("Access-Control-Allow-Origin", "*");
-
+			// Disable compression
+			req.headers["accept-encoding"] = "identity";
+			res.removeHeader("Content-Encoding");
 			const BATCH_DELAY = 1000;
 			let batchTimeout = null;
 			let opInProgress = false;
@@ -212,6 +214,10 @@ class DistributedUptimeController {
 			res.setHeader("Connection", "keep-alive");
 			res.setHeader("Access-Control-Allow-Origin", "*");
 
+			// disable compression
+			req.headers["accept-encoding"] = "identity";
+			res.removeHeader("Content-Encoding");
+
 			const BATCH_DELAY = 1000;
 			let batchTimeout = null;
 			let opInProgress = false;
@@ -279,12 +285,6 @@ class DistributedUptimeController {
 			const keepAlive = setInterval(() => {
 				res.write(": keepalive\n\n");
 			}, 10000);
-
-			// Clean up on close
-			req.on("close", () => {
-				clearInterval(keepAlive);
-			});
-
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitorDetails"));
 		}
