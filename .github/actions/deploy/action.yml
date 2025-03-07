@@ -34,6 +34,9 @@ inputs:
   IMAGE_TAG:
     description: 'Image Tag'
     required: true
+  AWS_REGION:
+    description: 'AWS Region'
+    required: true
 runs: 
   using: 'composite'
   steps:

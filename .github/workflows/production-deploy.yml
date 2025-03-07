@@ -384,6 +384,7 @@ jobs:
           ENVIRONMENT: "production"
           IMAGE_TAG: "latest"
           REPOSITORY: "${{ github.repository }}"
+          AWS_REGION: "${{ secrets.UPTIME_1_AWS_REGION }}"
 
   deploy-uptime-2:
     runs-on: ubuntu-latest
@@ -426,6 +427,7 @@ jobs:
           ENVIRONMENT: "production"
           IMAGE_TAG: "latest"
           REPOSITORY: "${{ github.repository }}"
+          AWS_REGION: "${{ secrets.UPTIME_2_AWS_REGION }}"
           
   deploy-uptime-3:
     runs-on: ubuntu-latest
@@ -468,6 +470,7 @@ jobs:
           ENVIRONMENT: "production"
           IMAGE_TAG: "latest"
           REPOSITORY: "${{ github.repository }}"
+          AWS_REGION: "${{ secrets.UPTIME_3_AWS_REGION }}"
 
   deploy-uptime-4:
     runs-on: ubuntu-latest
@@ -510,6 +513,7 @@ jobs:
           ENVIRONMENT: "production"
           IMAGE_TAG: "latest"
           REPOSITORY: "${{ github.repository }}"
+          AWS_REGION: "${{ secrets.UPTIME_4_AWS_REGION }}"
 
   cleanup:
     runs-on: ubuntu-latest
