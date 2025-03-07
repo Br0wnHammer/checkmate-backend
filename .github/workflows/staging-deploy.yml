@@ -112,7 +112,7 @@ jobs:
         with:
           REMOTE_USER: "ubuntu"
           SERVER_IP: "${{ secrets.UPTIME_STAGING_HOST_IP }}"
-          DOMAIN: "uptime.uprockrockstaging.com"
+          DOMAIN: "uptime.uprockstaging.com"
 
 
   deploy-uptime:
