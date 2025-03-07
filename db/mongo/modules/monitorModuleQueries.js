@@ -534,7 +534,7 @@ const buildHardwareDetailsPipeline = (monitor, dates, dateString) => {
 	];
 };
 
-const buildDistributedUptimeDetailsPipeline = (monitor, dates, dateString) => {
+const buildMonitorStatsPipeline = (monitor) => {
 	return [
 		{
 			$match: {
@@ -542,195 +542,15 @@ const buildDistributedUptimeDetailsPipeline = (monitor, dates, dateString) => {
 			},
 		},
 		{
-			$sort: {
-				createdAt: 1,
-			},
-		},
-		{
-			$facet: {
-				aggregateData: [
-					{
-						$group: {
-							_id: null,
-							avgResponseTime: {
-								$avg: "$responseTime",
-							},
-							lastCheck: {
-								$last: "$$ROOT",
-							},
-							totalChecks: {
-								$sum: 1,
-							},
-							downChecks: {
-								$sum: {
-									$cond: [{ $eq: ["$status", false] }, 1, 0],
-								},
-							},
-							upChecks: {
-								$sum: {
-									$cond: [{ $eq: ["$status", true] }, 1, 0],
-								},
-							},
-							uptBurnt: {
-								$sum: "$uptBurnt",
-							},
-						},
-					},
-				],
-				// For the response time chart, should return checks for date window
-				// Grouped by: {day: hour}, {week: day}, {month: day}
-				groupedMapChecks: [
-					{
-						$match: {
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
-					{
-						$group: {
-							_id: {
-								date: {
-									$dateToString: {
-										format: dateString,
-										date: "$createdAt",
-									},
-								},
-								city: "$city",
-								lat: "$location.lat",
-								lng: "$location.lng",
-							},
-							city: { $first: "$city" }, // Add this line to include city in output
-							lat: { $first: "$location.lat" },
-							lng: { $first: "$location.lng" },
-							avgResponseTime: {
-								$avg: "$responseTime",
-							},
-							totalChecks: {
-								$sum: 1,
-							},
-						},
-					},
-					{
-						$sort: {
-							"_id.date": 1,
-						},
-					},
-				],
-				groupedChecks: [
-					{
-						$match: {
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
-					{
-						$group: {
-							_id: {
-								$dateToString: {
-									format: dateString,
-									date: "$createdAt",
-								},
-							},
-							avgResponseTime: {
-								$avg: "$responseTime",
-							},
-							totalChecks: {
-								$sum: 1,
-							},
-						},
-					},
-					{
-						$sort: {
-							_id: 1,
-						},
-					},
-				],
-				// Average response time for the date window
-				groupAvgResponseTime: [
-					{
-						$match: {
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
-					{
-						$group: {
-							_id: null,
-							avgResponseTime: {
-								$avg: "$responseTime",
-							},
-						},
-					},
-				],
-				latestChecks: [
-					{
-						$sort: { createdAt: -1 }, // Sort by newest first
-					},
-					{
-						$limit: 5, // Get only the first 5 documents
-					},
-					{
-						$project: {
-							responseTime: 1,
-							city: 1,
-							countryCode: 1,
-							uptBurnt: { $toString: "$uptBurnt" },
-						},
-					},
-				],
-			},
-		},
-		{
 			$project: {
-				totalUptBurnt: {
-					$toString: {
-						$arrayElemAt: ["$aggregateData.uptBurnt", 0],
-					},
-				},
-				avgResponseTime: {
-					$arrayElemAt: ["$aggregateData.avgResponseTime", 0],
-				},
-				totalChecks: {
-					$arrayElemAt: ["$aggregateData.totalChecks", 0],
-				},
-				totalUpChecks: {
-					$arrayElemAt: ["$aggregateData.upChecks", 0],
-				},
-				totalDownChecks: {
-					$arrayElemAt: ["$aggregateData.downChecks", 0],
-				},
-				totalUptime: {
-					$divide: [
-						{ $arrayElemAt: ["$aggregateData.upChecks", 0] },
-						{ $arrayElemAt: ["$aggregateData.totalChecks", 0] },
-					],
-				},
-				latestResponseTime: {
-					$arrayElemAt: ["$aggregateData.lastCheck.responseTime", 0],
-				},
+				avgResponseTime: 1,
+				uptimePercentage: 1,
+				totalChecks: 1,
 				timeSinceLastCheck: {
-					$let: {
-						vars: {
-							lastCheck: {
-								$arrayElemAt: ["$aggregateData.lastCheck", 0],
-							},
-						},
-						in: {
-							$cond: [
-								{
-									$ifNull: ["$$lastCheck", false],
-								},
-								{
-									$subtract: [new Date(), "$$lastCheck.createdAt"],
-								},
-								0,
-							],
-						},
-					},
+					$subtract: [Date.now(), "$lastCheckTimestamp"],
 				},
-				groupedMapChecks: "$groupedMapChecks",
-				groupedChecks: "$groupedChecks",
-				groupedAvgResponseTime: {
-					$arrayElemAt: ["$groupAvgResponseTime", 0],
-				},
-				latestChecks: "$latestChecks",
+				lastCheckTimestamp: 1,
+				uptBurnt: { $toString: "$uptBurnt" },
 			},
 		},
 	];
@@ -825,7 +645,7 @@ const buildDePINLatestChecks = (monitor) => {
 export {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
-	buildDistributedUptimeDetailsPipeline,
+	buildMonitorStatsPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,
 };
