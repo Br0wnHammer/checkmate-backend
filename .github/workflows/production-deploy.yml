@@ -382,7 +382,7 @@ jobs:
           CALLBACK_URL: "https://api-uptime.uprock.com"
           UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
           ENVIRONMENT: "production"
-          IMAGE_TAG: "latest"
+          IMAGE_TAG: "${{ github.sha }}"
           REPOSITORY: "${{ github.repository }}"
           AWS_REGION: "${{ secrets.UPTIME_1_AWS_REGION }}"
 
@@ -425,7 +425,7 @@ jobs:
           CALLBACK_URL: "https://api-uptime.uprock.com"
           UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
           ENVIRONMENT: "production"
-          IMAGE_TAG: "latest"
+          IMAGE_TAG: "${{ github.sha }}"
           REPOSITORY: "${{ github.repository }}"
           AWS_REGION: "${{ secrets.UPTIME_2_AWS_REGION }}"
           
@@ -468,7 +468,7 @@ jobs:
           CALLBACK_URL: "https://api-uptime.uprock.com"
           UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
           ENVIRONMENT: "production"
-          IMAGE_TAG: "latest"
+          IMAGE_TAG: "${{ github.sha }}"
           REPOSITORY: "${{ github.repository }}"
           AWS_REGION: "${{ secrets.UPTIME_3_AWS_REGION }}"
 
@@ -511,7 +511,7 @@ jobs:
           CALLBACK_URL: "https://api-uptime.uprock.com"
           UPROCK_API_KEY: "${{ secrets.BACKEND_API_KEY }}"
           ENVIRONMENT: "production"
-          IMAGE_TAG: "latest"
+          IMAGE_TAG: "${{ github.sha }}"
           REPOSITORY: "${{ github.repository }}"
           AWS_REGION: "${{ secrets.UPTIME_4_AWS_REGION }}"
 
