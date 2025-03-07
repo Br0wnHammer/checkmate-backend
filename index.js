@@ -302,6 +302,18 @@ const startApp = async () => {
 	app.use(cors());
 	app.use(express.json());
 	app.use(helmet());
+	app.use(
+		compression({
+			level: 6,
+			threshold: 1024,
+			filter: (req, res) => {
+				if (req.headers["x-no-compression"]) {
+					return false;
+				}
+				return compression.filter(req, res);
+			},
+		})
+	);
 
 	app.use(languageMiddleware(stringService, translationService, settingsService));
 	// Swagger UI
