@@ -565,6 +565,16 @@ const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 			},
 		},
 		{
+			$project: {
+				_id: 0,
+				city: 1,
+				createdAt: 1,
+				"location.lat": 1,
+				"location.lng": 1,
+				responseTime: 1,
+			},
+		},
+		{
 			$facet: {
 				groupedMapChecks: [
 					{
