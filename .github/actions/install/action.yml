@@ -26,6 +26,21 @@ runs:
         fi
         EOF
 
+    - name: Install OpenTelemetry Collector
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+        if ! [ -x "$(command -v otelcol)" ]; then
+          sudo apt update -qq
+          sudo apt install -y wget
+          wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.121.0/otelcol_0.121.0_linux_amd64.deb
+          sudo dpkg -i otelcol_0.121.0_linux_amd64.deb
+          if ! sudo systemctl is-active --quiet otelcol; then
+          sudo systemctl restart otelcol
+          fi
+        fi
+        EOF
+
     - name: Install Nginx
       shell: bash
       run: |
