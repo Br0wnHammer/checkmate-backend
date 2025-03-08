@@ -1,0 +1,33 @@
+receivers:
+  hostmetrics:
+    collection_interval: 60s  # Frequency of metrics collection.
+    scrapers:
+      cpu: {}
+      load: {}
+      memory: {}
+      disk: {}
+      filesystem: {}
+      network: {}
+processors:
+  resourcedetection:
+    detectors: [env, system]
+    system:
+      hostname_sources: [os]
+extensions:
+  health_check:
+  zpages:
+exporters:
+  otlp:
+    endpoint: "http://52.209.145.102:4317" # The OpenTelemetry Collector address.
+    tls:
+      insecure: true
+service:
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888
+  extensions: [health_check, zpages]
+  pipelines:
+    metrics/hostmetrics:
+      receivers: [hostmetrics]
+      processors: [resourcedetection]
+      exporters: [otlp]

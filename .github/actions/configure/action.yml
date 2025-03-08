@@ -50,6 +50,21 @@ runs:
           fi
         EOF
 
+    - name: Copy Otel Config
+      shell: bash
+      run: |
+        # Update the OpenTelemetry Collector config and restart.
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          LOCAL_HASH=$(md5sum ~/uptime-backend/docker/prod/otel/config.yaml | awk '{ print $1 }')
+          REMOTE_HASH=$(md5sum /etc/otelcol-contrib/config.yaml | awk '{ print $1 }' || echo "file_not_found")
+          if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+            sudo cp ~/uptime-backend/docker/prod/otel/config.yaml /etc/otelcol-contrib/config.yaml
+            sudo systemctl restart otelcol-contrib
+          else
+            echo "OpenTelemetry config has not changed. Skipping copy."
+          fi
+        EOF
+        
     - name: Copy HAProxy Config
       shell: bash
       run: |

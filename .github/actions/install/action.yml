@@ -26,17 +26,17 @@ runs:
         fi
         EOF
 
-    - name: Install OpenTelemetry Collector
+    - name: Install OpenTelemetry Collector Contrib
       shell: bash
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
-        if ! [ -x "$(command -v otelcol)" ]; then
+        if ! [ -x "$(command -v otelcol-contrib)" ]; then
           sudo apt update -qq
           sudo apt install -y wget
-          wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.121.0/otelcol_0.121.0_linux_amd64.deb
-          sudo dpkg -i otelcol_0.121.0_linux_amd64.deb
-          if ! sudo systemctl is-active --quiet otelcol; then
-          sudo systemctl restart otelcol
+          wget https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.121.0/otelcol-contrib_0.121.0_linux_amd64.deb
+          sudo dpkg -i otelcol-contrib_0.121.0_linux_amd64.deb
+          if ! sudo systemctl is-active --quiet otelcol-contrib; then
+          sudo systemctl restart otelcol-contrib
           fi
         fi
         EOF
