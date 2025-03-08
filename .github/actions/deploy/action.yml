@@ -40,7 +40,7 @@ inputs:
   SIGNOZ_LOG_ENDPOINT:
     description: 'Signoz Log Endpoint'
     required: true
-    default: 'http://172.31.38.80:2254'
+    default: 'http://52.209.145.102:2254'
 runs: 
   using: 'composite'
   steps:
@@ -51,7 +51,7 @@ runs:
           if ! docker ps -q --filter "name=docker-spout" | grep -q .; then
             docker run -d --name docker-spout \
               -v /var/run/docker.sock:/var/run/docker.sock \
-              -e SIGNOZ_LOG_ENDPOINT=http://${{ inputs.SIGNOZ_LOG_ENDPOINT }}:2254 \
+              -e SIGNOZ_LOG_ENDPOINT=${{ inputs.SIGNOZ_LOG_ENDPOINT }} \
               -e 'ENV=${{ inputs.ENVIRONMENT }}' \
               --restart always \
               pavanputhra/logspout-signoz \
