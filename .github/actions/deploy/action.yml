@@ -37,9 +37,28 @@ inputs:
   AWS_REGION:
     description: 'AWS Region'
     required: true
+  SIGNOZ_LOG_ENDPOINT:
+    description: 'Signoz Log Endpoint'
+    required: true
+    default: 'http://172.31.38.80:2254'
 runs: 
   using: 'composite'
   steps:
+    - name: Run Docker Spout for log forwarding if not already running.
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          if ! docker ps -q --filter "name=docker-spout" | grep -q .; then
+            docker run -d --name docker-spout \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -e SIGNOZ_LOG_ENDPOINT=http://${{ inputs.SIGNOZ_LOG_ENDPOINT }}:2254 \
+              -e 'ENV=${{ inputs.ENVIRONMENT }}' \
+              --restart always \
+              pavanputhra/logspout-signoz \
+              signoz://localhost:2254
+          fi
+        EOF
+
     - name: Start Backend Service
       shell: bash
       run: |
