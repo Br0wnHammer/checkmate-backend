@@ -557,18 +557,19 @@ const buildMonitorStatsPipeline = (monitor) => {
 };
 
 const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
+	console.log(JSON.stringify(dateString, null, 2));
 	return [
 		{
 			$match: {
 				monitorId: monitor._id,
-				createdAt: { $gte: dates.start, $lte: dates.end },
+				updatedAt: { $gte: dates.start, $lte: dates.end },
 			},
 		},
 		{
 			$project: {
 				_id: 0,
 				city: 1,
-				createdAt: 1,
+				updatedAt: 1,
 				"location.lat": 1,
 				"location.lng": 1,
 				responseTime: 1,
@@ -598,7 +599,7 @@ const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 								date: {
 									$dateToString: {
 										format: dateString,
-										date: "$createdAt",
+										date: "$updatedAt",
 									},
 								},
 							},
@@ -632,7 +633,7 @@ const buildDePINLatestChecks = (monitor) => {
 			},
 		},
 		{
-			$sort: { createdAt: -1 },
+			$sort: { updatedAt: -1 },
 		},
 		{
 			$limit: 5,
