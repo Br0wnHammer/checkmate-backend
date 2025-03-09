@@ -105,6 +105,10 @@ const DistributedUptimeCheckSchema = mongoose.Schema(
 			type: mongoose.Schema.Types.Decimal128,
 			required: false,
 		},
+		count: {
+			type: Number,
+			required: false,
+		},
 	},
 	{ timestamps: true }
 );
