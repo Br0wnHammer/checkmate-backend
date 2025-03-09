@@ -19,7 +19,6 @@ import {
 	buildDePINLatestChecks,
 } from "./monitorModuleQueries.js";
 import { ObjectId } from "mongodb";
-import { safelyParseFloat } from "../../../utils/dataUtils.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -393,9 +392,9 @@ const getDistributedUptimeDetailsById = async (req) => {
 			recent: "%Y-%m-%dT%H:%M:00Z",
 			day: {
 				$concat: [
-					{ $dateToString: { format: "%Y-%m-%dT%H:", date: "$createdAt" } },
+					{ $dateToString: { format: "%Y-%m-%dT%H:", date: "$updatedAt" } },
 					{
-						$cond: [{ $lt: [{ $minute: "$createdAt" }, 30] }, "00:00Z", "30:00Z"],
+						$cond: [{ $lt: [{ $minute: "$updatedAt" }, 30] }, "00:00Z", "30:00Z"],
 					},
 				],
 			},
@@ -577,6 +576,7 @@ const getMonitorById = async (monitorId) => {
 
 const getMonitorsByTeamId = async (req) => {
 	let { limit, type, page, rowsPerPage, filter, field, order } = req.query;
+
 	limit = parseInt(limit);
 	page = parseInt(page);
 	rowsPerPage = parseInt(rowsPerPage);

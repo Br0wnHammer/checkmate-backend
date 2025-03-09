@@ -105,6 +105,10 @@ const DistributedUptimeCheckSchema = mongoose.Schema(
 			type: mongoose.Schema.Types.Decimal128,
 			required: false,
 		},
+		count: {
+			type: Number,
+			required: false,
+		},
 	},
 	{ timestamps: true }
 );
@@ -117,8 +121,8 @@ DistributedUptimeCheckSchema.pre("save", function (next) {
 });
 
 DistributedUptimeCheckSchema.index({ createdAt: 1 });
-DistributedUptimeCheckSchema.index({ monitorId: 1, createdAt: 1 });
-DistributedUptimeCheckSchema.index({ monitorId: 1, createdAt: -1 });
+DistributedUptimeCheckSchema.index({ monitorId: 1, updatedAt: 1 });
+DistributedUptimeCheckSchema.index({ monitorId: 1, updatedAt: -1 });
 DistributedUptimeCheckSchema.index(
 	{
 		monitorId: 1,
