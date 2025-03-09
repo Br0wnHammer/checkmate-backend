@@ -557,7 +557,6 @@ const buildMonitorStatsPipeline = (monitor) => {
 };
 
 const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
-	console.log(JSON.stringify(dateString, null, 2));
 	return [
 		{
 			$match: {
