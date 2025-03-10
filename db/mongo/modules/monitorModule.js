@@ -11,14 +11,18 @@ import StringService from "../../../service/stringService.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { ObjectId } from "mongodb";
+
 import {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
 	buildMonitorStatsPipeline,
+	buildMonitorSummaryByTeamIdPipeline,
+	buildMonitorsByTeamIdPipeline,
+	buildFilteredMonitorsByTeamIdPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,
 } from "./monitorModuleQueries.js";
-import { ObjectId } from "mongodb";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -576,7 +580,6 @@ const getMonitorById = async (monitorId) => {
 
 const getMonitorsByTeamId = async (req) => {
 	let { limit, type, page, rowsPerPage, filter, field, order } = req.query;
-
 	limit = parseInt(limit);
 	page = parseInt(page);
 	rowsPerPage = parseInt(rowsPerPage);
@@ -584,204 +587,35 @@ const getMonitorsByTeamId = async (req) => {
 		field = "name";
 		order = "asc";
 	}
-	// Build the match stage
+	// Build match stage
 	const matchStage = { teamId: ObjectId.createFromHexString(req.params.teamId) };
 	if (type !== undefined) {
 		matchStage.type = Array.isArray(type) ? { $in: type } : type;
 	}
 
-	const skip = page && rowsPerPage ? page * rowsPerPage : 0;
-	const sort = { [field]: order === "asc" ? 1 : -1 };
-	const results = await Monitor.aggregate([
-		{ $match: matchStage },
-		{
-			$facet: {
-				summary: [
-					{
-						$group: {
-							_id: null,
-							totalMonitors: { $sum: 1 },
-							upMonitors: {
-								$sum: {
-									$cond: [{ $eq: ["$status", true] }, 1, 0],
-								},
-							},
-							downMonitors: {
-								$sum: {
-									$cond: [{ $eq: ["$status", false] }, 1, 0],
-								},
-							},
-							pausedMonitors: {
-								$sum: {
-									$cond: [{ $eq: ["$isActive", false] }, 1, 0],
-								},
-							},
-						},
-					},
-					{
-						$project: {
-							_id: 0,
-						},
-					},
-				],
-				monitors: [
-					{ $sort: sort },
-					{
-						$project: {
-							_id: 1,
-							name: 1,
-						},
-					},
-				],
-				filteredMonitors: [
-					...(filter !== undefined
-						? [
-								{
-									$match: {
-										$or: [
-											{ name: { $regex: filter, $options: "i" } },
-											{ url: { $regex: filter, $options: "i" } },
-										],
-									},
-								},
-							]
-						: []),
-					{ $sort: sort },
-					{ $skip: skip },
-					...(rowsPerPage ? [{ $limit: rowsPerPage }] : []),
-					...(limit
-						? [
-								{
-									$lookup: {
-										from: "checks",
-										let: { monitorId: "$_id" },
-										pipeline: [
-											{
-												$match: {
-													$expr: { $eq: ["$monitorId", "$$monitorId"] },
-												},
-											},
-											{ $sort: { createdAt: -1 } },
-											...(limit ? [{ $limit: limit }] : []),
-										],
-										as: "standardchecks",
-									},
-								},
-							]
-						: []),
-					...(limit
-						? [
-								{
-									$lookup: {
-										from: "pagespeedchecks",
-										let: { monitorId: "$_id" },
-										pipeline: [
-											{
-												$match: {
-													$expr: { $eq: ["$monitorId", "$$monitorId"] },
-												},
-											},
-											{ $sort: { createdAt: -1 } },
-											...(limit ? [{ $limit: limit }] : []),
-										],
-										as: "pagespeedchecks",
-									},
-								},
-							]
-						: []),
-					...(limit
-						? [
-								{
-									$lookup: {
-										from: "hardwarechecks",
-										let: { monitorId: "$_id" },
-										pipeline: [
-											{
-												$match: {
-													$expr: { $eq: ["$monitorId", "$$monitorId"] },
-												},
-											},
-											{ $sort: { createdAt: -1 } },
-											...(limit ? [{ $limit: limit }] : []),
-										],
-										as: "hardwarechecks",
-									},
-								},
-							]
-						: []),
-					...(limit
-						? [
-								{
-									$lookup: {
-										from: "distributeduptimechecks",
-										let: { monitorId: "$_id" },
-										pipeline: [
-											{
-												$match: {
-													$expr: { $eq: ["$monitorId", "$$monitorId"] },
-												},
-											},
-											{ $sort: { createdAt: -1 } },
-											...(limit ? [{ $limit: limit }] : []),
-										],
-										as: "distributeduptimechecks",
-									},
-								},
-							]
-						: []),
+	const summaryResult = await Monitor.aggregate(
+		buildMonitorSummaryByTeamIdPipeline({ matchStage })
+	);
+	const summary = summaryResult[0];
 
-					{
-						$addFields: {
-							checks: {
-								$switch: {
-									branches: [
-										{
-											case: { $in: ["$type", ["http", "ping", "docker", "port"]] },
-											then: "$standardchecks",
-										},
-										{
-											case: { $eq: ["$type", "pagespeed"] },
-											then: "$pagespeedchecks",
-										},
-										{
-											case: { $eq: ["$type", "hardware"] },
-											then: "$hardwarechecks",
-										},
-										{
-											case: { $eq: ["$type", "distributed_http"] },
-											then: "$distributeduptimechecks",
-										},
-										{
-											case: { $eq: ["$type", "distributed_test"] },
-											then: "$distributeduptimechecks",
-										},
-									],
-									default: [],
-								},
-							},
-						},
-					},
-					{
-						$project: {
-							standardchecks: 0,
-							pagespeedchecks: 0,
-							hardwarechecks: 0,
-						},
-					},
-				],
-			},
-		},
-		{
-			$project: {
-				summary: { $arrayElemAt: ["$summary", 0] },
-				filteredMonitors: 1,
-				monitors: 1,
-			},
-		},
-	]);
+	const monitors = await Monitor.aggregate(
+		buildMonitorsByTeamIdPipeline({ matchStage, field, order })
+	);
 
-	let { monitors, filteredMonitors, summary } = results[0];
-	filteredMonitors = filteredMonitors.map((monitor) => {
+	const filteredMonitors = await Monitor.aggregate(
+		buildFilteredMonitorsByTeamIdPipeline({
+			matchStage,
+			filter,
+			page,
+			rowsPerPage,
+			field,
+			order,
+			limit,
+			type,
+		})
+	);
+
+	const normalizedFilteredMonitors = filteredMonitors.map((monitor) => {
 		if (!monitor.checks) {
 			return monitor;
 		}
@@ -789,7 +623,7 @@ const getMonitorsByTeamId = async (req) => {
 		return monitor;
 	});
 
-	return { monitors, filteredMonitors, summary };
+	return { summary, monitors, filteredMonitors: normalizedFilteredMonitors };
 };
 
 /**
