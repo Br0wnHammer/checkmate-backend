@@ -42,6 +42,10 @@ inputs:
     description: 'Region'
     required: true
     default: 'eu-west-1'
+  OTEL_EXPORTER_OTLP_SPAN_ENDPOINT:
+    description: 'OpenTelemetry Collector Span Endpoint'
+    required: true
+    default: 'http://uptime.signoz.uprock.com:4318/v1/traces'
 runs: 
   using: 'composite'
   steps:
@@ -88,6 +92,10 @@ runs:
             -e REDIS_URL="${{ inputs.REDIS_URL }}" \
             -e CALLBACK_URL="${{ inputs.CALLBACK_URL }}" \
             -e UPROCK_API_KEY="${{ inputs.UPROCK_API_KEY }}" \
+            -e OTEL_EXPORTER_OTLP_SPAN_ENDPOINT="${{ inputs.OTEL_EXPORTER_OTLP_SPAN_ENDPOINT }}" \
+            -e SERVICE_NAME=uptime-backend-${NEXT_LIVE} \
+            -e ENVIRONMENT=${{ inputs.ENVIRONMENT }} \
+            -e HOST_NAME=`hostname` \
             ${IMAGE_NAME}
             
           STATUS=$(echo "show stat" | socat stdio tcp4-connect:127.0.0.1:9000 | cut -d "," -f 2,18 | column -s, -t | grep ${NEXT_LIVE} | uniq | awk "{print \$2}")
