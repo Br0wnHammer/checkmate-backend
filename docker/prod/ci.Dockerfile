@@ -8,8 +8,14 @@ COPY ./package*.json ./
 
 RUN npm install
 
+RUN npm install @opentelemetry/sdk-node
+
+RUN npm install @opentelemetry/auto-instrumentations-node
+
+RUN npm install @opentelemetry/exporter-trace-otlp-http
+
 COPY . .
 
 EXPOSE 5000
 
-CMD ["node", "index.js"]
+CMD ["node", "-r ", "./tracing.js", "index.js"]
