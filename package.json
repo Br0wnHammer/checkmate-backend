@@ -10,8 +10,7 @@
 		"lint": "eslint .",
 		"lint-fix": "eslint --fix .",
 		"format": "prettier --write .",
-		"format-check": "prettier --check .",
-		"start": "node -r ./tracing.cjs index.js"
+		"format-check": "prettier --check ."
 	},
 	"keywords": [],
 	"author": "",

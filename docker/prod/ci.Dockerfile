@@ -18,4 +18,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+CMD ["node", "-r", "./tracing.cjs", "index.js"]
