@@ -16,7 +16,7 @@ runs:
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
         if ! [ -x "$(command -v td-agent)" ]; then
           curl -fsSL https://toolbelt.treasuredata.com/sh/install-ubuntu-bionic-td-agent3.sh -o td-agent3.sh
-          udo sh td-agent3.sh
+          sudo sh td-agent3.sh
         fi
         EOF
 
