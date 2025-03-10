@@ -64,7 +64,25 @@ runs:
             echo "OpenTelemetry config has not changed. Skipping copy."
           fi
         EOF
-        
+
+    - name: Copy fluentd Config
+      shell: bash
+      run: |
+        # Update the Fluentd config and restart.
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+          # Create the directory if it doesn't exist
+          sudo mkdir -p /etc/td-agent || true
+
+          LOCAL_HASH=$(md5sum ~/uptime-backend/docker/prod/fluentd/fluent.conf | awk '{ print $1 }')
+          REMOTE_HASH=$(md5sum /etc/td-agent/td-agent.conf | awk '{ print $1 }' || echo "file_not_found")
+          if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+            sudo cp ~/uptime-backend/docker/prod/fluentd/fluent.conf /etc/td-agent/td-agent.conf
+            sudo systemctl restart td-agent
+          else
+            echo "Fluentd config has not changed. Skipping copy."
+          fi
+        EOF
+
     - name: Copy HAProxy Config
       shell: bash
       run: |

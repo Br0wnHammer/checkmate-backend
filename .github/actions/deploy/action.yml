@@ -38,24 +38,21 @@ inputs:
     description: 'Signoz Log Endpoint'
     required: true
     default: 'http://52.209.145.102:2254'
+  REGION:
+    description: 'Region'
+    required: true
+    default: 'eu-west-1'
 runs: 
   using: 'composite'
   steps:
-    - name: Run Docker Spout for log forwarding if not already running.
+    - name: Stop Docker Spout for log forwarding if running.
       shell: bash
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
-          if ! docker ps -q --filter "name=docker-spout" | grep -q .; then
-            docker run -d --name docker-spout \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -e SIGNOZ_LOG_ENDPOINT=${{ inputs.SIGNOZ_LOG_ENDPOINT }} \
-              -e 'ENV=${{ inputs.ENVIRONMENT }}' \
-              --restart always \
-              pavanputhra/logspout-signoz \
-              signoz://localhost:2254
-          fi
+          docker stop docker-spout || true
+          docker rm docker-spout || true
         EOF
-
+    
     - name: Start Backend Service
       shell: bash
       run: |
@@ -87,6 +84,14 @@ runs:
             --name uptime-backend-${NEXT_LIVE} \
             -p 127.0.0.1:${NEXT_PORT}:5000 \
             --restart always \
+            --log-driver=fluentd \
+            --log-opt fluentd-address=localhost:24224 \
+            --log-opt tag="docker.{{.Name}}" \
+            --log-opt labels=service_name,environment,host_name,region \
+            --label service_name=uptime-backend-${NEXT_LIVE} \
+            --label environment=${{ inputs.ENVIRONMENT }} \
+            --label region=${{ inputs.REGION }} \
+            --label host_name=`hostname` \
             -e DB_CONNECTION_STRING="${{ inputs.MONGODB_URL }}" \
             -e REDIS_URL="${{ inputs.REDIS_URL }}" \
             -e CALLBACK_URL="${{ inputs.CALLBACK_URL }}" \

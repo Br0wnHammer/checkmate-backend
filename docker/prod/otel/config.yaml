@@ -18,7 +18,7 @@ extensions:
   zpages:
 exporters:
   otlp:
-    endpoint: "http://52.209.145.102:4317" # The OpenTelemetry Collector address.
+    endpoint: "http://uptime.signoz.uprock.com:4317" # The OpenTelemetry Collector address.
     tls:
       insecure: true
 service:

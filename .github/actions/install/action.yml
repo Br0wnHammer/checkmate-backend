@@ -1,5 +1,5 @@
-name: docker install
-description: 'Install Docker'
+name: packages install
+description: 'Install Required Packages on Remote Server'
 inputs:
   REMOTE_USER:
     description: 'Remote Server User'
@@ -10,6 +10,16 @@ inputs:
 runs: 
   using: 'composite'
   steps:
+    - name: Install Fluetd
+      shell: bash
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa_uptime ${{ inputs.REMOTE_USER }}@${{ inputs.SERVER_IP }} << 'EOF'
+        if ! [ -x "$(command -v td-agent)" ]; then
+          curl -fsSL https://toolbelt.treasuredata.com/sh/install-ubuntu-bionic-td-agent3.sh -o td-agent3.sh
+          udo sh td-agent3.sh
+        fi
+        EOF
+
     - name: Install Docker
       shell: bash
       run: |
