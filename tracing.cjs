@@ -9,7 +9,7 @@ const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventi
 
 const exporterOptions = {
     // highlight-next-line
-    url: 'http://localhost:4318/v1/traces' || process.env.OTEL_EXPORTER_OTLP_SPAN_ENDPOINT,
+    url: process.env.OTEL_EXPORTER_OTLP_SPAN_ENDPOINT || 'http://localhost:4318/v1/traces',
 }
 
 const traceExporter = new OTLPTraceExporter(exporterOptions)
@@ -18,9 +18,9 @@ const sdk = new opentelemetry.NodeSDK({
     instrumentations: [getNodeAutoInstrumentations()],
     // highlight-start
     resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: 'node_app' || process.env.SERVICE_NAME,
-        [SemanticResourceAttributes.HOST_NAME]: 'localhost' || process.env.HOST_NAME,
-        [SemanticResourceAttributes.ENVIRONMENT]: 'development' || process.env.ENVIRONMENT,
+        [SemanticResourceAttributes.SERVICE_NAME]: process.env.SERVICE_NAME || 'node_app',
+        [SemanticResourceAttributes.HOST_NAME]: process.env.HOST_NAME || 'localhost',
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.ENVIRONMENT || 'development',
     }),
     // highlight-end
 })
