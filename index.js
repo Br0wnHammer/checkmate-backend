@@ -139,7 +139,8 @@ const shutdown = async () => {
 // Need to wrap server setup in a function to handle async nature of JobQueue
 const startApp = async () => {
 	const app = express();
-
+	const allowedOrigin = process.env.CLIENT_HOST;
+	console.log({ allowedOrigin });
 	// Create and Register Primary services
 	const translationService = new TranslationService(logger);
 	const stringService = new StringService(translationService);
@@ -299,7 +300,14 @@ const startApp = async () => {
 	await jobQueue.initJobQueue();
 	// Middleware
 	app.use(responseHandler);
-	app.use(cors());
+	app.use(
+		cors({
+			origin: allowedOrigin,
+			methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+			allowedHeaders: "*",
+			credentials: true,
+		})
+	);
 	app.use(express.json());
 	app.use(helmet());
 	app.use(
@@ -320,7 +328,6 @@ const startApp = async () => {
 	app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
 	//routes
-
 	app.use("/api/v1/auth", authRoutes.getRouter());
 	app.use("/api/v1/settings", verifyJWT, settingsRoutes.getRouter());
 	app.use("/api/v1/invite", inviteRoutes.getRouter());

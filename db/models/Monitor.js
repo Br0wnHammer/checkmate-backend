@@ -92,4 +92,6 @@ const MonitorSchema = mongoose.Schema(
 	}
 );
 
+MonitorSchema.index({ teamId: 1, type: 1 });
+
 export default mongoose.model("Monitor", MonitorSchema);

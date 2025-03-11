@@ -1,5 +1,8 @@
 import Check from "../../models/Check.js";
 import Monitor from "../../models/Monitor.js";
+import HardwareCheck from "../../models/HardwareCheck.js";
+import PageSpeedCheck from "../../models/PageSpeedCheck.js";
+import DistributedUptimeCheck from "../../models/DistributedUptimeCheck.js";
 import User from "../../models/User.js";
 import logger from "../../../utils/logger.js";
 import { ObjectId } from "mongodb";
@@ -71,7 +74,7 @@ const createCheck = async (checkData) => {
 const getChecksByMonitor = async (req) => {
 	try {
 		const { monitorId } = req.params;
-		let { sortOrder, dateRange, filter, page, rowsPerPage, status } = req.query;
+		let { type, sortOrder, dateRange, filter, page, rowsPerPage, status } = req.query;
 		status = typeof status !== "undefined" ? false : undefined;
 		page = parseInt(page);
 		rowsPerPage = parseInt(rowsPerPage);
@@ -113,7 +116,21 @@ const getChecksByMonitor = async (req) => {
 		if (page && rowsPerPage) {
 			skip = page * rowsPerPage;
 		}
-		const checks = await Check.aggregate([
+
+		const checkModels = {
+			http: Check,
+			ping: Check,
+			docker: Check,
+			port: Check,
+			pagespeed: PageSpeedCheck,
+			hardware: HardwareCheck,
+			distributed_http: DistributedUptimeCheck,
+			distributed_test: DistributedUptimeCheck
+		}
+
+		const Model = checkModels[type];
+
+		const checks = await Model.aggregate([
 			{ $match: matchStage },
 			{ $sort: { createdAt: sortOrder } },
 			{
@@ -184,10 +201,27 @@ const getChecksByTeam = async (req) => {
 			skip = page * rowsPerPage;
 		}
 
-		const checks = await Check.aggregate([
+		const aggregatePipeline = [
 			{ $match: matchStage },
+			{ $unionWith: {
+				coll: 'hardwarechecks',
+				pipeline: [
+					{ $match: matchStage }
+				]
+			}},
+			{ $unionWith: {
+				coll: 'pagespeedchecks',
+				pipeline: [
+					{ $match: matchStage }
+				]
+			}},
+			{ $unionWith: {
+				coll: 'distributeduptimechecks',
+				pipeline: [
+					{ $match: matchStage }
+				]
+			}},
 			{ $sort: { createdAt: sortOrder } },
-
 			{
 				$facet: {
 					summary: [{ $count: "checksCount" }],
@@ -199,9 +233,10 @@ const getChecksByTeam = async (req) => {
 					checksCount: { $arrayElemAt: ["$summary.checksCount", 0] },
 					checks: "$checks",
 				},
-			},
-		]);
+			}
+		];
 
+		const checks = await Check.aggregate(aggregatePipeline);
 		return checks[0];
 	} catch (error) {
 		error.service = SERVICE_NAME;
