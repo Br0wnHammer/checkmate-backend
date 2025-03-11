@@ -73,6 +73,9 @@ import StatusService from "./service/statusService.js";
 // Notification Service and dependencies
 import NotificationService from "./service/notificationService.js";
 
+// Buffer Service and dependencies
+import BufferService from "./service/bufferService.js";
+
 // Service Registry
 import ServiceRegistry from "./service/serviceRegistry.js";
 
@@ -173,7 +176,8 @@ const startApp = async () => {
 		nodemailer,
 		logger
 	);
-	const statusService = new StatusService(db, logger);
+	const bufferService = new BufferService({ db, logger });
+	const statusService = new StatusService({ db, logger, buffer: bufferService });
 	const notificationService = new NotificationService(
 		emailService,
 		db,
@@ -200,6 +204,7 @@ const startApp = async () => {
 	ServiceRegistry.register(SettingsService.SERVICE_NAME, settingsService);
 	ServiceRegistry.register(EmailService.SERVICE_NAME, emailService);
 	ServiceRegistry.register(NetworkService.SERVICE_NAME, networkService);
+	ServiceRegistry.register(BufferService.SERVICE_NAME, bufferService);
 	ServiceRegistry.register(StatusService.SERVICE_NAME, statusService);
 	ServiceRegistry.register(NotificationService.SERVICE_NAME, notificationService);
 	ServiceRegistry.register(TranslationService.SERVICE_NAME, translationService);
