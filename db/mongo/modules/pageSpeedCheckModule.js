@@ -24,6 +24,16 @@ const createPageSpeedCheck = async (pageSpeedCheckData) => {
 		throw error;
 	}
 };
+const createPageSpeedChecks = async (pageSpeedChecks) => {
+	try {
+		await PageSpeedCheck.insertMany(pageSpeedChecks);
+		return true;
+	} catch (error) {
+		error.service = SERVICE_NAME;
+		error.method = "createPageSpeedCheck";
+		throw error;
+	}
+};
 
 /**
  * Delete all PageSpeed checks for a monitor
@@ -44,4 +54,4 @@ const deletePageSpeedChecksByMonitorId = async (monitorId) => {
 	}
 };
 
-export { createPageSpeedCheck, deletePageSpeedChecksByMonitorId };
+export { createPageSpeedCheck, createPageSpeedChecks, deletePageSpeedChecksByMonitorId };
