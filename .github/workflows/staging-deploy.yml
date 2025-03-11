@@ -157,6 +157,7 @@ jobs:
           IMAGE_TAG: "${{ github.sha }}"
           REPOSITORY: "${{ github.repository }}"
           REGION: "${{ secrets.UPTIME_STAGING_AWS_REGION }}"
+          CLIENT_HOST: "https://uptime.uprockstaging.com"
 
   cleanup:
     runs-on: ubuntu-latest

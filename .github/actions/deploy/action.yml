@@ -46,6 +46,10 @@ inputs:
     description: 'OpenTelemetry Collector Span Endpoint'
     required: true
     default: 'http://uptime.signoz.uprock.com:4318/v1/traces'
+  CLIENT_HOST:
+    description: 'Client Host'
+    required: true
+    default: 'https://uptime.uprock.com'
 runs: 
   using: 'composite'
   steps:
@@ -91,6 +95,7 @@ runs:
             --label region=${{ inputs.REGION }} \
             --label host_name=${hostname} \
             -e DB_CONNECTION_STRING="${{ inputs.MONGODB_URL }}" \
+            -e CLIENT_HOST="{{ inputs.CLIENT_HOST }}" \
             -e REDIS_URL="${{ inputs.REDIS_URL }}" \
             -e CALLBACK_URL="${{ inputs.CALLBACK_URL }}" \
             -e UPROCK_API_KEY="${{ inputs.UPROCK_API_KEY }}" \
