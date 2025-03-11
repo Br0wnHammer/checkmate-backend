@@ -141,7 +141,6 @@ class DistributedUptimeController {
 				});
 				monitorStream.on("close", () => {
 					monitorStream = null;
-					console.log("monitorStream closed");
 				});
 			};
 
@@ -164,7 +163,6 @@ class DistributedUptimeController {
 				});
 				checksStream.on("close", () => {
 					checksStream = null;
-					console.log("checksStream closed");
 				});
 			};
 
@@ -266,7 +264,6 @@ class DistributedUptimeController {
 				});
 				checksStream.on("close", () => {
 					checksStream = null;
-					console.log("checksStream closed");
 				});
 			};
 
