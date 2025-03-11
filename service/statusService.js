@@ -10,9 +10,10 @@ class StatusService {
 	 * @param {Object} db - The database instance.
 	 * @param {Object} logger - The logger instance.
 	 */
-	constructor(db, logger) {
+	constructor({ db, logger, buffer }) {
 		this.db = db;
 		this.logger = logger;
+		this.buffer = buffer;
 		this.SERVICE_NAME = SERVICE_NAME;
 	}
 
@@ -262,10 +263,11 @@ class StatusService {
 				port: this.db.createCheck,
 				distributed_http: this.db.createDistributedCheck,
 			};
-			const operation = operationMap[networkResponse.type];
+			// const operation = operationMap[networkResponse.type];
 
 			const check = this.buildCheck(networkResponse);
-			await operation(check);
+			this.buffer.addToBuffer({ check, type: networkResponse.type });
+			// await operation(check);
 		} catch (error) {
 			this.logger.error({
 				message: error.message,
