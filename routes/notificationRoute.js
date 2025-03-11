@@ -2,23 +2,35 @@ import express from "express";
 import { verifyJWT } from "../middleware/verifyJWT.js";
 
 class NotificationRoutes {
-	constructor(notificationController) {
-		this.notificationController = notificationController;
-		this.router = express.Router();
-		this.initializeRoutes();
-	}
+    constructor(notificationController) {
+        this.notificationController = notificationController;
+        this.router = express.Router();
+        this.publicRouter = express.Router(); 
+        this.initializeRoutes();
+    }
 
-	initializeRoutes() {
-		this.router.post(
-			"/trigger",
-			verifyJWT,
-			this.notificationController.triggerNotification
-		);
-	}
+    initializeRoutes() {
+        // Protected routes 
+        this.router.post(
+            "/trigger",
+            verifyJWT,
+            this.notificationController.triggerNotification
+        );
 
-	getRouter() {
-		return this.router;
-	}
+        // Public routes 
+        this.publicRouter.post(
+            "/test-webhook",
+            this.notificationController.testWebhook
+        );
+    }
+
+    getRouter() {
+        return this.router;
+    }
+
+    getPublicRouter() {
+        return this.publicRouter;
+    }
 }
 
 export default NotificationRoutes;
