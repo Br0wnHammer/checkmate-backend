@@ -6,6 +6,8 @@ class DiagnosticController {
 		this.db = db;
 		this.getDistributedUptimeDbExecutionStats =
 			this.getDistributedUptimeDbExecutionStats.bind(this);
+		this.getMonitorsByTeamIdExecutionStats =
+			this.getMonitorsByTeamIdExecutionStats.bind(this);
 	}
 
 	async getDistributedUptimeDbExecutionStats(req, res, next) {
@@ -17,6 +19,18 @@ class DiagnosticController {
 			});
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "getDbExecutionStats"));
+		}
+	}
+
+	async getMonitorsByTeamIdExecutionStats(req, res, next) {
+		try {
+			const data = await this.db.getMonitorsByTeamIdExecutionStats(req);
+			return res.success({
+				msg: "OK",
+				data,
+			});
+		} catch (error) {
+			next(handleError(error, SERVICE_NAME, "getMonitorsByTeamIdExecutionStats"));
 		}
 	}
 }

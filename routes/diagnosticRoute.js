@@ -11,6 +11,11 @@ class DiagnosticRoutes {
 			"/db/execution-stats/:monitorId",
 			this.diagnosticController.getDistributedUptimeDbExecutionStats
 		);
+
+		this.router.get(
+			"/db/get-monitors-by-team-id/:teamId",
+			this.diagnosticController.getMonitorsByTeamIdExecutionStats
+		);
 	}
 
 	getRouter() {

@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 const buildUptimeDetailsPipeline = (monitor, dates, dateString) => {
 	return [
 		{
@@ -556,12 +558,335 @@ const buildMonitorStatsPipeline = (monitor) => {
 	];
 };
 
+const buildMonitorSummaryByTeamIdPipeline = ({ matchStage }) => {
+	return [
+		{ $match: matchStage },
+		{
+			$group: {
+				_id: null,
+				totalMonitors: { $sum: 1 },
+				upMonitors: {
+					$sum: {
+						$cond: [{ $eq: ["$status", true] }, 1, 0],
+					},
+				},
+				downMonitors: {
+					$sum: {
+						$cond: [{ $eq: ["$status", false] }, 1, 0],
+					},
+				},
+				pausedMonitors: {
+					$sum: {
+						$cond: [{ $eq: ["$isActive", false] }, 1, 0],
+					},
+				},
+			},
+		},
+		{
+			$project: {
+				_id: 0,
+			},
+		},
+	];
+};
+
+const buildMonitorsByTeamIdPipeline = ({ matchStage, field, order }) => {
+	const sort = { [field]: order === "asc" ? 1 : -1 };
+
+	return [
+		{ $match: matchStage },
+		{ $sort: sort },
+		{
+			$project: {
+				_id: 1,
+				name: 1,
+			},
+		},
+	];
+};
+
+const buildFilteredMonitorsByTeamIdPipeline = ({
+	matchStage,
+	filter,
+	page,
+	rowsPerPage,
+	field,
+	order,
+	limit,
+	type,
+}) => {
+	const skip = page && rowsPerPage ? page * rowsPerPage : 0;
+	const sort = { [field]: order === "asc" ? 1 : -1 };
+	const limitStage = rowsPerPage ? [{ $limit: rowsPerPage }] : [];
+
+	if (typeof filter !== "undefined") {
+		matchStage.$or = [
+			{ name: { $regex: filter, $options: "i" } },
+			{ url: { $regex: filter, $options: "i" } },
+		];
+	}
+
+	const pipeline = [
+		{ $match: matchStage },
+		{ $sort: sort },
+		{ $skip: skip },
+		...limitStage,
+	];
+
+	// Add checks
+	if (limit) {
+		let checksCollection = "checks";
+		if (type === "pagespeed") {
+			checksCollection = "pagespeedchecks";
+		} else if (type === "hardware") {
+			checksCollection = "hardwarechecks";
+		} else if (type === "distributed_http" || type === "distributed_test") {
+			checksCollection = "distributeduptimechecks";
+		}
+		pipeline.push({
+			$lookup: {
+				from: checksCollection,
+				let: { monitorId: "$_id" },
+				pipeline: [
+					{
+						$match: {
+							$expr: { $eq: ["$monitorId", "$$monitorId"] },
+						},
+					},
+					{ $sort: { createdAt: -1 } },
+					{ $limit: limit },
+				],
+				as: "checks",
+			},
+		});
+	}
+
+	return pipeline;
+};
+
+const buildGetMonitorsByTeamIdPipeline = (req) => {
+	let { limit, type, page, rowsPerPage, filter, field, order } = req.query;
+
+	limit = parseInt(limit);
+	page = parseInt(page);
+	rowsPerPage = parseInt(rowsPerPage);
+	if (field === undefined) {
+		field = "name";
+		order = "asc";
+	}
+	// Build the match stage
+	const matchStage = { teamId: ObjectId.createFromHexString(req.params.teamId) };
+	if (type !== undefined) {
+		matchStage.type = Array.isArray(type) ? { $in: type } : type;
+	}
+
+	const skip = page && rowsPerPage ? page * rowsPerPage : 0;
+	const sort = { [field]: order === "asc" ? 1 : -1 };
+	return [
+		{ $match: matchStage },
+		{
+			$facet: {
+				summary: [
+					{
+						$group: {
+							_id: null,
+							totalMonitors: { $sum: 1 },
+							upMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$status", true] }, 1, 0],
+								},
+							},
+							downMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$status", false] }, 1, 0],
+								},
+							},
+							pausedMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$isActive", false] }, 1, 0],
+								},
+							},
+						},
+					},
+					{
+						$project: {
+							_id: 0,
+						},
+					},
+				],
+				monitors: [
+					{ $sort: sort },
+					{
+						$project: {
+							_id: 1,
+							name: 1,
+						},
+					},
+				],
+				filteredMonitors: [
+					...(filter !== undefined
+						? [
+								{
+									$match: {
+										$or: [
+											{ name: { $regex: filter, $options: "i" } },
+											{ url: { $regex: filter, $options: "i" } },
+										],
+									},
+								},
+							]
+						: []),
+					{ $sort: sort },
+					{ $skip: skip },
+					...(rowsPerPage ? [{ $limit: rowsPerPage }] : []),
+					...(limit
+						? [
+								{
+									$lookup: {
+										from: "checks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
+											},
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "standardchecks",
+									},
+								},
+							]
+						: []),
+					...(limit
+						? [
+								{
+									$lookup: {
+										from: "pagespeedchecks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
+											},
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "pagespeedchecks",
+									},
+								},
+							]
+						: []),
+					...(limit
+						? [
+								{
+									$lookup: {
+										from: "hardwarechecks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
+											},
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "hardwarechecks",
+									},
+								},
+							]
+						: []),
+					...(limit
+						? [
+								{
+									$lookup: {
+										from: "distributeduptimechecks",
+										let: { monitorId: "$_id" },
+										pipeline: [
+											{
+												$match: {
+													$expr: { $eq: ["$monitorId", "$$monitorId"] },
+												},
+											},
+											{ $sort: { createdAt: -1 } },
+											...(limit ? [{ $limit: limit }] : []),
+										],
+										as: "distributeduptimechecks",
+									},
+								},
+							]
+						: []),
+
+					{
+						$addFields: {
+							checks: {
+								$switch: {
+									branches: [
+										{
+											case: { $in: ["$type", ["http", "ping", "docker", "port"]] },
+											then: "$standardchecks",
+										},
+										{
+											case: { $eq: ["$type", "pagespeed"] },
+											then: "$pagespeedchecks",
+										},
+										{
+											case: { $eq: ["$type", "hardware"] },
+											then: "$hardwarechecks",
+										},
+										{
+											case: { $eq: ["$type", "distributed_http"] },
+											then: "$distributeduptimechecks",
+										},
+										{
+											case: { $eq: ["$type", "distributed_test"] },
+											then: "$distributeduptimechecks",
+										},
+									],
+									default: [],
+								},
+							},
+						},
+					},
+					{
+						$project: {
+							standardchecks: 0,
+							pagespeedchecks: 0,
+							hardwarechecks: 0,
+						},
+					},
+				],
+			},
+		},
+		{
+			$project: {
+				summary: { $arrayElemAt: ["$summary", 0] },
+				filteredMonitors: 1,
+				monitors: 1,
+			},
+		},
+	];
+};
+
 const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 	return [
 		{
 			$match: {
 				monitorId: monitor._id,
-				createdAt: { $gte: dates.start, $lte: dates.end },
+				updatedAt: { $gte: dates.start, $lte: dates.end },
+			},
+		},
+		{
+			$project: {
+				_id: 0,
+				city: 1,
+				updatedAt: 1,
+				"location.lat": 1,
+				"location.lng": 1,
+				responseTime: 1,
 			},
 		},
 		{
@@ -588,7 +913,7 @@ const buildDePINDetailsByDateRange = (monitor, dates, dateString) => {
 								date: {
 									$dateToString: {
 										format: dateString,
-										date: "$createdAt",
+										date: "$updatedAt",
 									},
 								},
 							},
@@ -622,7 +947,7 @@ const buildDePINLatestChecks = (monitor) => {
 			},
 		},
 		{
-			$sort: { createdAt: -1 },
+			$sort: { updatedAt: -1 },
 		},
 		{
 			$limit: 5,
@@ -646,6 +971,10 @@ export {
 	buildUptimeDetailsPipeline,
 	buildHardwareDetailsPipeline,
 	buildMonitorStatsPipeline,
+	buildGetMonitorsByTeamIdPipeline,
+	buildMonitorSummaryByTeamIdPipeline,
+	buildMonitorsByTeamIdPipeline,
+	buildFilteredMonitorsByTeamIdPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,
 };
