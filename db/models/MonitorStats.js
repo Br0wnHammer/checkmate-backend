@@ -40,6 +40,6 @@ const MonitorSatsSchema = new mongoose.Schema(
 	{ timestamps: true }
 );
 
-const MonitorSats = mongoose.model("MonitorSats", MonitorSatsSchema);
+const MonitorSats = mongoose.model("MonitorStats", MonitorSatsSchema);
 
 export default MonitorSats;
