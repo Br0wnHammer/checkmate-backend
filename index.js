@@ -143,7 +143,6 @@ const shutdown = async () => {
 const startApp = async () => {
 	const app = express();
 	const allowedOrigin = process.env.CLIENT_HOST;
-	console.log({ allowedOrigin });
 	// Create and Register Primary services
 	const translationService = new TranslationService(logger);
 	const stringService = new StringService(translationService);
@@ -275,11 +274,12 @@ const startApp = async () => {
 		ServiceRegistry.get(StringService.SERVICE_NAME)
 	);
 
-	const distributedUptimeController = new DistributedUptimeController(
-		ServiceRegistry.get(MongoDB.SERVICE_NAME),
+	const distributedUptimeController = new DistributedUptimeController({
+		db: ServiceRegistry.get(MongoDB.SERVICE_NAME),
 		http,
-		ServiceRegistry.get(StatusService.SERVICE_NAME)
-	);
+		statusService: ServiceRegistry.get(StatusService.SERVICE_NAME),
+		logger,
+	});
 
 	const diagnosticController = new DiagnosticController(
 		ServiceRegistry.get(MongoDB.SERVICE_NAME)
