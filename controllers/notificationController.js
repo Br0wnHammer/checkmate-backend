@@ -57,6 +57,61 @@ class NotificationController {
         }
     }
 
+    _createTestNetworkResponse() {
+        return {
+            monitor: { 
+                _id: "test-monitor-id", 
+                name: "Test Monitor", 
+                url: "https://example.com"
+            },
+            status: true,
+            statusChanged: true,
+            prevStatus: false,
+        };
+    }
+
+    _handleTelegramTest(botToken, chatId) {
+        if (!botToken || !chatId) {
+            return {
+                isValid: false,
+                error: {
+                    msg: "Telegram notifications require both botToken and chatId",
+                    status: 400
+                }
+            };
+        }
+
+        return {
+            isValid: true,
+            notification: {
+                type: NOTIFICATION_TYPES.WEBHOOK,
+                platform: PLATFORMS.TELEGRAM,
+                config: { botToken, chatId }
+            }
+        };
+    }
+
+    _handleWebhookTest(webhookUrl, platform) {
+        if (webhookUrl === null) {
+            return {
+                isValid: false,
+                error: {
+                    msg: "Webhook URL is required",
+                    status: 400
+                }
+            };
+        }
+
+        return {
+            isValid: true,
+            notification: {
+                type: NOTIFICATION_TYPES.WEBHOOK,
+                platform: platform,
+                config: { webhookUrl }
+            }
+        };
+    }
+
     async testWebhook(req, res, next) {
         try {
             const { webhookUrl, platform, botToken, chatId } = req.body;
@@ -67,56 +122,26 @@ class NotificationController {
                     status: 400
                 });
             }
-        
-            if (platform === PLATFORMS.TELEGRAM) {
-                if (!botToken || !chatId) {
-                    return res.error({
-                        msg: "Telegram notifications require both botToken and chatId",
-                        status: 400
-                    });
-                }
-            } else {
-                if (webhookUrl === null) {
-                    return res.error({
-                        msg: "Webhook URL is required",
-                        status: 400
-                    });
-                }
-            }
-        
-            // Create a simplified test monitor and status
-            const networkResponse = {
-                monitor: { 
-                    _id: "test-monitor-id", 
-                    name: "Test Monitor", 
-                    url: "https://example.com"
-                },
-                status: true,
-                statusChanged: true,
-                prevStatus: false,
+            
+            // Platform-specific handling
+            const platformHandlers = {
+                [PLATFORMS.TELEGRAM]: () => this._handleTelegramTest(botToken, chatId),
+                // Default handler for webhook-based platforms (Slack, Discord, etc.)
+                default: () => this._handleWebhookTest(webhookUrl, platform)
             };
-        
-            // Create notification config
-            let notification = {
-                type: NOTIFICATION_TYPES.WEBHOOK,
-                platform: platform
-            };
-        
-            // Set config based on platform
-            if (platform === PLATFORMS.TELEGRAM) {
-                notification.config = { 
-                    botToken,
-                    chatId
-                };
-            } else {
-                notification.config = { 
-                    webhookUrl 
-                };
+            
+            const handler = platformHandlers[platform] || platformHandlers.default;
+            const handlerResult = handler();
+            
+            if (!handlerResult.isValid) {
+                return res.error(handlerResult.error);
             }
-
+            
+            const networkResponse = this._createTestNetworkResponse();
+            
             const result = await this.notificationService.sendWebhookNotification(
                 networkResponse,
-                notification
+                handlerResult.notification
             );
         
             if (result && result !== false) {
