@@ -5,20 +5,18 @@ class NotificationRoutes {
     constructor(notificationController) {
         this.notificationController = notificationController;
         this.router = express.Router();
-        this.publicRouter = express.Router(); 
         this.initializeRoutes();
     }
 
     initializeRoutes() {
-        // Protected routes 
+
         this.router.post(
             "/trigger",
             verifyJWT,
             this.notificationController.triggerNotification
         );
 
-        // Public routes 
-        this.publicRouter.post(
+        this.router.post(
             "/test-webhook",
             this.notificationController.testWebhook
         );
@@ -26,10 +24,6 @@ class NotificationRoutes {
 
     getRouter() {
         return this.router;
-    }
-
-    getPublicRouter() {
-        return this.publicRouter;
     }
 }
 

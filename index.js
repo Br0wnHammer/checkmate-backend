@@ -336,7 +336,6 @@ const startApp = async () => {
 	app.use("/api/v1/queue", verifyJWT, queueRoutes.getRouter());
 	app.use("/api/v1/distributed-uptime", distributedUptimeRoutes.getRouter());
 	app.use("/api/v1/status-page", statusPageRoutes.getRouter());
-	app.use("/api/v1/notifications", notificationRoutes.getPublicRouter()); 
 	app.use("/api/v1/notifications", verifyJWT, notificationRoutes.getRouter()); 
 	app.use("/api/v1/diagnostic", verifyJWT, diagnosticRoutes.getRouter());
 	app.use("/api/v1/health", (req, res) => {
