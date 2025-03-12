@@ -3,7 +3,6 @@ import { handleError, handleValidationError } from "./controllerUtils.js";
 
 const SERVICE_NAME = "NotificationController";
 
-// Extract constants
 const NOTIFICATION_TYPES = {
   WEBHOOK: 'webhook',
   TELEGRAM: 'telegram'
