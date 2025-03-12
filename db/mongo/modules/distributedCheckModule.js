@@ -22,20 +22,38 @@ const createDistributedCheck = async (checkData) => {
 							$cond: {
 								if: { $ifNull: ["$count", false] },
 								then: {
-									$round: [
-										{
-											$divide: [
+									$cond: {
+										// Check if the new value is an outlier (3x the current average)
+										if: {
+											$and: [
+												{ $gt: ["$responseTime", 0] },
 												{
-													$add: [
-														{ $multiply: ["$responseTime", "$count"] },
+													$gt: [
 														checkData.responseTime,
+														{ $multiply: ["$responseTime", 3] },
 													],
 												},
-												{ $add: ["$count", 1] },
 											],
 										},
-										2,
-									],
+										then: "$responseTime", // Keep the current value if it's an outlier
+										else: {
+											// Normal case - calculate new average
+											$round: [
+												{
+													$divide: [
+														{
+															$add: [
+																{ $multiply: ["$responseTime", "$count"] },
+																checkData.responseTime,
+															],
+														},
+														{ $add: ["$count", 1] },
+													],
+												},
+												2,
+											],
+										},
+									},
 								},
 								else: checkData.responseTime,
 							},
