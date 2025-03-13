@@ -600,6 +600,7 @@ const buildMonitorsByTeamIdPipeline = ({ matchStage, field, order }) => {
 			$project: {
 				_id: 1,
 				name: 1,
+				type: 1,
 			},
 		},
 	];
