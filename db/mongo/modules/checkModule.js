@@ -64,6 +64,16 @@ const createCheck = async (checkData) => {
 	}
 };
 
+const createChecks = async (checks) => {
+	try {
+		await Check.insertMany(checks);
+	} catch (error) {
+		error.service = SERVICE_NAME;
+		error.method = "createCheck";
+		throw error;
+	}
+};
+
 /**
  * Get all checks for a monitor
  * @async
@@ -125,8 +135,8 @@ const getChecksByMonitor = async (req) => {
 			pagespeed: PageSpeedCheck,
 			hardware: HardwareCheck,
 			distributed_http: DistributedUptimeCheck,
-			distributed_test: DistributedUptimeCheck
-		}
+			distributed_test: DistributedUptimeCheck,
+		};
 
 		const Model = checkModels[type];
 
@@ -203,24 +213,24 @@ const getChecksByTeam = async (req) => {
 
 		const aggregatePipeline = [
 			{ $match: matchStage },
-			{ $unionWith: {
-				coll: 'hardwarechecks',
-				pipeline: [
-					{ $match: matchStage }
-				]
-			}},
-			{ $unionWith: {
-				coll: 'pagespeedchecks',
-				pipeline: [
-					{ $match: matchStage }
-				]
-			}},
-			{ $unionWith: {
-				coll: 'distributeduptimechecks',
-				pipeline: [
-					{ $match: matchStage }
-				]
-			}},
+			{
+				$unionWith: {
+					coll: "hardwarechecks",
+					pipeline: [{ $match: matchStage }],
+				},
+			},
+			{
+				$unionWith: {
+					coll: "pagespeedchecks",
+					pipeline: [{ $match: matchStage }],
+				},
+			},
+			{
+				$unionWith: {
+					coll: "distributeduptimechecks",
+					pipeline: [{ $match: matchStage }],
+				},
+			},
 			{ $sort: { createdAt: sortOrder } },
 			{
 				$facet: {
@@ -233,7 +243,7 @@ const getChecksByTeam = async (req) => {
 					checksCount: { $arrayElemAt: ["$summary.checksCount", 0] },
 					checks: "$checks",
 				},
-			}
+			},
 		];
 
 		const checks = await Check.aggregate(aggregatePipeline);
@@ -328,6 +338,7 @@ const updateChecksTTL = async (teamId, ttl) => {
 
 export {
 	createCheck,
+	createChecks,
 	getChecksByMonitor,
 	getChecksByTeam,
 	deleteChecks,

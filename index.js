@@ -73,6 +73,9 @@ import StatusService from "./service/statusService.js";
 // Notification Service and dependencies
 import NotificationService from "./service/notificationService.js";
 
+// Buffer Service and dependencies
+import BufferService from "./service/bufferService.js";
+
 // Service Registry
 import ServiceRegistry from "./service/serviceRegistry.js";
 
@@ -140,7 +143,6 @@ const shutdown = async () => {
 const startApp = async () => {
 	const app = express();
 	const allowedOrigin = process.env.CLIENT_HOST;
-	console.log({ allowedOrigin });
 	// Create and Register Primary services
 	const translationService = new TranslationService(logger);
 	const stringService = new StringService(translationService);
@@ -173,7 +175,8 @@ const startApp = async () => {
 		nodemailer,
 		logger
 	);
-	const statusService = new StatusService(db, logger);
+	const bufferService = new BufferService({ db, logger });
+	const statusService = new StatusService({ db, logger, buffer: bufferService });
 	const notificationService = new NotificationService(
 		emailService,
 		db,
@@ -200,6 +203,7 @@ const startApp = async () => {
 	ServiceRegistry.register(SettingsService.SERVICE_NAME, settingsService);
 	ServiceRegistry.register(EmailService.SERVICE_NAME, emailService);
 	ServiceRegistry.register(NetworkService.SERVICE_NAME, networkService);
+	ServiceRegistry.register(BufferService.SERVICE_NAME, bufferService);
 	ServiceRegistry.register(StatusService.SERVICE_NAME, statusService);
 	ServiceRegistry.register(NotificationService.SERVICE_NAME, notificationService);
 	ServiceRegistry.register(TranslationService.SERVICE_NAME, translationService);
@@ -270,11 +274,12 @@ const startApp = async () => {
 		ServiceRegistry.get(StringService.SERVICE_NAME)
 	);
 
-	const distributedUptimeController = new DistributedUptimeController(
-		ServiceRegistry.get(MongoDB.SERVICE_NAME),
+	const distributedUptimeController = new DistributedUptimeController({
+		db: ServiceRegistry.get(MongoDB.SERVICE_NAME),
 		http,
-		ServiceRegistry.get(StatusService.SERVICE_NAME)
-	);
+		statusService: ServiceRegistry.get(StatusService.SERVICE_NAME),
+		logger,
+	});
 
 	const diagnosticController = new DiagnosticController(
 		ServiceRegistry.get(MongoDB.SERVICE_NAME)
@@ -322,6 +327,7 @@ const startApp = async () => {
 			},
 		})
 	);
+
 	app.use(languageMiddleware(stringService, translationService, settingsService));
 	// Swagger UI
 	app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiSpec));
