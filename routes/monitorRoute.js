@@ -40,6 +40,11 @@ class MonitorRoutes {
 		);
 
 		this.router.get(
+			"/team/:teamId/with-checks",
+			this.monitorController.getMonitorsWithChecksByTeamId
+		);
+
+		this.router.get(
 			"/resolution/url",
 			isAllowed(["admin", "superadmin"]),
 			this.monitorController.checkEndpointResolution

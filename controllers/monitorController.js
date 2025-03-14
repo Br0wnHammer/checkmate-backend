@@ -605,6 +605,25 @@ class MonitorController {
 		}
 	};
 
+	getMonitorsWithChecksByTeamId = async (req, res, next) => {
+		try {
+			await getMonitorsByTeamIdParamValidation.validateAsync(req.params);
+			await getMonitorsByTeamIdQueryValidation.validateAsync(req.query);
+		} catch (error) {
+			return next(handleValidationError(error, SERVICE_NAME));
+		}
+
+		try {
+			const result = await this.db.getMonitorsWithChecksByTeamId(req);
+			return res.success({
+				msg: "OK", // TODO
+				data: result,
+			});
+		} catch (error) {
+			return next(handleError(error, SERVICE_NAME, "getMonitorsWithChecksByTeamId"));
+		}
+	};
+
 	seedDb = async (req, res, next) => {
 		try {
 			const { type } = req.body;
