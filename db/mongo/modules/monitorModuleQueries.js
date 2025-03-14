@@ -720,7 +720,7 @@ const buildMonitorsWithChecksByTeamIdPipeline = ({
 							$expr: { $eq: ["$monitorId", "$$monitorId"] },
 						},
 					},
-					{ $sort: { createdAt: -1 } },
+					{ $sort: { updatedAt: -1 } },
 					{ $limit: limit },
 					{
 						$project: {
