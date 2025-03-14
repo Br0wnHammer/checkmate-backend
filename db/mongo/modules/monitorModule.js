@@ -19,6 +19,8 @@ import {
 	buildMonitorStatsPipeline,
 	buildMonitorSummaryByTeamIdPipeline,
 	buildMonitorsByTeamIdPipeline,
+	buildMonitorsAndSummaryByTeamIdPipeline,
+	buildMonitorsWithChecksByTeamIdPipeline,
 	buildFilteredMonitorsByTeamIdPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,
@@ -626,6 +628,72 @@ const getMonitorsByTeamId = async (req) => {
 	return { summary, monitors, filteredMonitors: normalizedFilteredMonitors };
 };
 
+const getMonitorsAndSummaryByTeamId = async (req) => {
+	try {
+		const { type } = req.query;
+		const teamId = ObjectId.createFromHexString(req.params.teamId);
+		const matchStage = { teamId };
+		if (type !== undefined) {
+			matchStage.type = Array.isArray(type) ? { $in: type } : type;
+		}
+
+		const queryResult = await Monitor.aggregate(
+			buildMonitorsAndSummaryByTeamIdPipeline({ matchStage })
+		);
+		const { monitors, summary } = queryResult?.[0] ?? {};
+		return { monitors, summary };
+	} catch (error) {
+		error.service = SERVICE_NAME;
+		error.method = "getMonitorsAndSummaryByTeamId";
+		throw error;
+	}
+};
+
+const getMonitorsWithChecksByTeamId = async (req) => {
+	try {
+		let { limit, type, page, rowsPerPage, filter, field, order } = req.query;
+		limit = parseInt(limit);
+		page = parseInt(page);
+		rowsPerPage = parseInt(rowsPerPage);
+		if (field === undefined) {
+			field = "name";
+			order = "asc";
+		}
+		const teamId = ObjectId.createFromHexString(req.params.teamId);
+		// Build match stage
+		const matchStage = { teamId };
+		if (type !== undefined) {
+			matchStage.type = Array.isArray(type) ? { $in: type } : type;
+		}
+		const queryResult = await Monitor.aggregate(
+			buildMonitorsWithChecksByTeamIdPipeline({
+				matchStage,
+				filter,
+				page,
+				rowsPerPage,
+				field,
+				order,
+				limit,
+				type,
+			})
+		);
+		const monitors = queryResult[0]?.monitors;
+		const count = queryResult[0]?.count;
+		const normalizedFilteredMonitors = monitors.map((monitor) => {
+			if (!monitor.checks) {
+				return monitor;
+			}
+			monitor.checks = NormalizeData(monitor.checks, 10, 100);
+			return monitor;
+		});
+		return { count, monitors: normalizedFilteredMonitors };
+	} catch (error) {
+		error.service = SERVICE_NAME;
+		error.method = "getMonitorsWithChecksByTeamId";
+		throw error;
+	}
+};
+
 /**
  * Create a monitor
  * @async
@@ -779,6 +847,8 @@ export {
 	getMonitorStatsById,
 	getMonitorById,
 	getMonitorsByTeamId,
+	getMonitorsAndSummaryByTeamId,
+	getMonitorsWithChecksByTeamId,
 	getUptimeDetailsById,
 	getDistributedUptimeDetailsById,
 	createMonitor,
