@@ -19,6 +19,7 @@ import {
 	buildMonitorStatsPipeline,
 	buildMonitorSummaryByTeamIdPipeline,
 	buildMonitorsByTeamIdPipeline,
+	buildMonitorsAndSummaryByTeamIdPipeline,
 	buildFilteredMonitorsByTeamIdPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,
@@ -626,6 +627,27 @@ const getMonitorsByTeamId = async (req) => {
 	return { summary, monitors, filteredMonitors: normalizedFilteredMonitors };
 };
 
+const getMonitorsAndSummaryByTeamId = async (req) => {
+	try {
+		const { type } = req.query;
+		const teamId = ObjectId.createFromHexString(req.params.teamId);
+		const matchStage = { teamId };
+		if (type !== undefined) {
+			matchStage.type = Array.isArray(type) ? { $in: type } : type;
+		}
+
+		const queryResult = await Monitor.aggregate(
+			buildMonitorsAndSummaryByTeamIdPipeline({ matchStage })
+		);
+		const { monitors, summary } = queryResult?.[0] ?? {};
+		return { monitors, summary };
+	} catch (error) {
+		error.service = SERVICE_NAME;
+		error.method = "getMonitorsAndSummaryByTeamId";
+		throw error;
+	}
+};
+
 /**
  * Create a monitor
  * @async
@@ -779,6 +801,7 @@ export {
 	getMonitorStatsById,
 	getMonitorById,
 	getMonitorsByTeamId,
+	getMonitorsAndSummaryByTeamId,
 	getUptimeDetailsById,
 	getDistributedUptimeDetailsById,
 	createMonitor,

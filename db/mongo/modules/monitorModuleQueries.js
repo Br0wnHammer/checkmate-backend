@@ -606,6 +606,60 @@ const buildMonitorsByTeamIdPipeline = ({ matchStage, field, order }) => {
 	];
 };
 
+const buildMonitorsAndSummaryByTeamIdPipeline = ({ matchStage }) => {
+	return [
+		{ $match: matchStage },
+		{
+			$facet: {
+				summary: [
+					{
+						$group: {
+							_id: null,
+							totalMonitors: { $sum: 1 },
+							upMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$status", true] }, 1, 0],
+								},
+							},
+							downMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$status", false] }, 1, 0],
+								},
+							},
+							pausedMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$isActive", false] }, 1, 0],
+								},
+							},
+						},
+					},
+					{
+						$project: {
+							_id: 0,
+						},
+					},
+				],
+				monitors: [
+					{ $sort: { name: 1 } },
+					{
+						$project: {
+							_id: 1,
+							name: 1,
+							type: 1,
+						},
+					},
+				],
+			},
+		},
+		{
+			$project: {
+				summary: { $arrayElemAt: ["$summary", 0] },
+				monitors: 1,
+			},
+		},
+	];
+};
+
 const buildFilteredMonitorsByTeamIdPipeline = ({
 	matchStage,
 	filter,
@@ -975,6 +1029,7 @@ export {
 	buildGetMonitorsByTeamIdPipeline,
 	buildMonitorSummaryByTeamIdPipeline,
 	buildMonitorsByTeamIdPipeline,
+	buildMonitorsAndSummaryByTeamIdPipeline,
 	buildFilteredMonitorsByTeamIdPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,

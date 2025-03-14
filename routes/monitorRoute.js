@@ -35,6 +35,11 @@ class MonitorRoutes {
 		this.router.get("/team/:teamId", this.monitorController.getMonitorsByTeamId);
 
 		this.router.get(
+			"/summary/team/:teamId",
+			this.monitorController.getMonitorsAndSummaryByTeamId
+		);
+
+		this.router.get(
 			"/resolution/url",
 			isAllowed(["admin", "superadmin"]),
 			this.monitorController.checkEndpointResolution
