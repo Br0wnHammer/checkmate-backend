@@ -16,6 +16,8 @@ class DiagnosticRoutes {
 			"/db/get-monitors-by-team-id/:teamId",
 			this.diagnosticController.getMonitorsByTeamIdExecutionStats
 		);
+
+		this.router.post("/db/stats", this.diagnosticController.getDbStats);
 	}
 
 	getRouter() {
