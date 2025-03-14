@@ -637,6 +637,12 @@ const getMonitorsAndSummaryByTeamId = async (req) => {
 			matchStage.type = Array.isArray(type) ? { $in: type } : type;
 		}
 
+		if (req.explain === true) {
+			return Monitor.aggregate(
+				buildMonitorsAndSummaryByTeamIdPipeline({ matchStage })
+			).explain("executionStats");
+		}
+
 		const queryResult = await Monitor.aggregate(
 			buildMonitorsAndSummaryByTeamIdPipeline({ matchStage })
 		);
@@ -665,6 +671,22 @@ const getMonitorsWithChecksByTeamId = async (req) => {
 		if (type !== undefined) {
 			matchStage.type = Array.isArray(type) ? { $in: type } : type;
 		}
+
+		if (req.explain === true) {
+			return Monitor.aggregate(
+				buildMonitorsWithChecksByTeamIdPipeline({
+					matchStage,
+					filter,
+					page,
+					rowsPerPage,
+					field,
+					order,
+					limit,
+					type,
+				})
+			).explain("executionStats");
+		}
+
 		const queryResult = await Monitor.aggregate(
 			buildMonitorsWithChecksByTeamIdPipeline({
 				matchStage,

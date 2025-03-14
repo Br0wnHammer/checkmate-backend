@@ -8,6 +8,7 @@ class DiagnosticController {
 			this.getDistributedUptimeDbExecutionStats.bind(this);
 		this.getMonitorsByTeamIdExecutionStats =
 			this.getMonitorsByTeamIdExecutionStats.bind(this);
+		this.getDbStats = this.getDbStats.bind(this);
 	}
 
 	async getDistributedUptimeDbExecutionStats(req, res, next) {
@@ -31,6 +32,30 @@ class DiagnosticController {
 			});
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "getMonitorsByTeamIdExecutionStats"));
+		}
+	}
+
+	async getDbStats(req, res, next) {
+		try {
+			const { methodName, args = [] } = req.body;
+			if (!methodName || !this.db[methodName]) {
+				return res.error({
+					msg: "Invalid method name or method doesn't exist",
+					status: 400,
+				});
+			}
+			const explainMethod = await this.db[methodName].apply(this.db, args);
+			const stats = {
+				methodName,
+				timestamp: new Date(),
+				explain: explainMethod,
+			};
+			return res.success({
+				msg: "OK",
+				data: stats,
+			});
+		} catch (error) {
+			next(handleError(error, SERVICE_NAME, "getDbStats"));
 		}
 	}
 }

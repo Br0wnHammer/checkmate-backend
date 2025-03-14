@@ -73,10 +73,10 @@ const BaseCheckSchema = mongoose.Schema({
  * about the status and response of a particular check event.
  */
 const CheckSchema = mongoose.Schema({ ...BaseCheckSchema.obj }, { timestamps: true });
-CheckSchema.index({ createdAt: 1 });
-CheckSchema.index({ monitorId: 1, createdAt: 1 });
-CheckSchema.index({ monitorId: 1, createdAt: -1 });
-CheckSchema.index({ teamId: 1, createdAt: -1 });
+CheckSchema.index({ updatedAt: 1 });
+CheckSchema.index({ monitorId: 1, updatedAt: 1 });
+CheckSchema.index({ monitorId: 1, updatedAt: -1 });
+CheckSchema.index({ teamId: 1, updatedAt: -1 });
 CheckSchema.index({ teamId: 1 });
 
 export default mongoose.model("Check", CheckSchema);
