@@ -680,7 +680,25 @@ const buildMonitorsWithChecksByTeamIdPipeline = ({
 		];
 	}
 
-	const monitorsPipeline = [{ $sort: sort }, { $skip: skip }, ...limitStage];
+	const monitorsPipeline = [
+		{ $sort: sort },
+		{ $skip: skip },
+		...limitStage,
+		{
+			$project: {
+				_id: 1,
+				name: 1,
+				description: 1,
+				type: 1,
+				url: 1,
+				isActive: 1,
+				createdAt: 1,
+				updatedAt: 1,
+				uptimePercentage: 1,
+				status: 1,
+			},
+		},
+	];
 
 	// Add checks
 	if (limit) {
@@ -704,6 +722,17 @@ const buildMonitorsWithChecksByTeamIdPipeline = ({
 					},
 					{ $sort: { createdAt: -1 } },
 					{ $limit: limit },
+					{
+						$project: {
+							_id: 1,
+							status: 1,
+							responseTime: 1,
+							statusCode: 1,
+							createdAt: 1,
+							updatedAt: 1,
+							originalResponseTime: 1,
+						},
+					},
 				],
 				as: "checks",
 			},
