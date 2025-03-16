@@ -600,9 +600,161 @@ const buildMonitorsByTeamIdPipeline = ({ matchStage, field, order }) => {
 			$project: {
 				_id: 1,
 				name: 1,
+				type: 1,
 			},
 		},
 	];
+};
+
+const buildMonitorsAndSummaryByTeamIdPipeline = ({ matchStage }) => {
+	return [
+		{ $match: matchStage },
+		{
+			$facet: {
+				summary: [
+					{
+						$group: {
+							_id: null,
+							totalMonitors: { $sum: 1 },
+							upMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$status", true] }, 1, 0],
+								},
+							},
+							downMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$status", false] }, 1, 0],
+								},
+							},
+							pausedMonitors: {
+								$sum: {
+									$cond: [{ $eq: ["$isActive", false] }, 1, 0],
+								},
+							},
+						},
+					},
+					{
+						$project: {
+							_id: 0,
+						},
+					},
+				],
+				monitors: [
+					{ $sort: { name: 1 } },
+					{
+						$project: {
+							_id: 1,
+							name: 1,
+							type: 1,
+						},
+					},
+				],
+			},
+		},
+		{
+			$project: {
+				summary: { $arrayElemAt: ["$summary", 0] },
+				monitors: 1,
+			},
+		},
+	];
+};
+
+const buildMonitorsWithChecksByTeamIdPipeline = ({
+	matchStage,
+	filter,
+	page,
+	rowsPerPage,
+	field,
+	order,
+	limit,
+	type,
+}) => {
+	const skip = page && rowsPerPage ? page * rowsPerPage : 0;
+	const sort = { [field]: order === "asc" ? 1 : -1 };
+	const limitStage = rowsPerPage ? [{ $limit: rowsPerPage }] : [];
+	if (typeof filter !== "undefined") {
+		matchStage.$or = [
+			{ name: { $regex: filter, $options: "i" } },
+			{ url: { $regex: filter, $options: "i" } },
+		];
+	}
+
+	const monitorsPipeline = [
+		{ $sort: sort },
+		{ $skip: skip },
+		...limitStage,
+		{
+			$project: {
+				_id: 1,
+				name: 1,
+				description: 1,
+				type: 1,
+				url: 1,
+				isActive: 1,
+				createdAt: 1,
+				updatedAt: 1,
+				uptimePercentage: 1,
+				status: 1,
+			},
+		},
+	];
+
+	// Add checks
+	if (limit) {
+		let checksCollection = "checks";
+		if (type === "pagespeed") {
+			checksCollection = "pagespeedchecks";
+		} else if (type === "hardware") {
+			checksCollection = "hardwarechecks";
+		} else if (type === "distributed_http" || type === "distributed_test") {
+			checksCollection = "distributeduptimechecks";
+		}
+		monitorsPipeline.push({
+			$lookup: {
+				from: checksCollection,
+				let: { monitorId: "$_id" },
+				pipeline: [
+					{
+						$match: {
+							$expr: { $eq: ["$monitorId", "$$monitorId"] },
+						},
+					},
+					{ $sort: { updatedAt: -1 } },
+					{ $limit: limit },
+					{
+						$project: {
+							_id: 1,
+							status: 1,
+							responseTime: 1,
+							statusCode: 1,
+							createdAt: 1,
+							updatedAt: 1,
+							originalResponseTime: 1,
+						},
+					},
+				],
+				as: "checks",
+			},
+		});
+	}
+
+	const pipeline = [
+		{ $match: matchStage },
+		{
+			$facet: {
+				count: [{ $count: "monitorsCount" }],
+				monitors: monitorsPipeline,
+			},
+		},
+		{
+			$project: {
+				count: { $arrayElemAt: ["$count", 0] },
+				monitors: 1,
+			},
+		},
+	];
+	return pipeline;
 };
 
 const buildFilteredMonitorsByTeamIdPipeline = ({
@@ -974,6 +1126,8 @@ export {
 	buildGetMonitorsByTeamIdPipeline,
 	buildMonitorSummaryByTeamIdPipeline,
 	buildMonitorsByTeamIdPipeline,
+	buildMonitorsAndSummaryByTeamIdPipeline,
+	buildMonitorsWithChecksByTeamIdPipeline,
 	buildFilteredMonitorsByTeamIdPipeline,
 	buildDePINDetailsByDateRange,
 	buildDePINLatestChecks,

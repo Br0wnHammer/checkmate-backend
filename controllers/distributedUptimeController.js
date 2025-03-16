@@ -4,10 +4,11 @@ import DistributedUptimeCheck from "../db/models/DistributedUptimeCheck.js";
 const SERVICE_NAME = "DistributedUptimeQueueController";
 
 class DistributedUptimeController {
-	constructor(db, http, statusService) {
+	constructor({ db, http, statusService, logger }) {
 		this.db = db;
 		this.http = http;
 		this.statusService = statusService;
+		this.logger = logger;
 		this.resultsCallback = this.resultsCallback.bind(this);
 		this.getDistributedUptimeMonitors = this.getDistributedUptimeMonitors.bind(this);
 		this.subscribeToDistributedUptimeMonitors =
@@ -37,6 +38,14 @@ class DistributedUptimeController {
 
 			// Calculate response time
 			const responseTime = first_byte_took / 1_000_000;
+			if (!isFinite(responseTime) || responseTime <= 0 || responseTime > 30000) {
+				this.logger.info({
+					message: `Unreasonable response time detected: ${responseTime}ms from first_byte_took: ${first_byte_took}ns`,
+					service: SERVICE_NAME,
+					method: "resultsCallback",
+				});
+				return;
+			}
 
 			// Calculate if server is up or down
 			const isErrorStatus = status_code >= 400;
@@ -79,7 +88,7 @@ class DistributedUptimeController {
 
 	async getDistributedUptimeMonitors(req, res, next) {
 		try {
-			const monitors = await this.db.getMonitorsByTeamId(req);
+			const monitors = await this.db.getMonitorsWithChecksByTeamId(req);
 			return res.success({
 				msg: "OK",
 				data: monitors,
@@ -108,8 +117,8 @@ class DistributedUptimeController {
 			const notifyChange = async () => {
 				if (opInProgress) {
 					// Get data
-					const monitors = await this.db.getMonitorsByTeamId(req);
-					res.write(`data: ${JSON.stringify({ monitors })}\n\n`);
+					const { count, monitors } = await this.db.getMonitorsWithChecksByTeamId(req);
+					res.write(`data: ${JSON.stringify({ count, monitors })}\n\n`);
 					opInProgress = false;
 				}
 				batchTimeout = null;
@@ -220,7 +229,6 @@ class DistributedUptimeController {
 			let batchTimeout = null;
 			let opInProgress = false;
 			let checksStream = null;
-
 			// Do things here
 			const notifyChange = async () => {
 				try {

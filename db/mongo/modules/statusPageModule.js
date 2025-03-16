@@ -97,7 +97,7 @@ const getDistributedStatusPageByUrl = async ({ url, daysToShow = 30 }) => {
 								$expr: {
 									$and: [
 										{ $eq: ["$monitorId", "$$monitorId"] },
-										{ $gte: ["$createdAt", daysAgo] },
+										{ $gte: ["$updatedAt", daysAgo] },
 									],
 								},
 							},
@@ -105,7 +105,7 @@ const getDistributedStatusPageByUrl = async ({ url, daysToShow = 30 }) => {
 						{
 							$group: {
 								_id: {
-									$dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+									$dateToString: { format: "%Y-%m-%d", date: "$updatedAt" },
 								},
 								responseTime: {
 									$avg: "$responseTime",

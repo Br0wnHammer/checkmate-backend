@@ -44,6 +44,17 @@ const createHardwareCheck = async (hardwareCheckData) => {
 	}
 };
 
+const createHardwareChecks = async (hardwareChecks) => {
+	try {
+		await HardwareCheck.insertMany(hardwareChecks);
+		return true;
+	} catch (error) {
+		error.service = SERVICE_NAME;
+		error.method = "createHardwareChecks";
+		throw error;
+	}
+};
+
 const deleteHardwareChecksByMonitorId = async (monitorId) => {
 	try {
 		const result = await HardwareCheck.deleteMany({ monitorId });
@@ -55,4 +66,4 @@ const deleteHardwareChecksByMonitorId = async (monitorId) => {
 	}
 };
 
-export { createHardwareCheck, deleteHardwareChecksByMonitorId };
+export { createHardwareCheck, createHardwareChecks, deleteHardwareChecksByMonitorId };
