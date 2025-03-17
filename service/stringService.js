@@ -182,6 +182,22 @@ class StringService {
 		return this.translationService.getTranslation("webhookSendSuccess");
 	}
 
+	get telegramRequiresBotTokenAndChatId() {
+		return this.translationService.getTranslation("telegramRequiresBotTokenAndChatId");
+	}
+	
+	get webhookUrlRequired() {
+		return this.translationService.getTranslation("webhookUrlRequired");
+	}
+	
+	get platformRequired() {
+		return this.translationService.getTranslation("platformRequired");
+	}
+	
+	get testNotificationFailed() {
+		return this.translationService.getTranslation("testNotificationFailed");
+	}
+
 	getWebhookUnsupportedPlatform(platform) {
 		return this.translationService
 			.getTranslation("webhookUnsupportedPlatform")
