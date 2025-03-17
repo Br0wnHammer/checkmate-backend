@@ -271,7 +271,8 @@ const startApp = async () => {
 
 	const notificationController = new NotificationController(
 		ServiceRegistry.get(NotificationService.SERVICE_NAME),
-		ServiceRegistry.get(StringService.SERVICE_NAME)
+		ServiceRegistry.get(StringService.SERVICE_NAME),
+		ServiceRegistry.get(StatusService.SERVICE_NAME)
 	);
 
 	const distributedUptimeController = new DistributedUptimeController({
@@ -342,7 +343,7 @@ const startApp = async () => {
 	app.use("/api/v1/queue", verifyJWT, queueRoutes.getRouter());
 	app.use("/api/v1/distributed-uptime", distributedUptimeRoutes.getRouter());
 	app.use("/api/v1/status-page", statusPageRoutes.getRouter());
-	app.use("/api/v1/notifications", verifyJWT, notificationRoutes.getRouter());
+	app.use("/api/v1/notifications", verifyJWT, notificationRoutes.getRouter()); 
 	app.use("/api/v1/diagnostic", verifyJWT, diagnosticRoutes.getRouter());
 	app.use("/api/v1/health", (req, res) => {
 		res.json({

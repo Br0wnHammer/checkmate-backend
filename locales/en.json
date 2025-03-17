@@ -151,5 +151,10 @@
 	"httpJsonPathError": "Failed to parse json data",
 	"httpEmptyResult": "Result is empty",
 	"httpMatchSuccess": "Response data match successfully",
-	"httpMatchFail": "Failed to match response data"
+	"httpMatchFail": "Failed to match response data",
+	"webhookSendSuccess": "Webhook notification sent successfully",
+	"telegramRequiresBotTokenAndChatId": "Telegram notifications require both botToken and chatId",
+	"webhookUrlRequired": "Webhook URL is required",
+	"platformRequired": "Platform is required",
+	"testNotificationFailed": "Failed to send test notification"
 }
