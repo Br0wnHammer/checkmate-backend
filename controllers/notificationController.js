@@ -15,9 +15,10 @@ const PLATFORMS = {
 };
 
 class NotificationController {
-    constructor(notificationService, stringService) {
+    constructor(notificationService, stringService, statusService) {
         this.notificationService = notificationService;
         this.stringService = stringService;
+        this.statusService = statusService;
         this.triggerNotification = this.triggerNotification.bind(this);
         this.testWebhook = this.testWebhook.bind(this); 
     }
@@ -36,6 +37,16 @@ class NotificationController {
         try {
             const { monitorId, type, platform, config, status = false } = req.body;
 
+            // Create a simplified networkResponse similar to what would come from monitoring
+            const networkResponse = {
+                monitorId,
+                status
+            };
+            
+            // Use the statusService to get monitor details and handle status change logic
+            // This returns { monitor, statusChanged, prevStatus } exactly like your job queue uses
+            const statusResult = await this.statusService.updateStatus(networkResponse);
+            
             if (type === NOTIFICATION_TYPES.WEBHOOK) {
                 const notification = {
                     type,
@@ -44,7 +55,7 @@ class NotificationController {
                 };
 
                 await this.notificationService.sendWebhookNotification(
-                    networkResponse,
+                    statusResult, // Contains monitor, statusChanged, and prevStatus
                     notification
                 );
             }

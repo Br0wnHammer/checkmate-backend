@@ -271,7 +271,8 @@ const startApp = async () => {
 
 	const notificationController = new NotificationController(
 		ServiceRegistry.get(NotificationService.SERVICE_NAME),
-		ServiceRegistry.get(StringService.SERVICE_NAME)
+		ServiceRegistry.get(StringService.SERVICE_NAME),
+		ServiceRegistry.get(StatusService.SERVICE_NAME)
 	);
 
 	const distributedUptimeController = new DistributedUptimeController({
