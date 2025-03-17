@@ -1,21 +1,21 @@
-import express from "express";
+import { Router } from "express";
 import { verifyJWT } from "../middleware/verifyJWT.js";
 
 class NotificationRoutes {
     constructor(notificationController) {
+        this.router = Router();
         this.notificationController = notificationController;
-        this.router = express.Router();
         this.initializeRoutes();
     }
 
     initializeRoutes() {
-
+        this.router.use(verifyJWT);
+        
         this.router.post(
             "/trigger",
-            verifyJWT,
             this.notificationController.triggerNotification
         );
-
+        
         this.router.post(
             "/test-webhook",
             this.notificationController.testWebhook
