@@ -74,6 +74,7 @@ const MonitorSchema = mongoose.Schema(
 				usage_cpu: { type: Number },
 				usage_memory: { type: Number },
 				usage_disk: { type: Number },
+				usage_temperature: { type: Number },
 			},
 			_id: false,
 		},

@@ -215,6 +215,12 @@ const editMonitorBodyValidation = joi.object({
 	jsonPath: joi.string().allow(""),
 	expectedValue: joi.string().allow(""),
 	matchMethod: joi.string(),
+	thresholds: joi.object().keys({
+		usage_cpu: joi.number(),
+		usage_memory: joi.number(),
+		usage_disk: joi.number(),
+		usage_temperature: joi.number(),
+	}),
 });
 
 const pauseMonitorParamValidation = joi.object({
