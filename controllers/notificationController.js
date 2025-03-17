@@ -86,7 +86,7 @@ class NotificationController {
             return {
                 isValid: false,
                 error: {
-                    msg: "Telegram notifications require both botToken and chatId",
+                    msg: this.stringService.telegramRequiresBotTokenAndChatId,
                     status: 400
                 }
             };
@@ -107,7 +107,7 @@ class NotificationController {
             return {
                 isValid: false,
                 error: {
-                    msg: "Webhook URL is required",
+                    msg: this.stringService.webhookUrlRequired,
                     status: 400
                 }
             };
@@ -129,7 +129,7 @@ class NotificationController {
 
             if (platform === null) {
                 return res.error({
-                    msg: "Platform is required",
+                    msg: this.stringService.platformRequired,
                     status: 400
                 });
             }
@@ -157,11 +157,11 @@ class NotificationController {
         
             if (result && result !== false) {
                 return res.success({
-                    msg: this.stringService.webhookSendSuccess || "Test notification sent successfully",
+                    msg: this.stringService.webhookSendSuccess,
                 });
             } else {
                 return res.error({
-                    msg: "Failed to send test notification",
+                    msg: this.stringService.testNotificationFailed,
                     status: 400
                 });
             }
