@@ -57,7 +57,7 @@ class NotificationController {
         }
     }
 
-    _createTestNetworkResponse() {
+    createTestNetworkResponse() {
         return {
             monitor: { 
                 _id: "test-monitor-id", 
@@ -70,7 +70,7 @@ class NotificationController {
         };
     }
 
-    _handleTelegramTest(botToken, chatId) {
+    handleTelegramTest(botToken, chatId) {
         if (!botToken || !chatId) {
             return {
                 isValid: false,
@@ -91,7 +91,7 @@ class NotificationController {
         };
     }
 
-    _handleWebhookTest(webhookUrl, platform) {
+    handleWebhookTest(webhookUrl, platform) {
         if (webhookUrl === null) {
             return {
                 isValid: false,
@@ -125,9 +125,9 @@ class NotificationController {
             
             // Platform-specific handling
             const platformHandlers = {
-                [PLATFORMS.TELEGRAM]: () => this._handleTelegramTest(botToken, chatId),
+                [PLATFORMS.TELEGRAM]: () => this.handleTelegramTest(botToken, chatId),
                 // Default handler for webhook-based platforms (Slack, Discord, etc.)
-                default: () => this._handleWebhookTest(webhookUrl, platform)
+                default: () => this.handleWebhookTest(webhookUrl, platform)
             };
             
             const handler = platformHandlers[platform] || platformHandlers.default;
@@ -137,7 +137,7 @@ class NotificationController {
                 return res.error(handlerResult.error);
             }
             
-            const networkResponse = this._createTestNetworkResponse();
+            const networkResponse = this.createTestNetworkResponse();
             
             const result = await this.notificationService.sendWebhookNotification(
                 networkResponse,
