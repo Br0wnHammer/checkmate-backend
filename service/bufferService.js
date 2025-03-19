@@ -1,5 +1,5 @@
 const SERVICE_NAME = "BufferService";
-const BUFFER_TIMEOUT = 1000 * 60 * 1; // 1 minute
+const BUFFER_TIMEOUT = 1000 * 60 * 0.1; // 1 minute
 const TYPE_MAP = {
 	http: "checks",
 	ping: "checks",

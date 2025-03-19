@@ -356,6 +356,19 @@ const getUptimeDetailsById = async (req) => {
 		);
 
 		const monitorData = results[0];
+
+		monitorData.groupedUpChecks = NormalizeDataUptimeDetails(
+			monitorData.groupedUpChecks,
+			10,
+			100
+		);
+
+		monitorData.groupedDownChecks = NormalizeDataUptimeDetails(
+			monitorData.groupedDownChecks,
+			10,
+			100
+		);
+
 		const normalizedGroupChecks = NormalizeDataUptimeDetails(
 			monitorData.groupedChecks,
 			10,
