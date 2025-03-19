@@ -76,10 +76,10 @@ class MonitorController {
 
 	getUptimeDetailsById = async (req, res, next) => {
 		try {
-			const monitor = await this.db.getUptimeDetailsById(req);
+			const data = await this.db.getUptimeDetailsById(req);
 			return res.success({
 				msg: this.stringService.monitorGetById,
-				data: monitor,
+				data,
 			});
 		} catch (error) {
 			next(handleError(error, SERVICE_NAME, "getMonitorDetailsById"));

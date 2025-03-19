@@ -1,10 +1,11 @@
 import { ObjectId } from "mongodb";
 
-const buildUptimeDetailsPipeline = (monitor, dates, dateString) => {
+const buildUptimeDetailsPipeline = (monitorId, dates, dateString) => {
 	return [
 		{
 			$match: {
-				monitorId: monitor._id,
+				monitorId: ObjectId.createFromHexString(monitorId),
+				createdAt: { $gte: dates.start, $lte: dates.end },
 			},
 		},
 		{
@@ -14,73 +15,42 @@ const buildUptimeDetailsPipeline = (monitor, dates, dateString) => {
 		},
 		{
 			$facet: {
-				aggregateData: [
+				// For the response time chart, should return checks for date window
+				// Grouped by: {day: hour}, {week: day}, {month: day}
+				uptimePercentage: [
+					{
+						$group: {
+							_id: null,
+							upChecks: {
+								$sum: { $cond: [{ $eq: ["$status", true] }, 1, 0] },
+							},
+							totalChecks: { $sum: 1 },
+						},
+					},
+					{
+						$project: {
+							_id: 0,
+							percentage: {
+								$cond: [
+									{ $eq: ["$totalChecks", 0] },
+									0,
+									{ $divide: ["$upChecks", "$totalChecks"] },
+								],
+							},
+						},
+					},
+				],
+				groupedAvgResponseTime: [
 					{
 						$group: {
 							_id: null,
 							avgResponseTime: {
 								$avg: "$responseTime",
 							},
-							lastCheck: {
-								$last: "$$ROOT",
-							},
-							totalChecks: {
-								$sum: 1,
-							},
 						},
 					},
 				],
-				uptimeStreak: [
-					{
-						$sort: {
-							createdAt: -1,
-						},
-					},
-					{
-						$group: {
-							_id: null,
-							checks: { $push: "$$ROOT" },
-						},
-					},
-					{
-						$project: {
-							streak: {
-								$reduce: {
-									input: "$checks",
-									initialValue: { checks: [], foundFalse: false },
-									in: {
-										$cond: [
-											{
-												$and: [
-													{ $not: "$$value.foundFalse" }, // stop reducing if a false check has been found
-													{ $eq: ["$$this.status", true] }, // continue reducing if current check true
-												],
-											},
-											// true case
-											{
-												checks: { $concatArrays: ["$$value.checks", ["$$this"]] },
-												foundFalse: false, // Add the check to the streak
-											},
-											// false case
-											{
-												checks: "$$value.checks",
-												foundFalse: true, // Mark that we found a false
-											},
-										],
-									},
-								},
-							},
-						},
-					},
-				],
-				// For the response time chart, should return checks for date window
-				// Grouped by: {day: hour}, {week: day}, {month: day}
 				groupedChecks: [
-					{
-						$match: {
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
 					{
 						$group: {
 							_id: {
@@ -103,48 +73,11 @@ const buildUptimeDetailsPipeline = (monitor, dates, dateString) => {
 						},
 					},
 				],
-				// Average response time for the date window
-				groupAvgResponseTime: [
-					{
-						$match: {
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
-					{
-						$group: {
-							_id: null,
-							avgResponseTime: {
-								$avg: "$responseTime",
-							},
-						},
-					},
-				],
-				// All UpChecks for the date window
-				upChecks: [
-					{
-						$match: {
-							status: true,
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
-					{
-						$group: {
-							_id: null,
-							avgResponseTime: {
-								$avg: "$responseTime",
-							},
-							totalChecks: {
-								$sum: 1,
-							},
-						},
-					},
-				],
 				// Up checks grouped by: {day: hour}, {week: day}, {month: day}
 				groupedUpChecks: [
 					{
 						$match: {
 							status: true,
-							createdAt: { $gte: dates.start, $lte: dates.end },
 						},
 					},
 					{
@@ -167,32 +100,11 @@ const buildUptimeDetailsPipeline = (monitor, dates, dateString) => {
 						$sort: { _id: 1 },
 					},
 				],
-				// All down checks for the date window
-				downChecks: [
-					{
-						$match: {
-							status: false,
-							createdAt: { $gte: dates.start, $lte: dates.end },
-						},
-					},
-					{
-						$group: {
-							_id: null,
-							avgResponseTime: {
-								$avg: "$responseTime",
-							},
-							totalChecks: {
-								$sum: 1,
-							},
-						},
-					},
-				],
 				// Down checks grouped by: {day: hour}, {week: day}, {month: day} for the date window
 				groupedDownChecks: [
 					{
 						$match: {
 							status: false,
-							createdAt: { $gte: dates.start, $lte: dates.end },
 						},
 					},
 					{
@@ -218,64 +130,41 @@ const buildUptimeDetailsPipeline = (monitor, dates, dateString) => {
 			},
 		},
 		{
+			$lookup: {
+				from: "monitors",
+				let: { monitor_id: { $toObjectId: monitorId } },
+				pipeline: [
+					{
+						$match: {
+							$expr: { $eq: ["$_id", "$$monitor_id"] },
+						},
+					},
+					{
+						$project: {
+							_id: 1,
+							name: 1,
+							status: 1,
+							interval: 1,
+							type: 1,
+							url: 1,
+							isActive: 1,
+						},
+					},
+				],
+				as: "monitor",
+			},
+		},
+		{
 			$project: {
-				uptimeStreak: {
-					$let: {
-						vars: {
-							checks: { $ifNull: [{ $first: "$uptimeStreak.streak.checks" }, []] },
-						},
-						in: {
-							$cond: [
-								{ $eq: [{ $size: "$$checks" }, 0] },
-								0,
-								{
-									$subtract: [new Date(), { $last: "$$checks.createdAt" }],
-								},
-							],
-						},
-					},
-				},
-				avgResponseTime: {
-					$arrayElemAt: ["$aggregateData.avgResponseTime", 0],
-				},
-				totalChecks: {
-					$arrayElemAt: ["$aggregateData.totalChecks", 0],
-				},
-				latestResponseTime: {
-					$arrayElemAt: ["$aggregateData.lastCheck.responseTime", 0],
-				},
-				timeSinceLastCheck: {
-					$let: {
-						vars: {
-							lastCheck: {
-								$arrayElemAt: ["$aggregateData.lastCheck", 0],
-							},
-						},
-						in: {
-							$cond: [
-								{
-									$ifNull: ["$$lastCheck", false],
-								},
-								{
-									$subtract: [new Date(), "$$lastCheck.createdAt"],
-								},
-								0,
-							],
-						},
-					},
-				},
-				groupedChecks: "$groupedChecks",
 				groupedAvgResponseTime: {
-					$arrayElemAt: ["$groupAvgResponseTime", 0],
+					$arrayElemAt: ["$groupedAvgResponseTime.avgResponseTime", 0],
 				},
-				upChecks: {
-					$arrayElemAt: ["$upChecks", 0],
-				},
+
+				groupedChecks: "$groupedChecks",
 				groupedUpChecks: "$groupedUpChecks",
-				downChecks: {
-					$arrayElemAt: ["$downChecks", 0],
-				},
 				groupedDownChecks: "$groupedDownChecks",
+				groupedUptimePercentage: { $arrayElemAt: ["$uptimePercentage.percentage", 0] },
+				monitor: { $arrayElemAt: ["$monitor", 0] },
 			},
 		},
 	];

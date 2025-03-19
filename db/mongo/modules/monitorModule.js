@@ -340,11 +340,6 @@ const getUptimeDetailsById = async (req) => {
 	const stringService = ServiceRegistry.get(StringService.SERVICE_NAME);
 	try {
 		const { monitorId } = req.params;
-		const monitor = await Monitor.findById(monitorId);
-		if (monitor === null || monitor === undefined) {
-			throw new Error(stringService.dbFindMonitorById(monitorId));
-		}
-
 		const { dateRange, normalize } = req.query;
 		const dates = getDateRange(dateRange);
 		const formatLookup = {
@@ -357,7 +352,7 @@ const getUptimeDetailsById = async (req) => {
 		const dateString = formatLookup[dateRange];
 
 		const results = await Check.aggregate(
-			buildUptimeDetailsPipeline(monitor, dates, dateString)
+			buildUptimeDetailsPipeline(monitorId, dates, dateString)
 		);
 
 		const monitorData = results[0];
@@ -367,13 +362,9 @@ const getUptimeDetailsById = async (req) => {
 			100
 		);
 
-		const monitorStats = {
-			...monitor.toObject(),
-			...monitorData,
-			groupedChecks: normalizedGroupChecks,
-		};
-
-		return monitorStats;
+		monitorData.groupedChecks = normalizedGroupChecks;
+		const monitorStats = await MonitorStats.findOne({ monitorId });
+		return { monitorData, monitorStats };
 	} catch (error) {
 		error.service = SERVICE_NAME;
 		error.method = "getUptimeDetailsById";

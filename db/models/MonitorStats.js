@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MonitorSatsSchema = new mongoose.Schema(
+const MonitorStatsSchema = new mongoose.Schema(
 	{
 		monitorId: {
 			type: mongoose.Schema.Types.ObjectId,
@@ -32,6 +32,14 @@ const MonitorSatsSchema = new mongoose.Schema(
 			type: Number,
 			default: 0,
 		},
+		lastResponseTime: {
+			type: Number,
+			default: 0,
+		},
+		timeOfLastFailure: {
+			type: Number,
+			default: 0,
+		},
 		uptBurnt: {
 			type: mongoose.Schema.Types.Decimal128,
 			required: false,
@@ -40,6 +48,6 @@ const MonitorSatsSchema = new mongoose.Schema(
 	{ timestamps: true }
 );
 
-const MonitorSats = mongoose.model("MonitorStats", MonitorSatsSchema);
+const MonitorStats = mongoose.model("MonitorStats", MonitorStatsSchema);
 
-export default MonitorSats;
+export default MonitorStats;

@@ -39,6 +39,9 @@ class StatusService {
 
 			// Update stats
 
+			// Last response time
+			stats.lastResponseTime = responseTime;
+
 			// Avg response time:
 			let avgResponseTime = stats.avgResponseTime;
 			if (typeof responseTime !== "undefined" && responseTime !== null) {
@@ -56,8 +59,13 @@ class StatusService {
 			stats.totalChecks++;
 			if (status === true) {
 				stats.totalUpChecks++;
+				// Update the timeSinceLastFailure if needed
+				if (stats.timeOfLastFailure === 0) {
+					stats.timeOfLastFailure = new Date().getTime();
+				}
 			} else {
 				stats.totalDownChecks++;
+				stats.timeOfLastFailure = 0;
 			}
 
 			// Calculate uptime percentage
