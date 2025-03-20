@@ -14,6 +14,9 @@ const QUEUE_LOOKUP = {
 	distributed_http: "distributed",
 };
 const getSchedulerId = (monitor) => `scheduler:${monitor.type}:${monitor._id}`;
+const MAX_RETRIES = 3;
+const MAX_DELAY = 3000;
+const BASE_DELAY = 1000;
 
 class NewJobQueue {
 	static SERVICE_NAME = SERVICE_NAME;
@@ -31,7 +34,17 @@ class NewJobQueue {
 	) {
 		const settings = settingsService.getSettings() || {};
 		const { redisUrl } = settings;
-		const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+		const connection = new IORedis(redisUrl, { 
+			maxRetriesPerRequest: null,
+			retryStrategy: (attempts) => {
+				if (attempts > MAX_RETRIES) {
+					console.error("Max Redis connection retries reached.")
+					connection.quit();
+				}
+				const delay = Math.min(attempts * BASE_DELAY, MAX_DELAY);
+				return delay;
+			}
+		});
 
 		this.queues = {};
 		this.workers = {};
