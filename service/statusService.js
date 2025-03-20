@@ -262,20 +262,8 @@ class StatusService {
 	 */
 	insertCheck = async (networkResponse) => {
 		try {
-			const operationMap = {
-				http: this.db.createCheck,
-				ping: this.db.createCheck,
-				pagespeed: this.db.createPageSpeedCheck,
-				hardware: this.db.createHardwareCheck,
-				docker: this.db.createCheck,
-				port: this.db.createCheck,
-				distributed_http: this.db.createDistributedCheck,
-			};
-			// const operation = operationMap[networkResponse.type];
-
 			const check = this.buildCheck(networkResponse);
 			this.buffer.addToBuffer({ check, type: networkResponse.type });
-			// await operation(check);
 		} catch (error) {
 			this.logger.error({
 				message: error.message,
