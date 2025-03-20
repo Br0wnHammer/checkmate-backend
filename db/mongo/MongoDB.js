@@ -98,11 +98,14 @@ class MongoDB {
 				process.env.DB_CONNECTION_STRING || "mongodb://localhost:27017/uptime_db";
 			await mongoose.connect(connectionString);
 			// If there are no AppSettings, create one
-			let appSettings = await AppSettings.find();
-			if (appSettings.length === 0) {
-				appSettings = new AppSettings({});
-				await appSettings.save();
-			}
+			await AppSettings.findOneAndUpdate(
+				{}, // empty filter to match any document
+				{}, // empty update
+				{
+					new: true,
+					setDefaultsOnInsert: true,
+				}
+			);
 			// Sync indexes
 			const models = mongoose.modelNames();
 			for (const modelName of models) {
