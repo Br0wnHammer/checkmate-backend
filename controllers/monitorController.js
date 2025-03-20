@@ -1,3 +1,4 @@
+import Monitor from "../db/models/Monitor.js";
 import {
 	getMonitorByIdParamValidation,
 	getMonitorByIdQueryValidation,
@@ -518,14 +519,18 @@ class MonitorController {
 		}
 
 		try {
-			const monitor = await this.db.getMonitorById(req.params.monitorId);
+			const monitor = await Monitor.findOneAndUpdate({ _id: req.params.monitorId }, [
+				{
+					$set: {
+						isActive: { $not: "$isActive" },
+						status: "$$REMOVE",
+					},
+				},
+			]);
 			monitor.isActive === true
 				? await this.jobQueue.deleteJob(monitor)
 				: await this.jobQueue.addJob(monitor._id, monitor);
 
-			monitor.isActive = !monitor.isActive;
-			monitor.status = undefined;
-			monitor.save();
 			return res.success({
 				msg: monitor.isActive
 					? this.stringService.monitorResume
