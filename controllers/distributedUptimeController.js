@@ -135,7 +135,12 @@ class DistributedUptimeController {
 					try {
 						monitorStream.close();
 					} catch (error) {
-						console.log(error);
+						this.logger.error({
+							message: "Error closing monitor stream",
+							service: SERVICE_NAME,
+							method: "subscribeToDistributedUptimeMonitors",
+							stack: error.stack,
+						});
 					}
 				}
 				monitorStream = Monitor.watch(
@@ -145,7 +150,12 @@ class DistributedUptimeController {
 
 				monitorStream.on("change", handleChange);
 				monitorStream.on("error", (error) => {
-					console.log(error);
+					this.logger.error({
+						message: "Error in monitor stream",
+						service: SERVICE_NAME,
+						method: "subscribeToDistributedUptimeMonitors",
+						stack: error.stack,
+					});
 					createMonitorStream();
 				});
 				monitorStream.on("close", () => {
@@ -158,7 +168,12 @@ class DistributedUptimeController {
 					try {
 						checksStream.close();
 					} catch (error) {
-						console.log(error);
+						this.logger.error({
+							message: "Error closing checks stream",
+							service: SERVICE_NAME,
+							method: "subscribeToDistributedUptimeMonitors",
+							details: error,
+						});
 					}
 				}
 				checksStream = DistributedUptimeCheck.watch(
@@ -167,7 +182,12 @@ class DistributedUptimeController {
 				);
 				checksStream.on("change", handleChange);
 				checksStream.on("error", (error) => {
-					console.log(error);
+					this.logger.error({
+						message: "Error in checks stream",
+						service: SERVICE_NAME,
+						method: "subscribeToDistributedUptimeMonitors",
+						stack: error.stack,
+					});
 					createChecksStream();
 				});
 				checksStream.on("close", () => {
@@ -197,8 +217,13 @@ class DistributedUptimeController {
 				clearInterval(keepAlive);
 			});
 		} catch (error) {
-			console.log(error);
-			next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitors"));
+			this.logger.error({
+				message: "Error in subscribeToDistributedUptimeMonitors",
+				service: SERVICE_NAME,
+				method: "subscribeToDistributedUptimeMonitors",
+				stack: error.stack,
+			});
+			next(handleError(error, SERVICE_NAME, "subscribeToDistributedUptimeMonitors"));
 		}
 	}
 
@@ -240,9 +265,14 @@ class DistributedUptimeController {
 					}
 					batchTimeout = null;
 				} catch (error) {
-					console.error("Error in notifyChange:", error);
 					opInProgress = false;
 					batchTimeout = null;
+					this.logger.error({
+						message: "Error in notifyChange",
+						service: SERVICE_NAME,
+						method: "subscribeToDistributedUptimeMonitorDetails",
+						stack: error.stack,
+					});
 					next(handleError(error, SERVICE_NAME, "getDistributedUptimeMonitorDetails"));
 				}
 			};
@@ -258,7 +288,12 @@ class DistributedUptimeController {
 					try {
 						checksStream.close();
 					} catch (error) {
-						console.log(error);
+						this.logger.error({
+							message: "Error closing checks stream",
+							service: SERVICE_NAME,
+							method: "subscribeToDistributedUptimeMonitorDetails",
+							stack: error.stack,
+						});
 					}
 				}
 				checksStream = DistributedUptimeCheck.watch(
@@ -268,7 +303,12 @@ class DistributedUptimeController {
 
 				checksStream.on("change", handleChange);
 				checksStream.on("error", (error) => {
-					console.log(error);
+					this.logger.error({
+						message: "Error in checks stream",
+						service: SERVICE_NAME,
+						method: "subscribeToDistributedUptimeMonitorDetails",
+						stack: error.stack,
+					});
 					createCheckStream();
 				});
 				checksStream.on("close", () => {
