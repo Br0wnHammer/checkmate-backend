@@ -78,32 +78,6 @@ const PageSpeedCheck = mongoose.Schema(
  * @typedef {mongoose.Model<PageSpeedCheck>} LighthouseMetricsModel
  */
 
-PageSpeedCheck.pre("save", async function (next) {
-	try {
-		const monitor = await mongoose.model("Monitor").findById(this.monitorId);
-		if (monitor && monitor.status !== this.status) {
-			if (monitor.status === true && this.status === false) {
-				logger.info({ message: "Monitor went down", monitorId: monitor._id });
-			}
-
-			if (monitor.status === false && this.status === true) {
-				logger.info({ message: "Monitor went up", monitorId: monitor._id });
-			}
-			monitor.status = this.status;
-			await monitor.save();
-		}
-	} catch (error) {
-		logger.error({
-			message: error.message,
-			service: "PageSpeedCheck",
-			method: "pre-save",
-			stack: error.stack,
-		});
-	} finally {
-		next();
-	}
-});
-
 PageSpeedCheck.index({ createdAt: 1 });
 PageSpeedCheck.index({ monitorId: 1, createdAt: 1 });
 PageSpeedCheck.index({ monitorId: 1, createdAt: -1 });
