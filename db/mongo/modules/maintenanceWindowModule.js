@@ -14,17 +14,6 @@ const SERVICE_NAME = "maintenanceWindowModule";
  * @param {Date} maintenanceWindowData.end - The end date and time of the maintenance window.
  * @returns {Promise<MaintenanceWindow>} The saved MaintenanceWindow document.
  * @throws {Error} If there is an error saving the document.
- * @example
- * const maintenanceWindowData = {
- *   monitorId: 'yourMonitorId',
- *   active: true,
- *   oneTime: true,
- *   start: new Date(),
- *   end: new Date(),
- * };
- * createMaintenanceWindow(maintenanceWindowData)
- *   .then(maintenanceWindow => console.log(maintenanceWindow))
- *   .catch(error => console.error(error));
  */
 const createMaintenanceWindow = async (maintenanceWindowData) => {
 	try {
@@ -66,10 +55,6 @@ const getMaintenanceWindowById = async (maintenanceWindowId) => {
  * @param {Object} query - The request body.
  * @returns {Promise<Array<MaintenanceWindow>>} An array of MaintenanceWindow documents.
  * @throws {Error} If there is an error retrieving the documents.
- * @example
- * getMaintenanceWindowByUserId(teamId)
- *   .then(maintenanceWindows => console.log(maintenanceWindows))
- *   .catch(error => console.error(error));
  */
 const getMaintenanceWindowsByTeamId = async (teamId, query) => {
 	try {
@@ -113,10 +98,6 @@ const getMaintenanceWindowsByTeamId = async (teamId, query) => {
  * @param {mongoose.Schema.Types.ObjectId} monitorId - The ID of the monitor.
  * @returns {Promise<Array<MaintenanceWindow>>} An array of MaintenanceWindow documents.
  * @throws {Error} If there is an error retrieving the documents.
- * @example
- * getMaintenanceWindowsByMonitorId('monitorId')
- *   .then(maintenanceWindows => console.log(maintenanceWindows))
- *   .catch(error => console.error(error));
  */
 const getMaintenanceWindowsByMonitorId = async (monitorId) => {
 	try {
@@ -138,10 +119,6 @@ const getMaintenanceWindowsByMonitorId = async (monitorId) => {
  * @param {mongoose.Schema.Types.ObjectId} maintenanceWindowId - The ID of the MaintenanceWindow document to delete.
  * @returns {Promise<MaintenanceWindow>} The deleted MaintenanceWindow document.
  * @throws {Error} If there is an error deleting the document.
- * @example
- * deleteMaintenanceWindowById('maintenanceWindowId')
- *   .then(maintenanceWindow => console.log(maintenanceWindow))
- *   .catch(error => console.error(error));
  */
 const deleteMaintenanceWindowById = async (maintenanceWindowId) => {
 	try {
@@ -163,9 +140,6 @@ const deleteMaintenanceWindowById = async (maintenanceWindowId) => {
  * @returns {Promise<Object>} The result of the delete operation. This object contains information about the operation, such as the number of documents deleted.
  * @throws {Error} If there is an error deleting the documents.
  * @example
- * deleteMaintenanceWindowByMonitorId('monitorId')
- *   .then(result => console.log(result))
- *   .catch(error => console.error(error));
  */
 const deleteMaintenanceWindowByMonitorId = async (monitorId) => {
 	try {
@@ -186,9 +160,6 @@ const deleteMaintenanceWindowByMonitorId = async (monitorId) => {
  * @returns {Promise<Object>} The result of the delete operation. This object contains information about the operation, such as the number of documents deleted.
  * @throws {Error} If there is an error deleting the documents.
  * @example
- * deleteMaintenanceWindowByUserId('userId')
- *   .then(result => console.log(result))
- *   .catch(error => console.error(error));
  */
 const deleteMaintenanceWindowByUserId = async (userId) => {
 	try {

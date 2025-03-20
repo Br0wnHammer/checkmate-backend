@@ -37,7 +37,12 @@ const createHardwareCheck = async (hardwareCheckData) => {
 		}).save();
 		return hardwareCheck;
 	} catch (error) {
-		console.log("error creating hardware check", error);
+		logger.error({
+			message: "Error creating hardware check",
+			service: SERVICE_NAME,
+			method: "createHardwareCheck",
+			stack: error.stack,
+		});
 		error.service = SERVICE_NAME;
 		error.method = "createHardwareCheck";
 		throw error;

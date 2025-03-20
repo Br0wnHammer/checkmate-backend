@@ -1,6 +1,7 @@
 import Monitor from "../../models/Monitor.js";
 import Check from "../../models/Check.js";
 import DistributedUptimeCheck from "../../models/DistributedUptimeCheck.js";
+import logger from "../../../utils/logger.js";
 
 const generateRandomUrl = () => {
 	const domains = ["example.com", "test.org", "demo.net", "sample.io", "mock.dev"];
@@ -32,10 +33,18 @@ const generateChecks = (monitorId, teamId, count) => {
 
 const seedDb = async (userId, teamId) => {
 	try {
-		console.log("Deleting all monitors and checks");
+		logger.info({
+			message: "Deleting all monitors and checks",
+			service: "seedDb",
+			method: "seedDb",
+		});
 		await Monitor.deleteMany({});
 		await Check.deleteMany({});
-		console.log("Adding monitors");
+		logger.info({
+			message: "Adding monitors",
+			service: "DB",
+			method: "seedDb",
+		});
 		for (let i = 0; i < 300; i++) {
 			const monitor = await Monitor.create({
 				name: `Monitor ${i}`,
@@ -46,12 +55,21 @@ const seedDb = async (userId, teamId) => {
 				interval: 60000,
 				active: false,
 			});
-			console.log(`Adding monitor and checks for monitor ${i}`);
+			logger.info({
+				message: `Adding monitor and checks for monitor ${i}`,
+				service: "DB",
+				method: "seedDb",
+			});
 			const checks = generateChecks(monitor._id, teamId, 10000);
 			await Check.insertMany(checks);
 		}
 	} catch (error) {
-		console.error(error);
+		logger.error({
+			message: "Error seeding DB",
+			service: "DB",
+			method: "seedDb",
+			stack: error.stack,
+		});
 	}
 };
 
@@ -113,7 +131,12 @@ const generateDistributedChecks = (monitorId, teamId, count = 2880) => {
 
 export const seedDistributedTest = async (userId, teamId) => {
 	try {
-		console.log("Deleting all test monitors and checks");
+		logger.info({
+			message: "Deleting all test monitors and checks",
+			service: "DB",
+			method: "seedDistributedTest",
+		});
+
 		const testMonitors = await Monitor.find({
 			type: "distributed_test",
 		});
@@ -123,7 +146,11 @@ export const seedDistributedTest = async (userId, teamId) => {
 			await Monitor.deleteOne({ _id: monitor._id });
 		});
 
-		console.log("Adding test monitors and checks");
+		logger.info({
+			message: "Adding test monitors and checks",
+			service: "DB",
+			method: "seedDistributedTest",
+		});
 		const monitor = await Monitor.create({
 			name: "Distributed Test",
 			url: "https://distributed-test.com",
@@ -137,7 +164,12 @@ export const seedDistributedTest = async (userId, teamId) => {
 		await DistributedUptimeCheck.insertMany(checks);
 		return monitor;
 	} catch (error) {
-		console.error(error);
+		logger.error({
+			message: "Error seeding distributed test",
+			service: "DB",
+			method: "seedDistributedTest",
+			stack: error.stack,
+		});
 		throw error;
 	}
 };
