@@ -77,7 +77,6 @@ class MonitorController {
 
 	getUptimeDetailsById = async (req, res, next) => {
 		try {
-			throw new Error("test");
 			const data = await this.db.getUptimeDetailsById(req);
 			return res.success({
 				msg: this.stringService.monitorGetById,
