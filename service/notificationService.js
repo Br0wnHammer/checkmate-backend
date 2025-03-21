@@ -40,18 +40,28 @@ class NotificationService {
 	 */
 
 	formatNotificationMessage(monitor, status, platform, chatId) {
+		// Force status to be explicitly boolean true/false
+		const isUp = status === true;
+		
+		// Get appropriate message for up/down status
 		const messageText = this.stringService.getMonitorStatus(
-			monitor.name,
-			status,
-			monitor.url
+		  monitor.name,
+		  isUp,
+		  monitor.url
 		);
-
+		
+		console.log('Formatting message:', {
+		  monitorName: monitor.name,
+		  isUp,
+		  messageText
+		});
+	  
 		if (!PLATFORM_TYPES.includes(platform)) {
-			return undefined;
+		  return undefined;
 		}
-
+	  
 		return MESSAGE_FORMATTERS[platform](messageText, chatId);
-	}
+	  }
 
 	/**
 	 * Sends a webhook notification to a specified platform.
@@ -69,57 +79,70 @@ class NotificationService {
 	 */
 
 	async sendWebhookNotification(networkResponse, notification) {
+		// Extract monitor and status from networkResponse
 		const { monitor, status } = networkResponse;
+		
+		// Important: Use the status from networkResponse, NOT from monitor.status
+		// This ensures we're using the current status change information
+		const currentStatus = status; // Explicitly use networkResponse.status
+		
 		const { platform } = notification;
 		const { webhookUrl, botToken, chatId } = notification.config;
-
+	  
 		// Early return if platform is not supported
 		if (!PLATFORM_TYPES.includes(platform)) {
-			this.logger.warn({
-				message: this.stringService.getWebhookUnsupportedPlatform(platform),
-				service: this.SERVICE_NAME,
-				method: "sendWebhookNotification",
-				platform,
-			});
-			return false;
+		  this.logger.warn({
+			message: this.stringService.getWebhookUnsupportedPlatform(platform),
+			service: this.SERVICE_NAME,
+			method: "sendWebhookNotification",
+			platform,
+		  });
+		  return false;
 		}
-
+	  
 		// Early return for telegram if required fields are missing
 		if (platform === "telegram" && (!botToken || !chatId)) {
-			this.logger.warn({
-				message: "Missing required fields for Telegram notification",
-				service: this.SERVICE_NAME,
-				method: "sendWebhookNotification",
-				platform,
-			});
-			return false;
+		  this.logger.warn({
+			message: "Missing required fields for Telegram notification",
+			service: this.SERVICE_NAME,
+			method: "sendWebhookNotification",
+			platform,
+		  });
+		  return false;
 		}
-
+	  
 		let url = webhookUrl;
 		if (platform === "telegram") {
-			url = `${TELEGRAM_API_BASE_URL}${botToken}/sendMessage`;
+		  url = `${TELEGRAM_API_BASE_URL}${botToken}/sendMessage`;
 		}
+	  
+		
+		const message = this.formatNotificationMessage(monitor, currentStatus, platform, chatId);
 
-		// Now that we know the platform is valid, format the message
-		const message = this.formatNotificationMessage(monitor, status, platform, chatId);
-
+		 
+		 console.log('Sending webhook notification:', { 
+			status, 
+			platform, 
+			messageContent: JSON.stringify(message) 
+		  });
+	  
 		try {
-			const response = await this.networkService.requestWebhook(platform, url, message);
-			return response.status;
+		  const response = await this.networkService.requestWebhook(platform, url, message);
+		  return response.status;
 		} catch (error) {
-			this.logger.error({
-				message: this.stringService.getWebhookSendError(platform),
-				service: this.SERVICE_NAME,
-				method: "sendWebhookNotification",
-				error: error.message,
-				stack: error.stack,
-				url,
-				platform,
-				requestPayload: message,
-			});
-			return false;
+		  this.logger.error({
+			message: this.stringService.getWebhookSendError(platform),
+			service: this.SERVICE_NAME,
+			method: "sendWebhookNotification",
+			error: error.message,
+			stack: error.stack,
+			url,
+			platform,
+			requestPayload: message,
+		  });
+		  return false;
 		}
-	}
+	  }
 
 	/**
 	 * Sends an email notification for hardware infrastructure alerts
@@ -162,33 +185,47 @@ class NotificationService {
 
 	async handleStatusNotifications(networkResponse) {
 		try {
-			// If status hasn't changed, we're done
-			if (networkResponse.statusChanged === false) return false;
-			// if prevStatus is undefined, monitor is resuming, we're done
-			if (networkResponse.prevStatus === undefined) return false;
 
-			const notifications = await this.db.getNotificationsByMonitorId(
-				networkResponse.monitorId
-			);
-
-			for (const notification of notifications) {
-				if (notification.type === "email") {
-					await this.sendEmail(networkResponse, notification.address);
-				} else if (notification.type === "webhook") {
-					await this.sendWebhookNotification(networkResponse, notification);
+		  console.log('Monitor in response:', JSON.stringify(networkResponse.monitor));
+		  // If status hasn't changed, we're done
+		  if (networkResponse.statusChanged === false) return false;
+		  // if prevStatus is undefined, monitor is resuming, we're done
+		  if (networkResponse.prevStatus === undefined) return false;
+	  
+		  const notifications = await this.db.getNotificationsByMonitorId(
+			networkResponse.monitorId
+		  );
+	  
+		  for (const notification of notifications) {
+			if (notification.type === "email") {
+			  // Email notifications use prevStatus for template selection
+			  await this.sendEmail(networkResponse, notification.address);
+			} else if (notification.type === "webhook") {
+			  // For webhooks, we need a special fix to ensure down notifications work
+			  // Create a copy of the networkResponse with monitor present
+			  const webhookResponse = {
+				...networkResponse,
+				monitor: {
+				  ...networkResponse.monitor,
+				  // Ensure these critical fields exist for formatNotificationMessage
+				  name: networkResponse.monitor.name || "Monitor",
+				  url: networkResponse.monitor.url || "Unknown URL"
 				}
-				// Handle other types of notifications here
+			  };
+			  await this.sendWebhookNotification(webhookResponse, notification);
 			}
-			return true;
+			// Handle other types of notifications here
+		  }
+		  return true;
 		} catch (error) {
-			this.logger.warn({
-				message: error.message,
-				service: this.SERVICE_NAME,
-				method: "handleNotifications",
-				stack: error.stack,
-			});
+		  this.logger.warn({
+			message: error.message,
+			service: this.SERVICE_NAME,
+			method: "handleNotifications",
+			stack: error.stack,
+		  });
 		}
-	}
+	  }
 	/**
 	 * Handles status change notifications for a monitor
 	 *
