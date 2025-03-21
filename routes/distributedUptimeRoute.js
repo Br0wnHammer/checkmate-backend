@@ -1,5 +1,5 @@
 import { Router } from "express";
-
+import { verifyJWT } from "../middleware/verifyJWT.js";
 class DistributedUptimeRoutes {
 	constructor(distributedUptimeController) {
 		this.router = Router();
@@ -8,8 +8,10 @@ class DistributedUptimeRoutes {
 	}
 	initRoutes() {
 		this.router.post("/callback", this.distributedUptimeController.resultsCallback);
+
 		this.router.get(
 			"/monitors/:teamId",
+			verifyJWT,
 			this.distributedUptimeController.subscribeToDistributedUptimeMonitors
 		);
 		this.router.get(
@@ -18,10 +20,12 @@ class DistributedUptimeRoutes {
 		);
 		this.router.get(
 			"/monitors/details/:monitorId",
+			verifyJWT,
 			this.distributedUptimeController.subscribeToDistributedUptimeMonitorDetails
 		);
 		this.router.get(
 			"/monitors/details/:monitorId/initial",
+			verifyJWT,
 			this.distributedUptimeController.getDistributedUptimeMonitorDetails
 		);
 	}
