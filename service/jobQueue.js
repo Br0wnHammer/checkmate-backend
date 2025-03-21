@@ -33,12 +33,19 @@ class NewJobQueue {
 		Worker
 	) {
 		const settings = settingsService.getSettings() || {};
+		this.logger = logger;
 		const { redisUrl } = settings;
 		const connection = new IORedis(redisUrl, { 
 			maxRetriesPerRequest: null,
 			retryStrategy: (attempts) => {
 				if (attempts > MAX_RETRIES) {
-					console.error("Max Redis connection retries reached.")
+					const error = new Error("Max Redis connection retries reached.");
+					this.logger.error({
+						message: "Max Redis connection retries reached.",
+						service: SERVICE_NAME,
+						method: "constructor",
+						stack: error.stack,
+					});
 					connection.quit();
 				}
 				const delay = Math.min(attempts * BASE_DELAY, MAX_DELAY);
@@ -56,7 +63,6 @@ class NewJobQueue {
 		this.statusService = statusService;
 		this.notificationService = notificationService;
 		this.settingsService = settingsService;
-		this.logger = logger;
 		this.Worker = Worker;
 		this.stringService = stringService;
 
