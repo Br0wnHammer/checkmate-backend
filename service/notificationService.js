@@ -40,21 +40,12 @@ class NotificationService {
 	 */
 
 	formatNotificationMessage(monitor, status, platform, chatId) {
-		// Force status to be explicitly boolean true/false
-		const isUp = status === true;
-		
-		// Get appropriate message for up/down status
+
 		const messageText = this.stringService.getMonitorStatus(
 		  monitor.name,
 		  isUp,
 		  monitor.url
 		);
-		
-		console.log('Formatting message:', {
-		  monitorName: monitor.name,
-		  isUp,
-		  messageText
-		});
 	  
 		if (!PLATFORM_TYPES.includes(platform)) {
 		  return undefined;
@@ -79,13 +70,7 @@ class NotificationService {
 	 */
 
 	async sendWebhookNotification(networkResponse, notification) {
-		// Extract monitor and status from networkResponse
 		const { monitor, status } = networkResponse;
-		
-		// Important: Use the status from networkResponse, NOT from monitor.status
-		// This ensures we're using the current status change information
-		const currentStatus = status; // Explicitly use networkResponse.status
-		
 		const { platform } = notification;
 		const { webhookUrl, botToken, chatId } = notification.config;
 	  
@@ -115,16 +100,8 @@ class NotificationService {
 		if (platform === "telegram") {
 		  url = `${TELEGRAM_API_BASE_URL}${botToken}/sendMessage`;
 		}
-	  
-		
-		const message = this.formatNotificationMessage(monitor, currentStatus, platform, chatId);
-
-		 
-		 console.log('Sending webhook notification:', { 
-			status, 
-			platform, 
-			messageContent: JSON.stringify(message) 
-		  });
+	  	
+		const message = this.formatNotificationMessage(monitor, status, platform, chatId);
 	  
 		try {
 		  const response = await this.networkService.requestWebhook(platform, url, message);
