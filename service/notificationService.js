@@ -43,7 +43,7 @@ class NotificationService {
 
 		const messageText = this.stringService.getMonitorStatus(
 		  monitor.name,
-		  isUp,
+		  status,
 		  monitor.url
 		);
 	  
@@ -162,8 +162,6 @@ class NotificationService {
 
 	async handleStatusNotifications(networkResponse) {
 		try {
-
-		  console.log('Monitor in response:', JSON.stringify(networkResponse.monitor));
 		  // If status hasn't changed, we're done
 		  if (networkResponse.statusChanged === false) return false;
 		  // if prevStatus is undefined, monitor is resuming, we're done
@@ -175,21 +173,9 @@ class NotificationService {
 	  
 		  for (const notification of notifications) {
 			if (notification.type === "email") {
-			  // Email notifications use prevStatus for template selection
 			  await this.sendEmail(networkResponse, notification.address);
 			} else if (notification.type === "webhook") {
-			  // For webhooks, we need a special fix to ensure down notifications work
-			  // Create a copy of the networkResponse with monitor present
-			  const webhookResponse = {
-				...networkResponse,
-				monitor: {
-				  ...networkResponse.monitor,
-				  // Ensure these critical fields exist for formatNotificationMessage
-				  name: networkResponse.monitor.name || "Monitor",
-				  url: networkResponse.monitor.url || "Unknown URL"
-				}
-			  };
-			  await this.sendWebhookNotification(webhookResponse, notification);
+			  await this.sendWebhookNotification(networkResponse, notification);
 			}
 			// Handle other types of notifications here
 		  }
