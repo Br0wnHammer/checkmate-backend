@@ -205,6 +205,9 @@ class StatusService {
 		};
 
 		if (type === "distributed_http") {
+			if (typeof payload === "undefined") {
+				return undefined;
+			}
 			check.continent = payload.continent;
 			check.countryCode = payload.country_code;
 			check.city = payload.city;
@@ -219,8 +222,11 @@ class StatusService {
 		}
 
 		if (type === "pagespeed") {
-			const categories = payload.lighthouseResult?.categories;
-			const audits = payload.lighthouseResult?.audits;
+			if (typeof payload === "undefined") {
+				return undefined;
+			}
+			const categories = payload?.lighthouseResult?.categories ?? {};
+			const audits = payload?.lighthouseResult?.audits ?? {};
 			const {
 				"cumulative-layout-shift": cls = 0,
 				"speed-index": si = 0,
@@ -228,10 +234,10 @@ class StatusService {
 				"largest-contentful-paint": lcp = 0,
 				"total-blocking-time": tbt = 0,
 			} = audits;
-			check.accessibility = (categories.accessibility?.score || 0) * 100;
-			check.bestPractices = (categories["best-practices"]?.score || 0) * 100;
-			check.seo = (categories.seo?.score || 0) * 100;
-			check.performance = (categories.performance?.score || 0) * 100;
+			check.accessibility = (categories?.accessibility?.score || 0) * 100;
+			check.bestPractices = (categories?.["best-practices"]?.score || 0) * 100;
+			check.seo = (categories?.seo?.score || 0) * 100;
+			check.performance = (categories?.performance?.score || 0) * 100;
 			check.audits = { cls, si, fcp, lcp, tbt };
 		}
 
@@ -263,6 +269,15 @@ class StatusService {
 	insertCheck = async (networkResponse) => {
 		try {
 			const check = this.buildCheck(networkResponse);
+			if (typeof check === "undefined") {
+				this.logger.warn({
+					message: "Failed to build check",
+					service: this.SERVICE_NAME,
+					method: "insertCheck",
+					details: networkResponse,
+				});
+				return;
+			}
 			this.buffer.addToBuffer({ check, type: networkResponse.type });
 		} catch (error) {
 			this.logger.error({
