@@ -3,7 +3,7 @@ import IORedis from "ioredis";
 const QUEUE_NAMES = ["uptime", "pagespeed", "hardware", "distributed"];
 const SERVICE_NAME = "JobQueue";
 const JOBS_PER_WORKER = 5;
-const HEALTH_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
+const HEALTH_CHECK_INTERVAL = 10 * 60 * 1000; // 10 minutes
 const QUEUE_LOOKUP = {
 	hardware: "hardware",
 	http: "uptime",
@@ -55,7 +55,7 @@ class NewJobQueue {
 		this.healthCheckInterval = setInterval(async () => {
 			try {
 				const health = await this.checkQueueHealth();
-				if (health.stuck) {
+				if (health.stuck === true) {
 					this.logger.error({
 						message: `Queue is stuck: ${health.stuckQueues.join(", ")}`,
 						service: SERVICE_NAME,
@@ -251,6 +251,27 @@ class NewJobQueue {
 			const worker = new this.Worker(queue.name, this.createJobHandler(), {
 				connection: this.connection,
 				concurrency: 5,
+				stalledInterval: 10000,
+				maxStalledCount: 1,
+				lockDuration: 60000,
+			});
+
+			worker.on("failed", (job, err) => {
+				this.logger.error({
+					message: `Job ${job.id} failed: ${err.message}`,
+					service: SERVICE_NAME,
+					method: "worker:failed",
+					stack: err.stack,
+					jobData: job.data,
+				});
+			});
+
+			worker.on("stalled", (jobId) => {
+				this.logger.warn({
+					message: `Job ${jobId} stalled`,
+					service: SERVICE_NAME,
+					method: "worker:stalled",
+				});
 			});
 
 			return worker;
@@ -769,14 +790,19 @@ class NewJobQueue {
 				}
 			}
 
+			const queueHealth = { stuck: false, stuckQueues, idleTimes };
+
 			if (stuckQueues.length > 0) {
-				return {
-					stuck: true,
-					stuckQueues,
-					idleTimes,
-				};
+				queueHealth.stuck = true;
 			}
-			return { stuck: false, stuckQueues, idleTimes };
+
+			this.logger.info({
+				message: "Queue health check",
+				service: SERVICE_NAME,
+				method: "checkQueueHealth",
+				details: queueHealth,
+			});
+			return queueHealth;
 		} catch (error) {
 			error.service === undefined ? (error.service = SERVICE_NAME) : null;
 			error.method === undefined ? (error.method = "checkQueueHealth") : null;
