@@ -80,7 +80,7 @@ class NotificationService {
 			message: this.stringService.getWebhookUnsupportedPlatform(platform),
 			service: this.SERVICE_NAME,
 			method: "sendWebhookNotification",
-			platform,
+			details: { platform }
 		  });
 		  return false;
 		}
@@ -91,7 +91,7 @@ class NotificationService {
 			message: "Missing required fields for Telegram notification",
 			service: this.SERVICE_NAME,
 			method: "sendWebhookNotification",
-			platform,
+			details: { platform }
 		  });
 		  return false;
 		}
@@ -114,7 +114,7 @@ class NotificationService {
 			error: error.message,
 			stack: error.stack,
 			url,
-			platform,
+			details: { platform },
 			requestPayload: message,
 		  });
 		  return false;
