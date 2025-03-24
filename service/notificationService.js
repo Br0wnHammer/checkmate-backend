@@ -111,7 +111,6 @@ class NotificationService {
 			message: this.stringService.getWebhookSendError(platform),
 			service: this.SERVICE_NAME,
 			method: "sendWebhookNotification",
-			error: error.message,
 			stack: error.stack,
 		  });
 		  return false;
