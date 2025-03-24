@@ -181,7 +181,7 @@ class NotificationService {
 		  }
 		  return true;
 		} catch (error) {
-		  this.logger.warn({
+		  this.logger.error({
 			message: error.message,
 			service: this.SERVICE_NAME,
 			method: "handleNotifications",
@@ -287,7 +287,7 @@ class NotificationService {
 			this.handleStatusNotifications(networkResponse);
 			return true;
 		} catch (error) {
-			this.logger.warn({
+			this.logger.error({
 				message: error.message,
 				service: this.SERVICE_NAME,
 				method: "handleNotifications",
