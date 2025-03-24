@@ -11,7 +11,6 @@ class DistributedUptimeRoutes {
 
 		this.router.get(
 			"/monitors/:teamId",
-			verifyJWT,
 			this.distributedUptimeController.subscribeToDistributedUptimeMonitors
 		);
 		this.router.get(
@@ -20,7 +19,6 @@ class DistributedUptimeRoutes {
 		);
 		this.router.get(
 			"/monitors/details/:monitorId",
-			verifyJWT,
 			this.distributedUptimeController.subscribeToDistributedUptimeMonitorDetails
 		);
 		this.router.get(
