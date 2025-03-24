@@ -562,11 +562,23 @@ const buildMonitorsWithChecksByTeamIdPipeline = ({
 	const skip = page && rowsPerPage ? page * rowsPerPage : 0;
 	const sort = { [field]: order === "asc" ? 1 : -1 };
 	const limitStage = rowsPerPage ? [{ $limit: rowsPerPage }] : [];
-	if (typeof filter !== "undefined") {
+
+	// Match name
+	if (typeof filter !== "undefined" && field === "name") {
 		matchStage.$or = [
 			{ name: { $regex: filter, $options: "i" } },
 			{ url: { $regex: filter, $options: "i" } },
 		];
+	}
+
+	// Match isActive
+	if (typeof filter !== "undefined" && field === "isActive") {
+		matchStage.isActive = filter === "true" ? true : false;
+	}
+
+	// Match type
+	if (typeof filter !== "undefined" && field === "type") {
+		matchStage.type = filter;
 	}
 
 	const monitorsPipeline = [
