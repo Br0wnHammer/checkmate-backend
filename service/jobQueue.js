@@ -738,7 +738,7 @@ class NewJobQueue {
 		const now = Date.now();
 		const idleTimes = {};
 		Object.entries(this.lastJobProcessedTime).forEach(([queueName, lastProcessed]) => {
-			idleTimes[queueName] = now - lastProcessed;
+			idleTimes[queueName] = lastProcessed ? now - lastProcessed : Infinity;
 		});
 		return idleTimes;
 	}
@@ -746,8 +746,11 @@ class NewJobQueue {
 		try {
 			const currentTime = Date.now();
 			const stuckQueues = [];
+			const idleTimes = this.getQueueIdleTimes();
 			for (const queueName of QUEUE_NAMES) {
 				const queue = this.queues[queueName];
+				const idleTime = idleTimes[queueName];
+
 				const healthMetrics = await this.getQueueHealthMetrics(queue);
 				const hasJobs =
 					healthMetrics.waiting > 0 ||
@@ -755,8 +758,12 @@ class NewJobQueue {
 					healthMetrics.delayed > 0 ||
 					healthMetrics.completed > 0 ||
 					healthMetrics.failed > 0;
+
 				const timeSinceLastProcessed = currentTime - this.lastJobProcessedTime[queueName];
-				const isStuck = hasJobs && timeSinceLastProcessed > HEALTH_CHECK_INTERVAL;
+				const isStuck =
+					hasJobs &&
+					(timeSinceLastProcessed > HEALTH_CHECK_INTERVAL || idleTime === Infinity);
+
 				if (isStuck) {
 					stuckQueues.push(queueName);
 				}
@@ -766,10 +773,10 @@ class NewJobQueue {
 				return {
 					stuck: true,
 					stuckQueues,
-					idleTimes: this.getQueueIdleTimes(),
+					idleTimes,
 				};
 			}
-			return { stuck: false, stuckQueues, idleTimes: this.getQueueIdleTimes() };
+			return { stuck: false, stuckQueues, idleTimes };
 		} catch (error) {
 			error.service === undefined ? (error.service = SERVICE_NAME) : null;
 			error.method === undefined ? (error.method = "checkQueueHealth") : null;
