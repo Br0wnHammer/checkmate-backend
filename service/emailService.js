@@ -74,15 +74,20 @@ class EmailService {
 		 * @type {Object}
 		 */
 
-		const { systemEmailHost, systemEmailPort, systemEmailAddress, systemEmailPassword } =
-			this.settingsService.getSettings();
+		const {
+			systemEmailHost,
+			systemEmailPort,
+			systemEmailUser,
+			systemEmailAddress,
+			systemEmailPassword,
+		} = this.settingsService.getSettings();
 
 		const emailConfig = {
 			host: systemEmailHost,
 			port: systemEmailPort,
 			secure: true,
 			auth: {
-				user: systemEmailAddress,
+				user: systemEmailUser || systemEmailAddress,
 				pass: systemEmailPassword,
 			},
 		};
