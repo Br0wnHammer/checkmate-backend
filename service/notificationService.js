@@ -113,9 +113,6 @@ class NotificationService {
 			method: "sendWebhookNotification",
 			error: error.message,
 			stack: error.stack,
-			url,
-			details: { platform },
-			requestPayload: message,
 		  });
 		  return false;
 		}
