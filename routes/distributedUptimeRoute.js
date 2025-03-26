@@ -10,21 +10,29 @@ class DistributedUptimeRoutes {
 		this.router.post("/callback", this.distributedUptimeController.resultsCallback);
 
 		this.router.get(
+			"/monitors/:teamId/initial",
+			verifyJWT,
+			this.distributedUptimeController.getDistributedUptimeMonitors
+		);
+
+		this.router.get(
 			"/monitors/:teamId",
 			this.distributedUptimeController.subscribeToDistributedUptimeMonitors
 		);
-		this.router.get(
-			"/monitors/:teamId/initial",
-			this.distributedUptimeController.getDistributedUptimeMonitors
-		);
-		this.router.get(
-			"/monitors/details/:monitorId",
-			this.distributedUptimeController.subscribeToDistributedUptimeMonitorDetails
-		);
+
 		this.router.get(
 			"/monitors/details/:monitorId/initial",
 			verifyJWT,
 			this.distributedUptimeController.getDistributedUptimeMonitorDetails
+		);
+		this.router.get(
+			"/monitors/details/public/:monitorId/initial",
+			this.distributedUptimeController.getDistributedUptimeMonitorDetails
+		);
+
+		this.router.get(
+			"/monitors/details/:monitorId",
+			this.distributedUptimeController.subscribeToDistributedUptimeMonitorDetails
 		);
 	}
 
