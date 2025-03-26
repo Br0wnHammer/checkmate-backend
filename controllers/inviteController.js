@@ -31,7 +31,31 @@ class InviteController {
 	 * @returns {Object} The response object with a success status, a message indicating the sending of the invitation, and the invitation token.
 	 * @throws {Error} If there is an error during the process, especially if there is a validation error (422).
 	 */
-	issueInvitation = async (req, res, next) => {
+	getInviteToken = async (req, res, next) => {
+		try {
+			// Only admins can invite
+			const token = getTokenFromHeaders(req.headers);
+			const { role, teamId } = jwt.decode(token);
+			req.body.teamId = teamId;
+			try {
+				await inviteRoleValidation.validateAsync({ roles: role });
+				await inviteBodyValidation.validateAsync(req.body);
+			} catch (error) {
+				next(handleValidationError(error, SERVICE_NAME));
+				return;
+			}
+
+			const inviteToken = await this.db.requestInviteToken({ ...req.body });
+			return res.success({
+				msg: this.stringService.inviteIssued,
+				data: inviteToken,
+			});
+		} catch (error) {
+			next(handleError(error, SERVICE_NAME, "inviteController"));
+		}
+	};
+
+	sendInviteEmail = async (req, res, next) => {
 		try {
 			// Only admins can invite
 			const token = getTokenFromHeaders(req.headers);
