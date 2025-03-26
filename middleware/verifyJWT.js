@@ -27,7 +27,7 @@ const verifyJWT = (req, res, next) => {
 	// Make sure it is properly formatted
 	if (!token.startsWith(TOKEN_PREFIX)) {
 		const error = new Error(stringService.invalidAuthToken); // Instantiate a new Error object for improperly formatted token
-		error.status = 400;
+		error.status = 401;
 		error.service = SERVICE_NAME;
 		error.method = "verifyJWT";
 		next(error);
