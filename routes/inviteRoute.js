@@ -14,8 +14,10 @@ class InviteRoutes {
 			"/",
 			isAllowed(["admin", "superadmin"]),
 			verifyJWT,
-			this.inviteController.issueInvitation
+			this.inviteController.getInviteToken
 		);
+
+		this.router.post("/send", this.inviteController.sendInviteEmail);
 		this.router.post("/verify", this.inviteController.inviteVerifyController);
 	}
 
