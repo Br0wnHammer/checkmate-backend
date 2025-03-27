@@ -576,6 +576,10 @@ const buildMonitorsWithChecksByTeamIdPipeline = ({
 		matchStage.isActive = filter === "true" ? true : false;
 	}
 
+	if (typeof filter !== "undefined" && field === "status") {
+		matchStage.status = filter === "true" ? true : false;
+	}
+
 	// Match type
 	if (typeof filter !== "undefined" && field === "type") {
 		matchStage.type = filter;
