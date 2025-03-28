@@ -79,7 +79,7 @@ class MonitorController {
 		try {
 			const data = await this.db.getUptimeDetailsById(req);
 			return res.success({
-				msg: this.stringService.monitorGetById,
+				msg: this.stringService.monitorGetByIdSuccess,
 				data,
 			});
 		} catch (error) {
@@ -136,7 +136,7 @@ class MonitorController {
 		try {
 			const monitor = await this.db.getHardwareDetailsById(req);
 			return res.success({
-				msg: this.stringService.monitorGetById,
+				msg: this.stringService.monitorGetByIdSuccess,
 				data: monitor,
 			});
 		} catch (error) {
@@ -190,7 +190,7 @@ class MonitorController {
 		try {
 			const monitor = await this.db.getMonitorById(req.params.monitorId);
 			return res.success({
-				msg: this.stringService.monitorGetById,
+				msg: this.stringService.monitorGetByIdSuccess,
 				data: monitor,
 			});
 		} catch (error) {

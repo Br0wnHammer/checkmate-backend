@@ -112,6 +112,10 @@ class StringService {
 		return this.translationService.getTranslation("monitorGetById");
 	}
 
+	get monitorGetByIdSuccess() {
+		return this.translationService.getTranslation("monitorGetByIdSuccess");
+	}
+
 	get monitorCreate() {
 		return this.translationService.getTranslation("monitorCreate");
 	}
