@@ -24,7 +24,8 @@ const passwordPattern =
 const loginValidation = joi.object({
 	email: joi
 		.string()
-		.email(),
+		.email()
+		.required(),
 	password: joi.string().min(8).required().pattern(passwordPattern),
 });
 const nameValidation = joi
