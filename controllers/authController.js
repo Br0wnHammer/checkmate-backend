@@ -57,7 +57,9 @@ class AuthController {
 	 */
 	registerUser = async (req, res, next) => {
 		try {
-			req.body.email = req.body.email?.toLowerCase();
+			if(req.body?.email){
+				req.body.email = req.body.email?.toLowerCase();
+			}			
 			await registrationBodyValidation.validateAsync(req.body);
 		} catch (error) {
 			const validationError = handleValidationError(error, SERVICE_NAME);
@@ -131,7 +133,9 @@ class AuthController {
 	 */
 	loginUser = async (req, res, next) => {
 		try {
+			if(req.body?.email){
 			req.body.email = req.body.email?.toLowerCase();
+			}
 			await loginValidation.validateAsync(req.body);
 		} catch (error) {
 			const validationError = handleValidationError(error, SERVICE_NAME);
