@@ -24,15 +24,7 @@ const passwordPattern =
 const loginValidation = joi.object({
 	email: joi
 		.string()
-		.email()
-		.required()
-		.custom((value, helpers) => {
-			const lowercasedValue = value.toLowerCase();
-			if (value !== lowercasedValue) {
-				return helpers.message("Email must be in lowercase");
-			}
-			return lowercasedValue;
-		}),
+		.email(),
 	password: joi.string().min(8).required().pattern(passwordPattern),
 });
 const nameValidation = joi
@@ -53,14 +45,7 @@ const registrationBodyValidation = joi.object({
 	email: joi
 		.string()
 		.email()
-		.required()
-		.custom((value, helpers) => {
-			const lowercasedValue = value.toLowerCase();
-			if (value !== lowercasedValue) {
-				return helpers.message("Email must be in lowercase");
-			}
-			return lowercasedValue;
-		}),
+		.required(),
 	password: joi.string().min(8).required().pattern(passwordPattern),
 	profileImage: joi.any(),
 	role: joi
