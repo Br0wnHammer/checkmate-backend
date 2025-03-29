@@ -68,9 +68,9 @@ class NotificationService {
 		// Create different messages based on status with extra spacing
 		let messageText;
 		if (status === true) {
-		  messageText = `\n\nUptime Alert: One of your monitors is back online.\n📌 Monitor: ${monitor.name}\n📅 Time: ${formattedTime}\n⚠️ Status: UP\n📟 Status Code: ${code || 'Unknown'}\n\n`;
+		  messageText = `Uptime Alert: One of your monitors is back online.\n📌 Monitor: ${monitor.name}\n📅 Time: ${formattedTime}\n⚠️ Status: UP\n📟 Status Code: ${code || 'Unknown'}\n\u200B\n`;
 		} else {
-		  messageText = `\n\nDowntime Alert: One of your monitors went offline.\n📌 Monitor: ${monitor.name}\n📅 Time: ${formattedTime}\n⚠️ Status: DOWN\n📟 Status Code: ${code || 'Unknown'}\n\n`;
+		  messageText = `Downtime Alert: One of your monitors went offline.\n📌 Monitor: ${monitor.name}\n📅 Time: ${formattedTime}\n⚠️ Status: DOWN\n📟 Status Code: ${code || 'Unknown'}\n\u200B\n`;
 		}
 		
 		if (!PLATFORM_TYPES.includes(platform)) {
