@@ -32,7 +32,6 @@ class NewJobQueue {
 		const settings = settingsService.getSettings() || {};
 		const { redisUrl } = settings;
 		const connection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
-
 		this.queues = {};
 		this.workers = {};
 		this.lastJobProcessedTime = {};
@@ -48,7 +47,18 @@ class NewJobQueue {
 		this.stringService = stringService;
 
 		QUEUE_NAMES.forEach((name) => {
-			this.queues[name] = new Queue(name, { connection });
+			const q = new Queue(name, { connection });
+			this.lastJobProcessedTime[q.name] = Date.now();
+			q.on("error", (error) => {
+				this.logger.error({
+					message: error.message,
+					service: SERVICE_NAME,
+					method: "queue:error",
+					stack: error.stack,
+				});
+			});
+			this.queues[name] = q;
+
 			this.workers[name] = [];
 		});
 
@@ -83,6 +93,7 @@ class NewJobQueue {
 	 * @returns {Promise<void>}
 	 */
 	async initJobQueue() {
+		await this.connection.flushall();
 		const monitors = await this.db.getAllMonitors();
 		await Promise.all(
 			monitors
@@ -261,6 +272,15 @@ class NewJobQueue {
 					message: `Job ${job.id} failed: ${err.message}`,
 					service: SERVICE_NAME,
 					method: "worker:failed",
+					stack: err.stack,
+					jobData: job.data,
+				});
+			});
+			worker.on("error", (job, err) => {
+				this.logger.error({
+					message: `Job ${job.id} error: ${err.message}`,
+					service: SERVICE_NAME,
+					method: "worker:error",
 					stack: err.stack,
 					jobData: job.data,
 				});
@@ -744,22 +764,14 @@ class NewJobQueue {
 	 * @returns {Promise<Object>} Queue metrics
 	 */
 	async getQueueHealthMetrics(queue) {
-		const [waiting, active, completed, failed, delayed] = await Promise.all([
-			queue.getWaitingCount(),
-			queue.getActiveCount(),
-			queue.getCompletedCount(),
-			queue.getFailedCount(),
-			queue.getDelayedCount(),
-		]);
-
-		return { waiting, active, completed, failed, delayed };
+		return await queue.getJobCounts();
 	}
 
 	getQueueIdleTimes() {
 		const now = Date.now();
 		const idleTimes = {};
 		Object.entries(this.lastJobProcessedTime).forEach(([queueName, lastProcessed]) => {
-			idleTimes[queueName] = lastProcessed ? now - lastProcessed : Infinity;
+			idleTimes[queueName] = now - lastProcessed;
 		});
 		return idleTimes;
 	}
@@ -770,20 +782,12 @@ class NewJobQueue {
 			const idleTimes = this.getQueueIdleTimes();
 			for (const queueName of QUEUE_NAMES) {
 				const queue = this.queues[queueName];
-				const idleTime = idleTimes[queueName];
 
-				const healthMetrics = await this.getQueueHealthMetrics(queue);
-				const hasJobs =
-					healthMetrics.waiting > 0 ||
-					healthMetrics.active > 0 ||
-					healthMetrics.delayed > 0 ||
-					healthMetrics.completed > 0 ||
-					healthMetrics.failed > 0;
+				const jobCounts = await this.getQueueHealthMetrics(queue);
+				const hasJobs = Object.values(jobCounts).some((count) => count > 0);
 
 				const timeSinceLastProcessed = currentTime - this.lastJobProcessedTime[queueName];
-				const isStuck =
-					hasJobs &&
-					(timeSinceLastProcessed > HEALTH_CHECK_INTERVAL || idleTime === Infinity);
+				const isStuck = hasJobs && timeSinceLastProcessed > HEALTH_CHECK_INTERVAL;
 
 				if (isStuck) {
 					stuckQueues.push(queueName);
