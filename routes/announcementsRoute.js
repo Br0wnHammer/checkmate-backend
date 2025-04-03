@@ -17,8 +17,8 @@ class AnnouncementRoutes {
          */
         this.router.post(
             "/",
-            isAllowed(["admin", "superadmin"]),
             verifyJWT,
+            isAllowed(["admin", "superadmin"]),
             this.announcementController.createAnnouncementHandler
         );
     }
