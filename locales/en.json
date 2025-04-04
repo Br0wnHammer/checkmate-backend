@@ -156,5 +156,7 @@
 	"telegramRequiresBotTokenAndChatId": "Telegram notifications require both botToken and chatId",
 	"webhookUrlRequired": "Webhook URL is required",
 	"platformRequired": "Platform is required",
-	"testNotificationFailed": "Failed to send test notification"
+	"testNotificationFailed": "Failed to send test notification",
+	"monitorUpAlert": "Uptime Alert: One of your monitors is back online.\n📌 Monitor: {monitorName}\n📅 Time: {time}\n⚠️ Status: UP\n📟 Status Code: {code}\n\u200B\n",
+  	"monitorDownAlert": "Downtime Alert: One of your monitors went offline.\n📌 Monitor: {monitorName}\n📅 Time: {time}\n⚠️ Status: DOWN\n📟 Status Code: {code}\n\u200B\n"
 }

@@ -202,6 +202,14 @@ class StringService {
 		return this.translationService.getTranslation("testNotificationFailed");
 	}
 
+	get monitorUpAlert() {
+		return this.translationService.getTranslation("monitorUpAlert");
+	  }
+	  
+	  get monitorDownAlert() {
+		return this.translationService.getTranslation("monitorDownAlert");
+	  }
+
 	getWebhookUnsupportedPlatform(platform) {
 		return this.translationService
 			.getTranslation("webhookUnsupportedPlatform")
