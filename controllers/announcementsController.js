@@ -52,7 +52,13 @@ class AnnouncementController {
 	};
 
 	/**
-	 * Handles retrieving announcements.
+	 * Handles retrieving announcements with pagination.
+	 *
+	 * @async
+	 * @param {Object} res - The response object used to send the result back to the client.
+	 *  - `data`: The list of announcements to be sent back to the client.
+	 *  - `msg`: A message about the success of the request.
+	 * @param {Function} next - The next middleware function in the stack for error handling.
 	 */
 	getAnnouncementsHandler = async (req, res, next) => {
 		try {
