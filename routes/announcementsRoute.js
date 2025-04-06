@@ -23,8 +23,8 @@ class AnnouncementRoutes {
 		);
 
 		/**
-		 * @route   GET /:statusPageId
-		 * @desc    Get announcements (paginated, filterable by query params)
+		 * @route   GET /
+		 * @desc    Get announcements
 		 * @access  Public
 		 */
 		this.router.get("/", this.announcementController.getAnnouncementsHandler);
