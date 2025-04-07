@@ -1,3 +1,4 @@
+import { createAnnouncementValidation } from "../validation/joi.js";
 import { handleError } from "./controllerUtils.js";
 
 const SERVICE_NAME = "announcementController";
@@ -13,8 +14,8 @@ class AnnouncementController {
 	constructor(db, stringService) {
 		this.db = db;
 		this.stringService = stringService;
-		this.createAnnouncementHandler = this.createAnnouncementHandler.bind(this);
-		this.getAnnouncementsHandler = this.getAnnouncementsHandler.bind(this);
+		this.createAnnouncement = this.createAnnouncement.bind(this);
+		this.getAnnouncement = this.getAnnouncement.bind(this);
 	}
 
 	/**
@@ -27,12 +28,14 @@ class AnnouncementController {
 	 *
 	 * @returns {Promise<void>} A promise that resolves once the response is sent.
 	 */
-	createAnnouncementHandler = async (req, res, next) => {
-		const { title, message } = req.body;
-
-		if (!title || !message) {
-			return res.status(400).json({ message: "Title and message are required." });
+	createAnnouncement = async (req, res, next) => {
+		try {
+			await createAnnouncementValidation.validateAsync(req.body);
+		} catch (error) {
+			return next(handleError(error, SERVICE_NAME)); // Handle Joi validation errors
 		}
+
+		const { title, message } = req.body;
 
 		try {
 			const announcementData = {
@@ -43,11 +46,11 @@ class AnnouncementController {
 
 			const newAnnouncement = await this.db.createAnnouncement(announcementData);
 			return res.success({
-				msg: this.stringService.createAnnouncementHandler,
+				msg: this.stringService.createAnnouncement,
 				data: newAnnouncement,
 			});
 		} catch (error) {
-			next(handleError(error, SERVICE_NAME, "createAnnouncementHandler"));
+			next(handleError(error, SERVICE_NAME, "createAnnouncement"));
 		}
 	};
 
@@ -60,15 +63,15 @@ class AnnouncementController {
 	 *  - `msg`: A message about the success of the request.
 	 * @param {Function} next - The next middleware function in the stack for error handling.
 	 */
-	getAnnouncementsHandler = async (req, res, next) => {
+	getAnnouncement = async (req, res, next) => {
 		try {
 			const allAnnouncements = await this.db.getAnnouncements();
 			return res.success({
-				msg: this.stringService.getAnnouncementsHandler,
+				msg: this.stringService.getAnnouncement,
 				data: allAnnouncements,
 			});
 		} catch (error) {
-			next(handleError(error, SERVICE_NAME, "getAnnouncementsHandler"));
+			next(handleError(error, SERVICE_NAME, "getAnnouncement"));
 		}
 	};
 }
