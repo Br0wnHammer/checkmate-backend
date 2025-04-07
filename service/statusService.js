@@ -119,34 +119,43 @@ class StatusService {
 	updateStatus = async (networkResponse) => {
 		this.insertCheck(networkResponse);
 		try {
-			const { monitorId, status } = networkResponse;
+			const { monitorId, status, code } = networkResponse;
 			const monitor = await this.db.getMonitorById(monitorId);
-
+	
 			// Update running stats
 			this.updateRunningStats({ monitor, networkResponse });
-
+	
 			// No change in monitor status, return early
 			if (monitor.status === status)
-				return { monitor, statusChanged: false, prevStatus: monitor.status };
+				return {
+					monitor,
+					statusChanged: false,
+					prevStatus: monitor.status,
+					code,
+					timestamp: new Date().getTime(),
+				};
+	
 			// Monitor status changed, save prev status and update monitor
-
 			this.logger.info({
 				service: this.SERVICE_NAME,
-				message: `${monitor.name} went from ${this.getStatusString(monitor.status)} to ${this.getStatusString(status)}`,
+				message: `${monitor.name} went from ${this.getStatusString(
+					monitor.status
+				)} to ${this.getStatusString(status)}`,
 				prevStatus: monitor.status,
 				newStatus: status,
 			});
-
+	
 			const prevStatus = monitor.status;
 			monitor.status = status;
 			await monitor.save();
-
+	
 			return {
 				monitor,
 				statusChanged: true,
-				prevStatus: prevStatus,
+				prevStatus,
+				code,
+				timestamp: new Date().getTime(),
 			};
-			//
 		} catch (error) {
 			this.logger.error({
 				service: this.SERVICE_NAME,

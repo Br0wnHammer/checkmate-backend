@@ -39,18 +39,50 @@ class NotificationService {
 	 * @returns {Object|null} The formatted message object for the specified platform, or null if the platform is unsupported.
 	 */
 
-	formatNotificationMessage(monitor, status, platform, chatId) {
-
-		const messageText = this.stringService.getMonitorStatus(
-		  monitor.name,
-		  status,
-		  monitor.url
-		);
-	  
+	formatNotificationMessage(monitor, status, platform, chatId, code, timestamp) {
+		// Format timestamp using the local system timezone
+		const formatTime = (timestamp) => {
+		  const date = new Date(timestamp);
+		  
+		  // Get timezone abbreviation and format the date
+		  const timeZoneAbbr = date.toLocaleTimeString('en-US', { timeZoneName: 'short' })
+			.split(' ').pop();
+		  
+		  // Format the date with readable format
+		  return date.toLocaleString('en-US', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: false
+		  }).replace(/(\d+)\/(\d+)\/(\d+),\s/, '$3-$1-$2 ') + ' ' + timeZoneAbbr;
+		};
+		
+		// Get formatted time
+		const formattedTime = timestamp 
+		  ? formatTime(timestamp) 
+		  : formatTime(new Date().getTime());
+		
+		// Create different messages based on status with extra spacing
+		let messageText;
+		if (status === true) {
+			messageText = this.stringService.monitorUpAlert
+			.replace("{monitorName}", monitor.name)
+			.replace("{time}", formattedTime)
+			.replace("{code}", code || 'Unknown');
+		} else {
+			messageText = this.stringService.monitorDownAlert
+			.replace("{monitorName}", monitor.name)
+			.replace("{time}", formattedTime)
+			.replace("{code}", code || 'Unknown');
+		}
+		
 		if (!PLATFORM_TYPES.includes(platform)) {
 		  return undefined;
 		}
-	  
+		
 		return MESSAGE_FORMATTERS[platform](messageText, chatId);
 	  }
 
@@ -70,10 +102,10 @@ class NotificationService {
 	 */
 
 	async sendWebhookNotification(networkResponse, notification) {
-		const { monitor, status } = networkResponse;
+		const { monitor, status, code } = networkResponse;
 		const { platform } = notification;
 		const { webhookUrl, botToken, chatId } = notification.config;
-	  
+		
 		// Early return if platform is not supported
 		if (!PLATFORM_TYPES.includes(platform)) {
 		  this.logger.warn({
@@ -84,7 +116,7 @@ class NotificationService {
 		  });
 		  return false;
 		}
-	  
+		
 		// Early return for telegram if required fields are missing
 		if (platform === "telegram" && (!botToken || !chatId)) {
 		  this.logger.warn({
@@ -95,14 +127,21 @@ class NotificationService {
 		  });
 		  return false;
 		}
-	  
+		
 		let url = webhookUrl;
 		if (platform === "telegram") {
 		  url = `${TELEGRAM_API_BASE_URL}${botToken}/sendMessage`;
 		}
-	  	
-		const message = this.formatNotificationMessage(monitor, status, platform, chatId);
-	  
+		  
+		const message = this.formatNotificationMessage(
+		  monitor, 
+		  status, 
+		  platform, 
+		  chatId, 
+		  code,  // Pass the code field directly
+		  networkResponse.timestamp
+		);
+		
 		try {
 		  const response = await this.networkService.requestWebhook(platform, url, message);
 		  return response.status;
