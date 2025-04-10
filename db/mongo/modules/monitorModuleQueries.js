@@ -676,11 +676,15 @@ const buildFilteredMonitorsByTeamIdPipeline = ({
 	const sort = { [field]: order === "asc" ? 1 : -1 };
 	const limitStage = rowsPerPage ? [{ $limit: rowsPerPage }] : [];
 
-	if (typeof filter !== "undefined") {
+	if (typeof filter !== "undefined" && field === "name") {
 		matchStage.$or = [
 			{ name: { $regex: filter, $options: "i" } },
 			{ url: { $regex: filter, $options: "i" } },
 		];
+	}
+
+	if (typeof filter !== "undefined" && field === "status") {
+		matchStage.status = filter === "true";
 	}
 
 	const pipeline = [
