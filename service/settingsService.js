@@ -49,7 +49,10 @@ class SettingsService {
 
 			// If there are any settings that weren't set by environment variables, use user settings from DB
 			for (const key in envConfig) {
-				if (envConfig[key] === undefined && dbSettings[key] !== undefined) {
+				if (
+					typeof envConfig?.[key] === "undefined" &&
+					typeof dbSettings?.[key] !== "undefined"
+				) {
 					this.settings[key] = dbSettings[key];
 				}
 			}
