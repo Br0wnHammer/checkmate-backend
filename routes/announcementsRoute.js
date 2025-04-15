@@ -19,7 +19,7 @@ class AnnouncementRoutes {
 			"/",
 			verifyJWT,
 			isAllowed(["admin", "superadmin"]),
-			this.announcementController.createAnnouncementHandler
+			this.announcementController.createAnnouncement
 		);
 
 		/**
@@ -27,7 +27,7 @@ class AnnouncementRoutes {
 		 * @desc    Get announcements
 		 * @access  Public
 		 */
-		this.router.get("/", this.announcementController.getAnnouncementsHandler);
+		this.router.get("/", this.announcementController.getAnnouncement);
 	}
 
 	getRouter() {
