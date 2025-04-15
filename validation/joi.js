@@ -572,6 +572,23 @@ const triggerNotificationBodyValidation = joi.object({
 	}),
 });
 
+//****************************************
+// Announcetment Page Validation
+//****************************************
+
+const createAnnouncementValidation = joi.object({
+	title: joi.string().required().messages({
+	  'string.empty': 'Title cannot be empty',
+	  'any.required': 'Title is required',
+	}),
+	message: joi.string().required().messages({
+	  'string.empty': 'Message cannot be empty',
+	  'any.required': 'Message is required',
+	}),
+	userId: joi.string().required(),
+  });
+
+
 export {
 	roleValidatior,
 	loginValidation,
@@ -634,4 +651,5 @@ export {
 	imageValidation,
 	triggerNotificationBodyValidation,
 	webhookConfigValidation,
+	createAnnouncementValidation
 };
