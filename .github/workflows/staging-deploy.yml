@@ -1,0 +1,13 @@
+name: Staging deploy
+
+on:
+  push:
+    branches: [ "develop" ]
+
+jobs:
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+    - uses: actions/checkout@v4
