@@ -1,6 +1,6 @@
 services:
   client:
-    image: uptime_client:latest
+    image: ghcr.io/bluewave-labs/checkmate-frontend:staging
     restart: always
     environment:
       UPTIME_APP_API_BASE_URL: "https://checkmate-test.bluewavelabs.ca/api/v1"
