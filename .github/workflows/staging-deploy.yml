@@ -18,11 +18,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image name as output
-        id: set-image-name
-        run: echo "image_name=ghcr.io/bluewave-labs/checkmate-backend:staging" >> $GITHUB_OUTPUT
-
-      - name: Build Docker image
+      - name: Build Server Docker image
         run: |
           docker build \
             -t ghcr.io/bluewave-labs/checkmate-backend:staging \
@@ -30,8 +26,30 @@ jobs:
             --label org.opencontainers.image.source=https://github.com/bluewave-labs/checkmate-backend \
             .
 
-      - name: Push Docker image
+      - name: Push Server Docker image
         run: docker push ghcr.io/bluewave-labs/checkmate-backend:staging
+
+      - name: Build Mongo Docker image
+        run: |
+          docker build \
+            -t ghcr.io/bluewave-labs/checkmate-mongo:staging \
+            -f ./docker/staging/mongoDB.Dockerfile \
+            --label org.opencontainers.image.source=https://github.com/bluewave-labs/checkmate-backend \
+            .
+
+      - name: Push MongoDB Docker image
+        run: docker push ghcr.io/bluewave-labs/checkmate-mongo:staging
+
+      - name: Build Redis Docker image
+        run: |
+          docker build \
+            -t ghcr.io/bluewave-labs/checkmate-redis:staging \
+            -f ./docker/staging/redis.Dockerfile \
+            --label org.opencontainers.image.source=https://github.com/bluewave-labs/checkmate-backend \
+            .
+
+      - name: Push Redis Docker image
+        run: docker push ghcr.io/bluewave-labs/checkmate-redis:staging
 
   deploy-to-staging:
     needs: docker-build-and-push
@@ -45,6 +63,6 @@ jobs:
           key: ${{ secrets.STAGING_SERVER_SSH_KEY }}
           script: |
             cd checkmate/server/docker/staging
-            docker-compose down
-            docker-compose pull
-            docker-compose up -d
+            docker compose down
+            docker compose pull
+            docker compose up -d
