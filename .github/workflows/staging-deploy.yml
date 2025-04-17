@@ -7,6 +7,8 @@ on:
 jobs:
   docker-build:
     runs-on: ubuntu-latest
+    outputs:
+      image_name: ${{ steps.set-image-name.outputs.image_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,13 +20,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image name as environment variable
-        run: echo "IMAGE_NAME=ghcr.io/bluewave-labs/checkmate-backend:staging" >> $GITHUB_ENV
+      - name: Set image name as output
+        id: set-image-name
+        run: echo "image_name=ghcr.io/bluewave-labs/checkmate-backend:staging" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
         run: |
           docker build \
-            -t $IMAGE_NAME \
+            -t ghcr.io/bluewave-labs/checkmate-backend:staging \
             -f ./docker/staging/server.Dockerfile \
             --label org.opencontainers.image.source=https://github.com/bluewave-labs/checkmate-backend \
             .
@@ -33,8 +36,15 @@ jobs:
     needs: docker-build
     runs-on: ubuntu-latest
     steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Push Docker image to GHCR
-        run: docker push $IMAGE_NAME
+        run: docker push ${{ needs.docker-build.outputs.image_name }}
 
   deploy-to-staging:
     needs: push-to-ghcr
@@ -48,6 +58,6 @@ jobs:
           key: ${{ secrets.STAGING_SERVER_SSH_KEY }}
           script: |
             cd /checkmate/server/docker/staging
-            docker-compose down                   
-            docker-compose pull                  
+            docker-compose down
+            docker-compose pull
             docker-compose up -d
