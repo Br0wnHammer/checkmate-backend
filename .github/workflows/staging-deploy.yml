@@ -29,8 +29,17 @@ jobs:
             --label org.opencontainers.image.source=https://github.com/bluewave-labs/checkmate-backend \
             .
 
+  push-to-ghcr:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
       - name: Push Docker image to GHCR
         run: docker push $IMAGE_NAME
+
+  deploy-to-staging:
+    needs: push-to-ghcr
+    runs-on: ubuntu-latest
+    steps:
       - name: SSH into server and restart container using Docker Compose
         uses: appleboy/ssh-action@v1.0.0
         with:
