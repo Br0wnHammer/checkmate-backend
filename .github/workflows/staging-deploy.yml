@@ -25,9 +25,20 @@ jobs:
         run: |
           docker build \
             -t $IMAGE_NAME \
-            -f ./docker/test/server.Dockerfile \
+            -f ./docker/staging/server.Dockerfile \
             --label org.opencontainers.image.source=https://github.com/bluewave-labs/checkmate-backend \
             .
 
       - name: Push Docker image to GHCR
         run: docker push $IMAGE_NAME
+      - name: SSH into server and restart container using Docker Compose
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_SERVER_HOST }}
+          username: ${{ secrets.STAGING_SERVER_USER }}
+          key: ${{ secrets.STAGING_SERVER_SSH_KEY }}
+          script: |
+            cd /checkmate/server/docker/staging
+            docker-compose down                   
+            docker-compose pull                  
+            docker-compose up -d

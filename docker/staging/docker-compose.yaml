@@ -24,7 +24,7 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;'"
 
   server:
-    image: uptime_server:latest
+    image: ghcr.io/bluewave-labs/checkmate-client:staging
     restart: always
     ports:
       - "5000:5000"
