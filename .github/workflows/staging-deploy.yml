@@ -25,7 +25,7 @@ jobs:
         run: |
           docker build \
             -t $IMAGE_NAME \
-            -f ./docker/test/server.Dockerfile \
+            -f ./docker/staging/server.Dockerfile \
             --label org.opencontainers.image.source=https://github.com/bluewave-labs/checkmate-backend \
             .
 
@@ -34,11 +34,11 @@ jobs:
       - name: SSH into server and restart container using Docker Compose
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: ${{ secrets.STAGING_SERVER_HOST }} # IP address or domain of your server
-          username: ${{ secrets.STAGING_SERVER_USER }} # Username to SSH into the server
-          key: ${{ secrets.STAGING_SERVER_SSH_KEY }} # The private key stored in secrets
+          host: ${{ secrets.STAGING_SERVER_HOST }}
+          username: ${{ secrets.STAGING_SERVER_USER }}
+          key: ${{ secrets.STAGING_SERVER_SSH_KEY }}
           script: |
             cd /checkmate/server/docker/staging
-            docker-compose down                   # Stop and remove containers
-            docker-compose pull                   # Pull the latest images
-            docker-compose up -d                  # Restart containers with the latest images
+            docker-compose down                   
+            docker-compose pull                  
+            docker-compose up -d
