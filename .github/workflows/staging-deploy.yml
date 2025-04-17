@@ -22,7 +22,7 @@ jobs:
         run: echo "IMAGE_NAME=ghcr.io/${{ github.repository }}/my-app:staging" >> $GITHUB_ENV
 
       - name: Build Docker image
-        run: docker build -t $IMAGE_NAME .
+        run: docker build -t $IMAGE_NAME -f ./docker/test/server.Dockerfile .
 
       - name: Push Docker image to GHCR
         run: docker push $IMAGE_NAME
