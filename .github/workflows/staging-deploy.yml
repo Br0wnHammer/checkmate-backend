@@ -31,3 +31,14 @@ jobs:
 
       - name: Push Docker image to GHCR
         run: docker push $IMAGE_NAME
+      - name: SSH into server and restart container using Docker Compose
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_SERVER_HOST }} # IP address or domain of your server
+          username: ${{ secrets.STAGING_SERVER_USER }} # Username to SSH into the server
+          key: ${{ secrets.STAGING_SERVER_SSH_KEY }} # The private key stored in secrets
+          script: |
+            cd /checkmate/server/docker/staging
+            docker-compose down                   # Stop and remove containers
+            docker-compose pull                   # Pull the latest images
+            docker-compose up -d                  # Restart containers with the latest images
